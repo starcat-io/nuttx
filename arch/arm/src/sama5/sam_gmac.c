@@ -684,7 +684,7 @@ static int sam_transmit(struct sam_gmac_s *priv)
   uint32_t regval;
   uint32_t status;
 
-  ninfo("d_len: %d txhead: %d txtail: %d\n",
+  ninfo("sam_transmit d_len: %d txhead: %d txtail: %d\n",
         dev->d_len, priv->txhead, priv->txtail);
   sam_dumppacket("Transmit packet", dev->d_buf, dev->d_len);
 
@@ -1329,6 +1329,11 @@ static void sam_txdone(struct sam_gmac_s *priv)
    * first descriptor that is still in use by the hardware.
    */
 
+  struct net_driver_s *dev = &priv->dev;
+  ninfo("sam_txdone: d_len: %d txhead: %d txtail: %d\n",
+        dev->d_len, priv->txhead, priv->txtail);
+
+  uint8_t in_chain = 0;
   while (priv->txhead != priv->txtail)
     {
       /* Yes.. check the next buffer at the tail of the list */
@@ -1337,8 +1342,14 @@ static void sam_txdone(struct sam_gmac_s *priv)
       up_invalidate_dcache((uintptr_t)txdesc,
                            (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
 
-      /* Is this TX descriptor still in use? */
 
+      if ((txdesc->status & GMACTXD_STA_USED) != 0)
+      {
+         custinfo("TX chain: start of chain\n");
+         in_chain = 1;
+      }
+
+      // Is this TX descriptor done transmitting (datasheet, p. 934)
       if ((txdesc->status & GMACTXD_STA_USED) == 0)
         {
           /* Yes.. the descriptor is still in use.  However, I have seen a
@@ -1347,21 +1358,48 @@ static void sam_txdone(struct sam_gmac_s *priv)
            * descriptor, then we should also have TQBD equal to the descriptor
            * address.  If it is not, then treat is as used anyway.
            */
-
-#warning REVISIT
           if (priv->txtail == 0 &&
               sam_physramaddr((uintptr_t)txdesc) != sam_getreg(priv, SAM_GMAC_TBQB))
             {
+              ninfo("TX buffer marked in-use: unusual startup case (%d)\n", priv->txtail);
+              sam_tx_bufinfo(priv, txdesc);
               txdesc->status = (uint32_t)GMACTXD_STA_USED;
               up_clean_dcache((uintptr_t)txdesc,
                               (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
+            }
+          else if ( (in_chain == 1) && ((txdesc->status & GMACTXD_STA_LAST) == 0) )
+            {
+              custinfo("TX chain: middle buffer in transmit chain (%d)\n", priv->txtail);
+              sam_tx_bufinfo(priv, txdesc);
+              txdesc->status = (uint32_t)GMACTXD_STA_USED;
+              up_clean_dcache((uintptr_t)txdesc,
+                              (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
+            }
+          else if ( (in_chain == 1) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
+            {
+              custinfo("TX chain: last buffer in transmit chain (%d)\n", priv->txtail);
+              sam_tx_bufinfo(priv, txdesc);
+              txdesc->status = (uint32_t)GMACTXD_STA_USED;
+              up_clean_dcache((uintptr_t)txdesc,
+                              (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
+              in_chain = 0;
+            }
+          else if ( ((txdesc->status & GMACTXD_STA_USED) == 0) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
+            {
+              custinfo("TX chain: end of two buffer transmit chain (%d)\n", priv->txtail);
+              sam_tx_bufinfo(priv, txdesc);
+              txdesc->status = (uint32_t)GMACTXD_STA_USED;
+              up_clean_dcache((uintptr_t)txdesc,
+                              (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
+              in_chain = 0;
             }
           else
             {
               /* Otherwise, the descriptor is truly in use.  Break out of the
                * loop now.
                */
-
+              custinfo("TX chain: TX descriptor still in use. (%d)\n", priv->txtail);
+              sam_tx_bufinfo(priv, txdesc);
               break;
             }
         }
@@ -1387,6 +1425,36 @@ static void sam_txdone(struct sam_gmac_s *priv)
 
   sam_dopoll(priv);
 }
+
+void sam_tx_bufinfo(struct sam_gmac_s *priv, struct gmac_txdesc_s *txdesc)
+{
+      custinfo("total number of tx buffers: %d\n", CONFIG_SAMA5_GMAC_NTXBUFFERS);
+      custinfo("number of free tx buffers: %d\n", sam_txfree(priv));
+      custinfo("number of in-use tx buffers: %d\n", sam_txinuse(priv));
+      custinfo("txdesc->status: 0x%08x\n", txdesc->status);
+      custinfo("txdesc->status: ");
+//      printBits(sizeof(txdesc->status), &(txdesc->status));
+//      puts("\n");
+}
+
+//assumes little endian
+void printBits(size_t const size, void const * const ptr)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+
+    for (i=size-1;i>=0;i--)
+    {
+        for (j=7;j>=0;j--)
+        {
+            byte = (b[i] >> j) & 1;
+            printf("%u", byte);
+        }
+    }
+    puts("");
+}
+
 
 /****************************************************************************
  * Function: sam_interrupt_work
