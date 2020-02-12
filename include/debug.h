@@ -719,6 +719,13 @@
 #  define wdinfo(x...)
 #endif
 
+// af
+#ifdef CONFIG_DEBUG_CUSTOM_INFO
+#  define custinfo(format, ...)   _info(format, ##__VA_ARGS__)
+#else
+#  define custinfo(x...)
+#endif
+
 #else /* CONFIG_CPP_HAVE_VARARGS */
 
 /* Variadic macros NOT supported */
@@ -1582,6 +1589,8 @@
 #  define wderrdumpbuffer(m,b,n)
 #  define wdinfodumpbuffer(m,b,n)
 #endif
+
+
 
 /****************************************************************************
  * Public Type Declarations
