@@ -1343,14 +1343,15 @@ static void sam_txdone(struct sam_gmac_s *priv)
                            (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
 
 
+      // Is this TX descriptor done transmitting? (SAMA5D36 datasheet, p. 934)
+      // First TX descriptor in chain GMACTXD_STA_USED = 1
       if ((txdesc->status & GMACTXD_STA_USED) != 0)
-      {
+        {
          custinfo("TX chain: start of chain\n");
-         in_chain = 1;
-      }
-
-      // Is this TX descriptor done transmitting (datasheet, p. 934)
-      if ((txdesc->status & GMACTXD_STA_USED) == 0)
+           in_chain = 1;
+        }
+//      else if ((txdesc->status & GMACTXD_STA_USED) == 0)
+      else
         {
           /* Yes.. the descriptor is still in use.  However, I have seen a
            * case (only repeatable on start-up) where the USED bit is never
@@ -1433,8 +1434,7 @@ void sam_tx_bufinfo(struct sam_gmac_s *priv, struct gmac_txdesc_s *txdesc)
       custinfo("number of in-use tx buffers: %d\n", sam_txinuse(priv));
       custinfo("txdesc->status: 0x%08x\n", txdesc->status);
       custinfo("txdesc->status: ");
-//      printBits(sizeof(txdesc->status), &(txdesc->status));
-//      puts("\n");
+      printBits(sizeof(txdesc->status), &(txdesc->status));
 }
 
 //assumes little endian
@@ -1452,7 +1452,7 @@ void printBits(size_t const size, void const * const ptr)
             printf("%u", byte);
         }
     }
-    puts("");
+    puts("\n");
 }
 
 
@@ -1893,6 +1893,8 @@ static int sam_ifup(struct net_driver_s *dev)
   /* Configure the GMAC interface for normal operation. */
 
   ninfo("Initialize the GMAC\n");
+  // af
+  custinfo("Initialize the GMAC\n");
   sam_gmac_configure(priv);
 
   /* Set the MAC address (should have been configured while we were down) */
