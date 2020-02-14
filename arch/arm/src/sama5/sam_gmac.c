@@ -1333,6 +1333,8 @@ static void sam_txdone(struct sam_gmac_s *priv)
   ninfo("sam_txdone: d_len: %d txhead: %d txtail: %d\n",
         dev->d_len, priv->txhead, priv->txtail);
 
+  custinfo("::::::::: start txdone\n");
+
   uint8_t in_chain = 0;
   while (priv->txhead != priv->txtail)
     {
@@ -1368,23 +1370,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
               up_clean_dcache((uintptr_t)txdesc,
                               (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
             }
-          else if ( (in_chain == 1) && ((txdesc->status & GMACTXD_STA_LAST) == 0) )
-            {
-              custinfo("TX chain: middle buffer in transmit chain (%d)\n", priv->txtail);
-              sam_tx_bufinfo(priv, txdesc);
-              txdesc->status = (uint32_t)GMACTXD_STA_USED;
-              up_clean_dcache((uintptr_t)txdesc,
-                              (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
-            }
-          else if ( (in_chain == 1) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
-            {
-              custinfo("TX chain: last buffer in transmit chain (%d)\n", priv->txtail);
-              sam_tx_bufinfo(priv, txdesc);
-              txdesc->status = (uint32_t)GMACTXD_STA_USED;
-              up_clean_dcache((uintptr_t)txdesc,
-                              (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
-              in_chain = 0;
-            }
           else if ( ((txdesc->status & GMACTXD_STA_USED) == 0) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
             {
               custinfo("TX chain: end of two buffer transmit chain (%d)\n", priv->txtail);
@@ -1412,6 +1397,7 @@ static void sam_txdone(struct sam_gmac_s *priv)
           /* Wrap to the beginning of the TX descriptor list */
 
           priv->txtail = 0;
+          custinfo("wrap\n");
         }
 
       /* At least one TX descriptor is available.  Re-enable RX interrupts.
@@ -1423,8 +1409,9 @@ static void sam_txdone(struct sam_gmac_s *priv)
     }
 
   /* Then poll the network for new XMIT data */
-
+  custinfo("about to sam_dopoll\n");
   sam_dopoll(priv);
+  custinfo("::::::::: end txdone\n");
 }
 
 void sam_tx_bufinfo(struct sam_gmac_s *priv, struct gmac_txdesc_s *txdesc)
