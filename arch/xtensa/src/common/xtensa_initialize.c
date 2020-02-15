@@ -100,16 +100,6 @@ void up_initialize(void)
 
   xtensa_add_region();
 
-  /* Initialize the interrupt subsystem */
-
-  xtensa_irq_initialize();
-
-#if !defined(CONFIG_SUPPRESS_INTERRUPTS) && !defined(CONFIG_SUPPRESS_TIMER_INTS)
-  /* Initialize the system timer interrupt */
-
-  xtensa_timer_initialize();
-#endif
-
 #ifdef CONFIG_PM
   /* Initialize the power management subsystem.  This MCU-specific function
    * must be called *very* early in the initialization sequence *before* any
@@ -217,7 +207,7 @@ void up_initialize(void)
   up_netinitialize();
 #endif
 
-#ifdef CONFIG_NETDEV_LOOPBACK
+#ifdef CONFIG_NET_LOOPBACK
   /* Initialize the local loopback device */
 
   localhost_initialize();

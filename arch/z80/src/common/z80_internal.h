@@ -104,14 +104,6 @@ extern "C"
 {
 #endif
 
-/* Supplied by chip- or board-specific logic */
-
-void z80_irq_initialize(void);
-
-#ifdef CONFIG_RTC_ALARM
-void z80_rtc_irqinitialize(void);
-#endif
-
 #ifdef USE_LOWSERIALINIT
 void z80_lowserial_initialize(void);
 #endif
@@ -172,10 +164,6 @@ void ramlog_consoleinit(void);
 
 void up_puts(const char *str);
 
-/* Defined in xyz_timerisr.c */
-
-void z80_timer_initialize(void);
-
 /* Architecture specific hook into the timer interrupt handler */
 
 #ifdef CONFIG_ARCH_TIMERHOOK
@@ -217,4 +205,4 @@ void up_stackdump(void);
 #endif
 #endif
 
-#endif  /* __ARCH_Z80_SRC_COMMON_Z80_INTERNAL_H */
+#endif /* __ARCH_Z80_SRC_COMMON_Z80_INTERNAL_H */

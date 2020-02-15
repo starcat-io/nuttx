@@ -337,8 +337,6 @@ void up_pminitialize(void);
 
 /* Interrupt handling *******************************************************/
 
-void up_irqinitialize(void);
-
 /* Exception handling logic unique to the Cortex-M family */
 
 #if defined(CONFIG_ARCH_CORTEXM0) || defined(CONFIG_ARCH_ARMV7M)
@@ -430,10 +428,6 @@ void up_restorefpu(const uint32_t *regs);
 #  define up_savefpu(regs)
 #  define up_restorefpu(regs)
 #endif
-
-/* System timer *************************************************************/
-
-void arm_timer_initialize(void);
 
 /* Low level serial output **************************************************/
 
@@ -540,4 +534,4 @@ void up_stack_color(FAR void *stackbase, size_t nbytes);
 #endif
 #endif /* __ASSEMBLY__ */
 
-#endif  /* __ARCH_ARM_SRC_COMMON_UP_INTERNAL_H */
+#endif /* __ARCH_ARM_SRC_COMMON_UP_INTERNAL_H */

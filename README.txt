@@ -964,7 +964,7 @@ Make Sure that You are on the Right Platform
 
   For a Linux host or for a Windows/Cygwin host:
 
-    tools/configure.sh -h board:configuration
+    tools/configure.sh -c board:configuration
 
   Other options are available from the help option built into the
   script.  You can see all options with:
@@ -2121,7 +2121,7 @@ nuttx/
  |   |       `- moteino-mega/
  |   |           `- README.txt
  |   |- hc/
- |   |   `- mcs92s12ne64/
+ |   |   `- m9s12/
  |   |       |- demo9s12ne64/
  |   |       |   `- README.txt
  |   |       `- ne64badge/
@@ -2152,10 +2152,10 @@ nuttx/
  |   |       `- or1k/
  |   |           `- README.txt
  |   |- renesas/
- |   |   |- m32262f8/
+ |   |   |- m16c/
  |   |   |   `- skp16c26/
  |   |   |       `- README.txt
- |   |   `-sh7032/
+ |   |   `-sh1/
  |   |       `- us7032evb1/
  |   |           `- README.txt
  |   |- risc-v/
@@ -2179,7 +2179,7 @@ nuttx/
  |   |       `- esp32-core/
  |   |           `- README.txt
  |   |- z16/
- |   |   `- z16f2811/
+ |   |   `- z16f/
  |   |       `- z16f2800100zcog/
  |   |           |- configs/nsh/README.txt
  |   |           |- configs/ostest/README.txt
@@ -2363,4 +2363,3 @@ tools/
 
 uClibc++/
  `- README.txt
-

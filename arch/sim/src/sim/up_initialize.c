@@ -189,7 +189,7 @@ void up_initialize(void)
    * with the power management subsystem).
    */
 
-  up_pminitialize();
+  pm_initialize();
 #endif
 
 #ifdef CONFIG_MM_IOB
@@ -274,7 +274,7 @@ void up_initialize(void)
   netdriver_init();         /* Our "real" network driver */
 #endif
 
-#ifdef CONFIG_NETDEV_LOOPBACK
+#ifdef CONFIG_NET_LOOPBACK
   /* Initialize the local loopback device */
 
   localhost_initialize();
@@ -295,4 +295,17 @@ void up_initialize(void)
 #if defined(CONFIG_FS_SMARTFS) && (defined(CONFIG_SIM_SPIFLASH) || defined(CONFIG_SIM_QSPIFLASH))
   up_init_smartfs();
 #endif
+}
+
+/****************************************************************************
+ * Function:  up_timer_initialize
+ *
+ * Description:
+ *   This function is called during start-up to initialize
+ *   the timer hardware.
+ *
+ ****************************************************************************/
+
+void up_timer_initialize(void)
+{
 }

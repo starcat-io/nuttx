@@ -43,7 +43,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <assert.h>
 #include <queue.h>
@@ -1042,7 +1041,7 @@ static void sai_worker(void *arg)
 
       flags = enter_critical_section();
 #ifdef CONFIG_STM32F7_SAI_DMA
-      (void)sai_dma_setup(priv);
+      sai_dma_setup(priv);
 #endif
       leave_critical_section(flags);
     }
@@ -1161,7 +1160,7 @@ static void sai_dma_callback(DMA_HANDLE handle, uint8_t isr, void *arg)
 
   /* Cancel the watchdog timeout */
 
-  (void)wd_cancel(priv->dog);
+  wd_cancel(priv->dog);
 
   /* Then schedule completion of the transfer to occur on the worker thread */
 

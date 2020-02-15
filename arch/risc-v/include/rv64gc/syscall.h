@@ -87,7 +87,7 @@
 
 #define SYS_restore_context (1)
 #define up_fullcontextrestore(restoreregs) \
-  (void)sys_call1(SYS_restore_context, (uintptr_t)restoreregs)
+  sys_call1(SYS_restore_context, (uintptr_t)restoreregs)
 
 /* SYS call 2:
  *
@@ -96,7 +96,7 @@
 
 #define SYS_switch_context (2)
 #define up_switchcontext(saveregs, restoreregs) \
-  (void)sys_call2(SYS_switch_context, (uintptr_t)saveregs, (uintptr_t)restoreregs)
+  sys_call2(SYS_switch_context, (uintptr_t)saveregs, (uintptr_t)restoreregs)
 
 #ifdef CONFIG_BUILD_KERNEL
 /* SYS call 3:
@@ -105,7 +105,7 @@
  */
 
 #define SYS_syscall_return (3)
-#define up_syscall_return() (void)sys_call0(SYS_syscall_return)
+#define up_syscall_return() sys_call0(SYS_syscall_return)
 
 #endif
 #endif /* __ASSEMBLY__ */
@@ -206,4 +206,3 @@ uintptr_t sys_call5(unsigned int nbr, uintptr_t parm1, uintptr_t parm2,
 
 #endif /* __ASSEMBLY__ */
 #endif /* __ARCH_RISCV_INCLUDE_RV64GC_SYSCALL_H */
-

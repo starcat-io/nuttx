@@ -37,7 +37,7 @@
 include ${TOPDIR}/.config
 include ${TOPDIR}/tools/Config.mk
 
-HOSTOS = ${shell uname -o 2>/dev/null || echo "Other"}
+HOSTOS = ${shell uname -o 2>/dev/null || uname -s 2>/dev/null || echo "Other"}
 
 ifeq ($(CONFIG_WINDOWS_MSYS),y)
   DIRLINK = $(TOPDIR)/tools/copydir.sh
@@ -62,6 +62,11 @@ ARCHDEFINESXX =
 ARCHINCLUDES = -I. -isystem $(TOPDIR)/include
 ARCHINCLUDESXX = -I. -isystem $(TOPDIR)/include -isystem $(TOPDIR)/include/cxx
 ARCHSCRIPT =
+
+# Add -fno-common because macOS "ld -r" doesn't seem to pick objects
+# for common symbols.
+ARCHCPUFLAGS += -fno-common
+ARCHCPUFLAGSXX += -fno-common
 
 ifeq ($(CONFIG_SIM_M32),y)
   ARCHCPUFLAGS += -m32
@@ -115,9 +120,7 @@ CCLINKFLAGS = $(ARCHSCRIPT) # Link flags used with $(CC)
 LDFLAGS = $(ARCHSCRIPT) # For backward compatibility, same as CCLINKFLAGS
 
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
-  LDLINKFLAGS += -g
   CCLINKFLAGS += -g
-  LDFLAGS += -g
 endif
 
 ifeq ($(CONFIG_SIM_M32),y)

@@ -263,8 +263,6 @@ void up_pminitialize(void);
 
 /* Interrupt handling *******************************************************/
 
-void up_irqinitialize(void);
-
 /* Exception handling logic unique to the Cortex-M family */
 
 /* Interrupt acknowledge and dispatch */
@@ -284,10 +282,6 @@ uint32_t *or1k_doirq(int irq, uint32_t *regs);
 /* Exception Handlers */
 
 uint32_t *or1k_syscall(uint32_t *regs);
-
-/* System timer *************************************************************/
-
-void or1k_timer_initialize(void);
 
 /* Low level serial output **************************************************/
 
@@ -386,4 +380,4 @@ void up_stack_color(FAR void *stackbase, size_t nbytes);
 #endif
 #endif /* __ASSEMBLY__ */
 
-#endif  /* __ARCH_OR1K_SRC_COMMON_UP_INTERNAL_H */
+#endif /* __ARCH_OR1K_SRC_COMMON_UP_INTERNAL_H */

@@ -46,7 +46,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <assert.h>
 #include <debug.h>
@@ -1381,7 +1380,7 @@ static void qspi_dma_callback(DMA_HANDLE handle, uint8_t isr, void *arg)
 
   /* Cancel the watchdog timeout */
 
-  (void)wd_cancel(priv->dmadog);
+  wd_cancel(priv->dmadog);
 
   /* Sample DMA registers at the time of the callback */
 
@@ -1530,7 +1529,7 @@ static int qspi_memory_dma(struct stm32h7_qspidev_s *priv,
 
       /* Cancel the watchdog timeout */
 
-      (void)wd_cancel(priv->dmadog);
+      wd_cancel(priv->dmadog);
 
       /* Check if we were awakened by an error of some kind */
 
@@ -1775,8 +1774,7 @@ static int qspi_lock(struct qspi_dev_s *dev, bool lock)
     }
   else
     {
-      (void)nxsem_post(&priv->exclsem);
-      ret = OK;
+      ret = nxsem_post(&priv->exclsem);
     }
 
   return ret;
@@ -2108,7 +2106,7 @@ static int qspi_command(struct qspi_dev_s *dev,
 
   /* Wait for the interrupt routine to finish it's magic */
 
-  (void)nxsem_wait(&priv->op_sem);
+  nxsem_wait(&priv->op_sem);
   MEMORY_SYNC();
 
   /* Convey the result */
@@ -2266,7 +2264,7 @@ static int qspi_memory(struct qspi_dev_s *dev,
 
   /* Wait for the interrupt routine to finish it's magic */
 
-  (void)nxsem_wait(&priv->op_sem);
+  nxsem_wait(&priv->op_sem);
   MEMORY_SYNC();
 
   /* convey the result */

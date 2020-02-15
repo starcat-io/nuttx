@@ -43,7 +43,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <semaphore.h>
 #include <string.h>
 #include <errno.h>
 #include <debug.h>
@@ -970,7 +969,7 @@ static uint16_t hciuart_rxinuse(const struct hciuart_config_s *config)
 
 static void hciuart_rxflow_enable(const struct hciuart_config_s *config)
 {
-#ifdef  CONFIG_STM32_HCIUART_SW_RXFLOW
+#ifdef CONFIG_STM32_HCIUART_SW_RXFLOW
   struct hciuart_state_s *state;
 
   DEBUGASSERT(config != NULL && config->state != NULL);
@@ -1007,7 +1006,7 @@ static void hciuart_rxflow_enable(const struct hciuart_config_s *config)
 
 static void hciuart_rxflow_disable(const struct hciuart_config_s *config)
 {
-#ifdef  CONFIG_STM32_HCIUART_SW_RXFLOW
+#ifdef CONFIG_STM32_HCIUART_SW_RXFLOW
   struct hciuart_state_s *state;
 
   DEBUGASSERT(config != NULL && config->state != NULL);

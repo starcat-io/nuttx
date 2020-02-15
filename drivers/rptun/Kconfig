@@ -13,4 +13,4 @@ config RPTUN_STACKSIZE
 	int "rptun stack size"
 	default 2048
 
-endif
+endif # RPTUN

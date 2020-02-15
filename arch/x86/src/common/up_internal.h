@@ -177,7 +177,6 @@ void x86_boardinitialize(void);
 void up_copystate(uint32_t *dest, uint32_t *src);
 void up_savestate(uint32_t *regs);
 void up_decodeirq(uint32_t *regs);
-void up_irqinitialize(void);
 #ifdef CONFIG_ARCH_DMA
 void weak_function up_dma_initialize(void);
 #endif
@@ -223,10 +222,6 @@ void lowconsole_init(void);
 
 void up_wdtinit(void);
 
-/* Defined in xyz_timerisr.c */
-
-void x86_timer_initialize(void);
-
 /* Defined in board/up_network.c */
 
 #if defined(CONFIG_NET) && !defined(CONFIG_NETDEV_LATEINIT)
@@ -245,4 +240,4 @@ void up_usbuninitialize(void);
 
 #endif /* __ASSEMBLY__ */
 
-#endif  /* __ARCH_X86_SRC_COMMON_UP_INTERNAL_H */
+#endif /* __ARCH_X86_SRC_COMMON_UP_INTERNAL_H */
