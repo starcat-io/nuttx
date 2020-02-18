@@ -992,6 +992,8 @@
 #define GMACTXD_STA_WRAP          (1 << 30) /* Bit 30: Last descriptor in descriptor list */
 #define GMACTXD_STA_USED          (1 << 31) /* Bit 31: Zero for the GMAC to read from buffer */
 
+#define GMAC_STATUS_LENGTH_MASK   0x3fffu
+
 /************************************************************************************
  * Public Types
  ************************************************************************************/
