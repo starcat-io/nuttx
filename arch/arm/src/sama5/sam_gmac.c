@@ -961,6 +961,7 @@ static int sam_recvframe(struct sam_gmac_s *priv)
                        (uintptr_t)rxdesc + sizeof(struct gmac_rxdesc_s));
 
   ninfo("rxndx: %d\n", rxndx);
+  custinfo("::::::: recvframe\n");
 
   while ((rxdesc->addr & GMACRXD_ADDR_OWNER) != 0)
     {
@@ -1157,6 +1158,9 @@ static int sam_recvframe(struct sam_gmac_s *priv)
     {
       priv->rxndx = rxndx;
     }
+  // af
+  custinfo("::::::: rx bufinfo\n");
+  sam_rx_bufinfo(priv);
 
   ninfo("rxndx: %d\n", priv->rxndx);
   return -EAGAIN;
@@ -1439,6 +1443,29 @@ void sam_tx_bufinfo(struct sam_gmac_s *priv, struct gmac_txdesc_s *txdesc)
       printBits(sizeof(txdesc->status), &(txdesc->status));
 }
 
+int sam_rxfree(struct sam_gmac_s *priv)
+{
+    volatile struct gmac_rxdesc_s *rxdesc;
+    int rx_free_buffers = 0;
+    for (int i=0; i<CONFIG_SAMA5_GMAC_NRXBUFFERS; i++) {
+       rxdesc = &priv->rxdesc[i];
+       if ((rxdesc->addr & GMACRXD_ADDR_OWNER) != 0) {
+           // owned by software
+           rx_free_buffers++;
+       }
+    }
+    return rx_free_buffers;
+}
+
+void sam_rx_bufinfo(struct sam_gmac_s *priv)
+{
+    int rx_free_buffers = sam_rxfree(priv);
+    custinfo("total number of rx buffers: %d\n", CONFIG_SAMA5_GMAC_NRXBUFFERS);
+    custinfo("rxndx : %d\n", priv->rxndx);
+    custinfo("number of software-owned rx buffers: %d\n", rx_free_buffers);
+    custinfo("number of free rx buffers: %d\n", CONFIG_SAMA5_GMAC_NRXBUFFERS - rx_free_buffers);
+}
+
 //assumes little endian
 void printBits(size_t const size, void const * const ptr)
 {
@@ -1498,6 +1525,8 @@ static void sam_interrupt_work(FAR void *arg)
 
   pending = isr & ~(imr | GMAC_INT_UNUSED);
   ninfo("isr: %08x pending: %08x\n", isr, pending);
+  // af
+  custinfo("tsr:  %08x isr: %08x pending: %08x\n", tsr, isr, pending);
 
   /* Check for the completion of a transmission.  This should be done before
    * checking for received data (because receiving can cause another transmission
@@ -1511,6 +1540,7 @@ static void sam_interrupt_work(FAR void *arg)
   if ((pending & GMAC_INT_TCOMP) != 0 || (tsr & GMAC_TSR_TXCOMP) != 0)
     {
       /* A frame has been transmitted */
+      custinfo("error checking\n");
 
       clrbits = GMAC_TSR_TXCOMP;
 
@@ -1629,6 +1659,8 @@ static void sam_interrupt_work(FAR void *arg)
         {
           nerr("ERROR: Buffer not available RSR: %08x\n", rsr);
           clrbits |= GMAC_RSR_BNA;
+          // af
+          sam_rx_bufinfo(priv);
         }
 
       /* Check for HRESP not OK (HNO) */
@@ -1718,7 +1750,7 @@ static int sam_gmac_interrupt(int irq, void *context, FAR void *arg)
 
   tsr = sam_getreg(priv, SAM_GMAC_TSR);
   // af
-//  custinfo("::: gmac tsr: 0x%08x\n");
+  custinfo("::: gmac tsr: 0x%08x\n");
   if ((tsr & GMAC_TSR_TXCOMP) != 0)
     {
       /* If a TX transfer just completed, then cancel the TX timeout so
