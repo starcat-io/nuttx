@@ -40,9 +40,8 @@
 
 #include <nuttx/config.h>
 
-#include <time.h>
-
 #include <nuttx/arch.h>
+#include <nuttx/power/pm.h>
 
 #include "up_internal.h"
 
@@ -51,22 +50,6 @@
  ****************************************************************************/
 
 #define PM_IDLE_DOMAIN 0 /* Revisit */
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
-
-#ifdef CONFIG_SIM_X11FB
-static int g_x11refresh = 0;
-#endif
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-#ifdef CONFIG_SIM_X11FB
-extern void up_x11update(void);
-#endif
 
 /****************************************************************************
  * Public Functions
@@ -89,16 +72,21 @@ extern void up_x11update(void);
 
 void up_idle(void)
 {
-#ifdef CONFIG_SCHED_TICKLESS
-  /* Driver the simulated interval timer */
+#ifdef CONFIG_PM
+  static enum pm_state_e state = PM_NORMAL;
+  enum pm_state_e newstate;
 
-  up_timer_update();
-#else
-  /* If the system is idle, then process "fake" timer interrupts.
-   * Hopefully, something will wake up.
-   */
+  /* Fake some power management stuff for testing purposes */
 
-  nxsched_process_timer();
+  newstate = pm_checkstate(PM_IDLE_DOMAIN);
+  if (newstate != state)
+    {
+      if (pm_changestate(PM_IDLE_DOMAIN, newstate) == OK)
+        {
+          state = newstate;
+          pwrinfo("IDLE: switching to new state %i\n", state);
+        }
+    }
 #endif
 
 #ifdef USE_DEVCONSOLE
@@ -107,7 +95,13 @@ void up_idle(void)
   up_devconloop();
 #endif
 
-#if defined(CONFIG_NET_ETHERNET) && defined(CONFIG_SIM_NETDEV)
+#if defined(CONFIG_SIM_TOUCHSCREEN) || defined(CONFIG_SIM_AJOYSTICK)
+  /* Drive the X11 event loop */
+
+  up_x11events();
+#endif
+
+#ifdef CONFIG_SIM_NETDEV
   /* Run the network if enabled */
 
   netdriver_loop();
@@ -117,54 +111,9 @@ void up_idle(void)
   up_rptun_loop();
 #endif
 
-#ifdef CONFIG_PM
-  /* Fake some power management stuff for testing purposes */
+#ifdef CONFIG_ONESHOT
+  /* Driver the simulated interval timer */
 
-  {
-    static enum pm_state_e state = PM_NORMAL;
-    enum pm_state_e newstate;
-
-    newstate = pm_checkstate(PM_IDLE_DOMAIN);
-    if (newstate != state)
-      {
-        if (pm_changestate(PM_IDLE_DOMAIN, newstate) == OK)
-          {
-            state = newstate;
-            pwrinfo("IDLE: switching to new state %i\n", state);
-          }
-      }
-  }
-#endif
-
-#if defined(CONFIG_SIM_WALLTIME) || defined(CONFIG_SIM_X11FB)
-  /* Wait a bit so that the nxsched_process_timer() is called close to the
-   * correct rate.
-   */
-
-  up_hostusleep(1000000 / CLK_TCK);
-
-  /* Handle X11-related events */
-
-#ifdef CONFIG_SIM_X11FB
-  if (g_x11initialized)
-    {
-#if defined(CONFIG_SIM_TOUCHSCREEN) || defined(CONFIG_SIM_AJOYSTICK)
-      /* Drive the X11 event loop */
-
-      if (g_eventloop)
-        {
-          up_x11events();
-        }
-#endif
-
-      /* Update the display periodically */
-
-      g_x11refresh += 1000000 / CLK_TCK;
-      if (g_x11refresh > 500000)
-        {
-          up_x11update();
-        }
-    }
-#endif
+  up_timer_update();
 #endif
 }

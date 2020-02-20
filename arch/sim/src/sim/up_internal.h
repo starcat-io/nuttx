@@ -89,9 +89,8 @@
 
 #ifndef CONFIG_DEV_CONSOLE
 #  undef USE_DEVCONSOLE
-#  undef CONFIG_RAMLOG_CONSOLE
 #else
-#  if defined(CONFIG_RAMLOG_CONSOLE) ||  defined(CONFIG_SYSLOG_RPMSG)
+#  ifdef CONFIG_SYSLOG_RPMSG
 #    undef USE_DEVCONSOLE
 #  else
 #    define USE_DEVCONSOLE 1
@@ -197,13 +196,6 @@
 
 #ifndef __ASSEMBLY__
 
-#ifdef CONFIG_SIM_X11FB
-extern int g_x11initialized;
-#if defined(CONFIG_SIM_TOUCHSCREEN) || defined(CONFIG_SIM_AJOYSTICK)
-extern volatile int g_eventloop;
-#endif
-#endif
-
 #ifdef CONFIG_SMP
 /* These spinlocks are used in the SMP configuration in order to implement
  * up_cpu_pause().  The protocol for CPUn to pause CPUm is as follows
@@ -232,9 +224,10 @@ volatile spinlock_t g_cpu_paused[CONFIG_SMP_NCPUS] SP_SECTION;
 int  up_setjmp(xcpt_reg_t *jb);
 void up_longjmp(xcpt_reg_t *jb, int val) noreturn_function;
 
-/* up_hostusleep.c **********************************************************/
+/* up_hosttime.c ************************************************************/
 
-int up_hostusleep(unsigned int usec);
+uint64_t host_gettime(bool rtc);
+void host_sleepuntil(uint64_t nsec);
 
 /* up_simsmp.c **************************************************************/
 
@@ -248,9 +241,9 @@ void sim_cpu0_start(void);
 void up_cpu_started(void);
 #endif
 
-/* up_tickless.c ************************************************************/
+/* up_oneshot.c *************************************************************/
 
-#ifdef CONFIG_SCHED_TICKLESS
+#ifdef CONFIG_ONESHOT
 void up_timer_update(void);
 #endif
 
@@ -279,18 +272,13 @@ bool simuart_checkc(void);
 char *up_deviceimage(void);
 void up_registerblockdevice(void);
 
-/* up_netdev.c **************************************************************/
-
-#ifdef CONFIG_NET
-unsigned long up_getwalltime(void);
-#endif
-
 /* up_x11framebuffer.c ******************************************************/
 
 #ifdef CONFIG_SIM_X11FB
 int up_x11initialize(unsigned short width, unsigned short height,
                      void **fbmem, size_t *fblen, unsigned char *bpp,
                      unsigned short *stride);
+void up_x11update(void);
 #ifdef CONFIG_FB_CMAP
 int up_x11cmap(unsigned short first, unsigned short len,
                unsigned char *red, unsigned char *green,
@@ -300,21 +288,17 @@ int up_x11cmap(unsigned short first, unsigned short len,
 
 /* up_touchscreen.c *********************************************************/
 
+#ifdef CONFIG_SIM_TOUCHSCREEN
 int  sim_tsc_initialize(int minor);
 void sim_tsc_uninitialize(void);
-
-/* up_eventloop.c ***********************************************************/
-
-#if defined(CONFIG_SIM_X11FB) && \
-   (defined(CONFIG_SIM_TOUCHSCREEN) || defined(CONFIG_SIM_AJOYSTICK))
-void up_x11events(void);
 #endif
 
 /* up_eventloop.c ***********************************************************/
 
 #if defined(CONFIG_SIM_X11FB) && \
    (defined(CONFIG_SIM_TOUCHSCREEN) || defined(CONFIG_SIM_AJOYSTICK))
-int up_buttonevent(int x, int y, int buttons);
+void up_x11events(void);
+void up_buttonevent(int x, int y, int buttons);
 #endif
 
 /* up_ajoystick.c ***********************************************************/
@@ -332,14 +316,16 @@ FAR struct ioexpander_dev_s *sim_ioexpander_initialize(void);
 
 /* up_tapdev.c **************************************************************/
 
-#if defined(CONFIG_NET_ETHERNET) && !defined(__CYGWIN__)
+#if defined(CONFIG_SIM_NETDEV) && !defined(__CYGWIN__)
 void tapdev_init(void);
+int tapdev_avail(void);
 unsigned int tapdev_read(unsigned char *buf, unsigned int buflen);
 void tapdev_send(unsigned char *buf, unsigned int buflen);
 void tapdev_ifup(in_addr_t ifaddr);
 void tapdev_ifdown(void);
 
 #  define netdev_init()           tapdev_init()
+#  define netdev_avail()          tapdev_avail()
 #  define netdev_read(buf,buflen) tapdev_read(buf,buflen)
 #  define netdev_send(buf,buflen) tapdev_send(buf,buflen)
 #  define netdev_ifup(ifaddr)     tapdev_ifup(ifaddr)
@@ -348,12 +334,13 @@ void tapdev_ifdown(void);
 
 /* up_wpcap.c ***************************************************************/
 
-#if defined(CONFIG_NET_ETHERNET) && defined(__CYGWIN__)
+#if defined(CONFIG_SIM_NETDEV) && defined(__CYGWIN__)
 void wpcap_init(void);
 unsigned int wpcap_read(unsigned char *buf, unsigned int buflen);
 void wpcap_send(unsigned char *buf, unsigned int buflen);
 
 #  define netdev_init()           wpcap_init()
+#  define netdev_avail()          1
 #  define netdev_read(buf,buflen) wpcap_read(buf,buflen)
 #  define netdev_send(buf,buflen) wpcap_send(buf,buflen)
 #  define netdev_ifup(ifaddr)     {}
@@ -362,9 +349,9 @@ void wpcap_send(unsigned char *buf, unsigned int buflen);
 
 /* up_netdriver.c ***********************************************************/
 
-#ifdef CONFIG_NET_ETHERNET
+#ifdef CONFIG_SIM_NETDEV
 int netdriver_init(void);
-int netdriver_setmacaddr(unsigned char *macaddr);
+void netdriver_setmacaddr(unsigned char *macaddr);
 void netdriver_loop(void);
 #endif
 

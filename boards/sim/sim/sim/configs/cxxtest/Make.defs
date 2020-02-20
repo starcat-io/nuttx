@@ -71,9 +71,9 @@ ifeq ($(CONFIG_SIM_M32),y)
 endif
 
 CROSSDEV =
-CC = $(CROSSDEV)gcc
-CXX = $(CROSSDEV)g++
-CPP = $(CROSSDEV)gcc -E
+CC = $(CROSSDEV)cc
+CXX = $(CROSSDEV)c++
+CPP = $(CROSSDEV)cc -E
 LD = $(CROSSDEV)ld
 STRIP = $(CROSSDEV)strip --strip-unneeded
 AR = $(CROSSDEV)ar rcs
@@ -88,11 +88,26 @@ CXXFLAGS = $(ARCHWARNINGSXX) $(ARCHOPTIMIZATION) \
 CPPFLAGS = $(ARCHINCLUDES) $(ARCHDEFINES) $(EXTRADEFINES)
 AFLAGS = $(CFLAGS) -D__ASSEMBLY__
 
+# Loadable module definitions
+
+CMODULEFLAGS = $(CFLAGS)
+# -fno-pic to avoid GOT relocations
+CMODULEFLAGS += -fno-pic
+
+LDMODULEFLAGS = -r -e module_initialize
+ifeq ($(WINTOOL),y)
+  LDMODULEFLAGS += -T "${shell cygpath -w $(TOPDIR)/libs/libc/modlib/gnu-elf.ld}"
+else
+  LDMODULEFLAGS += -T $(TOPDIR)/libs/libc/modlib/gnu-elf.ld
+endif
 
 # ELF module definitions
 
 CELFFLAGS = $(CFLAGS)
 CXXELFFLAGS = $(CXXFLAGS)
+# -fno-pic to avoid GOT relocations
+CELFFLAGS += -fno-pic
+CXXELFFLAGS += -fno-pic
 
 LDELFFLAGS = -r -e main
 ifeq ($(WINTOOL),y)
@@ -128,12 +143,14 @@ ifeq ($(CONFIG_SIM_M32),y)
   LDLINKFLAGS += -melf_i386
   CCLINKFLAGS += -m32
   LDFLAGS += -m32
+  LDMODULEFLAGS += -melf_i386
+  LDELFFLAGS += -melf_i386
   HOSTLDFLAGS += -m32
 endif
 
 MKDEP = $(TOPDIR)/tools/mkdeps$(HOSTEXEEXT)
 
-HOSTCC = gcc
+HOSTCC = cc
 HOSTINCLUDES = -I.
 HOSTCFLAGS = $(ARCHWARNINGS) $(ARCHOPTIMIZATION) \
    $(ARCHCPUFLAGS) $(HOSTINCLUDES) $(ARCHDEFINES) $(EXTRADEFINES) -pipe

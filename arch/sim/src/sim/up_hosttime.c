@@ -1,9 +1,8 @@
 /****************************************************************************
- * arch/misoc/include/minerva/types.h
+ * arch/sim/src/sim/up_hosttime.c
  *
- *   Copyright (C) 2019 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2008 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
- *           Ramtin Amin <keytwo@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,61 +33,50 @@
  *
  ****************************************************************************/
 
-/* This file should never be included directed but, rather, only indirectly
- * through stdint.h
- */
-
-#ifndef __ARCH_MISOC_INCLUDE_MINERVA_TYPES_H
-#define __ARCH_MISOC_INCLUDE_MINERVA_TYPES_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <time.h>
+#include <unistd.h>
+
 /****************************************************************************
- * Pre-processor Definitions
+ * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Type Declarations
+ * Name: host_gettime
  ****************************************************************************/
 
-#ifndef __ASSEMBLY__
+uint64_t host_gettime(bool rtc)
+{
+  struct timespec tp;
 
-/* These are the sizes of the standard integer types.  NOTE that these type
- * names have a leading underscore character.  This file will be included
- * (indirectly) by include/stdint.h and typedef'ed to the final name without
- * the underscore character.  This roundabout way of doings things allows
- * the stdint.h to be removed from the include/ directory in the event that
- * the user prefers to use the definitions provided by their toolchain header
- * files
- */
-
-typedef signed char _int8_t;
-typedef unsigned char _uint8_t;
-
-typedef signed short _int16_t;
-typedef unsigned short _uint16_t;
-
-typedef signed int _int32_t;
-typedef unsigned int _uint32_t;
-
-typedef signed long long _int64_t;
-typedef unsigned long long _uint64_t;
-#define __INT64_DEFINED
-
-/* A pointer is 4 bytes */
-
-typedef signed int _intptr_t;
-typedef unsigned int _uintptr_t;
-
-/* This is the size of the interrupt state save returned by up_irq_save(). */
-
-typedef unsigned int irqstate_t;
+  clock_gettime(rtc ? CLOCK_REALTIME : CLOCK_MONOTONIC, &tp);
+  return 1000000000ull * tp.tv_sec + tp.tv_nsec;
+}
 
 /****************************************************************************
- * Public Function Prototypes
+ * Name: host_sleepuntil
  ****************************************************************************/
 
-#endif /* __ASSEMBLY__ */
-#endif /* __ARCH_MISOC_INCLUDE_MINERVA_TYPES_H */
+void host_sleepuntil(uint64_t nsec)
+{
+  static uint64_t base;
+  uint64_t now;
+
+  now = host_gettime(false);
+  if (base == 0)
+    {
+      base = now;
+    }
+
+  now -= base;
+
+  if (nsec > now + 1000)
+    {
+      usleep((nsec - now) / 1000);
+    }
+}

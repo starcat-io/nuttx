@@ -199,6 +199,16 @@ REVISIT: This may not long be an issue even with NSH because of the recent
 redesign of how the stdio devices are handled in the simulation (they should
 no longer freeze the simulation).
 
+Update: Please issue these commands to setup the reliable network on Ubuntu:
+
+  sudo apt-get -y install net-tools
+  sudo nuttx/tools/simbridge.sh eth0 on
+
+Here is some tips you may need:
+  1.Must launch the exectuable with the root permission
+  2.Have to use virtual machine if host is in corporation network
+  3.Configure the network adpater in NAT mode if virtual machine is used
+
 X11 Issues
 ----------
 There is an X11-based framebuffer driver that you can use to exercise the
@@ -219,6 +229,10 @@ The X11 examples builds on Cygwin, but does not run.  The last time I tried
 it, XOpenDisplay() aborted the program.  UPDATE:  This was caused by the small
 stack size and can be fixed by increasing the size of the NuttX stack that
 calls into X11.  See the discussion "Stack Size Issues" above.
+
+Update: You may need issue this command with the latest Ubuntu before launch:
+
+  sudo xhost +
 
 Cygwin64 Issues
 ---------------
@@ -1103,6 +1117,21 @@ spiffs
 
   This is a test of the SPIFFS file system using the apps/testing/fstest test
   with an MTD RAM driver to simulate the FLASH part.
+
+tcploop
+
+  This configuration performs a TCP "performance" test using
+  apps/examples/tcpblaster and the IPv6 local loopback device.  Performance
+  is in quotes because, while that is the intent of the tcpblaster example,
+  this is not an appropriate configuration for TCP performance testing.
+  Rather, this configurat is useful only for verifying TCP transfers over
+  the loopback device.
+
+  To use IPv4, modify these settings in the defconfig file:
+
+    -# CONFIG_NET_IPv4 is not set
+    -CONFIG_NET_IPv6=y
+    -CONFIG_NET_IPv6_NCONF_ENTRIES=4
 
 touchscreen
 

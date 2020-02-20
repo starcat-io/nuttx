@@ -7,14 +7,15 @@ config ARCH_HAVE_SERIAL_TERMIOS
 	bool
 	default n
 
-if SERIAL
-
-config DEV_LOWCONSOLE
-	bool "Low-level console support"
-	default n
-	depends on ARCH_LOWPUTC && DEV_CONSOLE
+menuconfig SERIAL
+	bool "Serial Driver Support"
+	default y
 	---help---
-		Use the simple, low-level, write-only serial console driver (minimal support)
+		Front-end character drivers for chip-specific UARTs.  This provide
+		some TTY-like functionality and are commonly used (but not required
+		for) the NuttX system console.  See also include/nuttx/serial/serial.h
+
+if SERIAL
 
 config SERIAL_PM_ACTIVITY_DOMAIN
 	int "PM activity domain"
@@ -85,7 +86,6 @@ config STANDARD_SERIAL
 	bool "Enable standard \"upper-half\" serial driver"
 	default y if MCU_SERIAL
 	default n if !MCU_SERIAL
-	depends on !DEV_LOWCONSOLE
 	---help---
 		Enable the standard, upper-half serial driver used by most MCU serial peripherals.
 
