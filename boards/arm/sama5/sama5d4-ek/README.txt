@@ -182,7 +182,7 @@ IDEs
   2) Start the NuttX build at least one time from the Cygwin command line
      before trying to create your project.  This is necessary to create
      certain auto-generated files and directories that will be needed.
-  3) Set up include pathes:  You will need include/, arch/arm/src/sam34,
+  3) Set up include paths:  You will need include/, arch/arm/src/sam34,
      arch/arm/src/common, arch/arm/src/armv7-m, and sched/.
   4) All assembly files need to have the definition option -D __ASSEMBLY__
      on the command line.
@@ -1344,7 +1344,6 @@ Networking
     CONFIG_NET_ARP_IPIN=y                : IP address harvesting (optional)
     CONFIG_NET_TCP=y                     : Enable TCP/IP networking
     CONFIG_NET_TCPBACKLOG=y              : Support TCP/IP backlog
-    CONFIG_NET_TCP_READAHEAD=y           : Enable TCP read-ahead buffering
     CONFIG_NET_TCP_WRITE_BUFFERS=y       : Enable TCP write buffering
     CONFIG_NET_UDP=y                     : Enable UDP networking
     CONFIG_NET_BROADCAST=y               : Support UDP broadcast packets
@@ -2163,7 +2162,7 @@ SDRAM Support
       CONFIG_SYSTEM_RAMTEST=y
 
   In this configuration, the SDRAM is not added to heap and so is not
-  accessable to the applications.  So the RAM test can be freely executed
+  accessible to the applications.  So the RAM test can be freely executed
   against the SRAM memory beginning at address 0x2000:0000 (DDR CS):
 
     nsh> ramtest -h
@@ -4017,7 +4016,7 @@ Configurations
        - CONFIG_NSH_IPv6NETMASK_8=0xff80
 
   knsh:
-    An NSH configuration used to test the SAMA5D kenel build configuration.
+    An NSH configuration used to test the SAMA5D kernel build configuration.
 
     NOTES:
 
@@ -4109,8 +4108,7 @@ Configurations
        Then you will need to follow some special build instructions below
        in order to build and install the ROMFS file system image.
 
-    5. Board initialization is performed performed before the application
-       is started:
+    5. Board initialization is performed before the application is started:
 
        RTOS Features -> RTOS Hooks
          CONFIG_BOARD_INITITIALIZE=y
@@ -4301,7 +4299,6 @@ Configurations
 
        Device Drivers:
        CONFIG_RAMLOG=y             : Enable the RAM-based logging feature.
-       CONFIG_RAMLOG_CONSOLE=n     : (We don't use the RAMLOG console)
        CONFIG_RAMLOG_SYSLOG=y      : This enables the RAM-based logger as the
                                      system logger.
        CONFIG_RAMLOG_NONBLOCKING=y : Needs to be non-blocking for dmesg

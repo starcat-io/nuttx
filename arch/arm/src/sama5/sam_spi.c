@@ -49,7 +49,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <assert.h>
 #include <debug.h>
@@ -191,7 +190,7 @@ typedef void (*select_t)(uint32_t devid, bool selected);
 struct sam_spidev_s
 {
   uint32_t base;               /* SPI controller register base address */
-  sem_t spisem;                /* Assures mutually exclusive acess to SPI */
+  sem_t spisem;                /* Assures mutually exclusive access to SPI */
   select_t select;             /* SPI select callout */
   bool initialized;            /* TRUE: Controller has been initialized */
 #ifdef CONFIG_SAMA5_SPI_DMA
@@ -569,7 +568,7 @@ static inline void spi_flush(struct sam_spidev_s *spi)
  *   Map the chip select number to the bit-set PCS field used in the SPI
  *   registers.  A chip select number is used for indexing and identifying
  *   chip selects.  However, the chip select information is represented by
- *   a bit set in the SPI regsisters.  This function maps those chip select
+ *   a bit set in the SPI registers.  This function maps those chip select
  *   numbers to the correct bit set:
  *
  *    CS  Returned   Spec    Effective

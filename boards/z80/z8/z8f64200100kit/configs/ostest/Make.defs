@@ -181,7 +181,7 @@ ARFLAGS = -quiet -warn
 
 LINKCMDTEMPLATE = $(TOPDIR)$(DELIM)boards$(DELIM)$(CONFIG_ARCH)$(DELIM)$(CONFIG_ARCH_CHIP)$(DELIM)$(CONFIG_ARCH_BOARD)$(DELIM)configs$(DELIM)ostest$(DELIM)ostest.linkcmd
 
-# Tool names/pathes
+# Tool names/paths
 
 CROSSDEV =
 CC = ez8cc.exe
@@ -229,8 +229,7 @@ define MOVEOBJ
 endef
 
 define ARCHIVE
-	@echo AR: $2
-	$(Q) for %%G in ($(2)) do ( "$(AR)" $(ARFLAGS) $1=-+%%G )
+	for %%G in ($(2)) do ( "$(AR)" $(ARFLAGS) $1=-+%%G )
 endef
 
 define CLEAN
@@ -258,9 +257,8 @@ define ASSEMBLE
 endef
 
 define ARCHIVE
-	$(Q) for __obj in $(2) ; do \
-		echo "AR: $$__obj"; \
-		"$(AR)" $(ARFLAGS) $1=-+$$__obj || { echo "$(AR) $1=-+$$__obj FAILED!" ; exit 1 ; } \
+	for __obj in $(2) ; do \
+		"$(AR)" $(ARFLAGS) $1=-+$$__obj \
 	done
 endef
 

@@ -47,7 +47,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <debug.h>
 
@@ -80,7 +79,7 @@
  * If mode32 is enabled the consecutive odd timers will be automatically
  * enabled through menuconfig.
  * This is an indication for the user that the odd timer is in use
- * and to avoid a seperate, incorrect, utilization.
+ * and to avoid a separate, incorrect, utilization.
  * Undef it here so its (useless in this case) structures won't be created
  * later.
  */
@@ -974,7 +973,6 @@ static bool pic32mz_timer_setfreq(FAR struct pic32mz_timer_dev_s *dev,
                                   uint32_t freq)
 {
   uint16_t prescale;
-  uint32_t tmrfreq;
 
   DEBUGASSERT(dev != NULL);
 
@@ -1046,9 +1044,7 @@ static bool pic32mz_timer_setfreq(FAR struct pic32mz_timer_dev_s *dev,
       return false;
     }
 
-  tmrfreq = pic32mz_timer_getfreq(dev);
-
-  tmrinfo("Timer's frequency set to %luHz\n", tmrfreq);
+  tmrinfo("Timer's frequency set to %luHz\n", pic32mz_timer_getfreq(dev));
 
   return true;
 }

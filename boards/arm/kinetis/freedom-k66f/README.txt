@@ -203,11 +203,9 @@ Networking Support
     CONFIG_NET_ARP_IPIN=y               : Enable ARP address harvesting
     CONFIG_NET_ARP_SEND=y               : Send ARP request before sending data
     CONFIG_NET_TCP=y                    : Enable TCP/IP networking
-    CONFIG_NET_TCP_READAHEAD=y          : Support TCP read-ahead
     CONFIG_NET_TCP_WRITE_BUFFERS=y      : Support TCP write-buffering
     CONFIG_NET_TCPBACKLOG=y             : Support TCP/IP backlog
     CONFIG_NET_MAX_LISTENPORTS=20       :
-    CONFIG_NET_TCP_READAHEAD_BUFSIZE=536  Read-ahead buffer size
     CONFIG_NET_UDP=y                    : Enable UDP networking
     CONFIG_NET_BROADCAST=y              : Needed for DNS name resolution
     CONFIG_NET_ICMP=y                   : Enable ICMP networking
@@ -377,7 +375,7 @@ Networking Support
       need to provide some custom logic in the Freedcom K66F
       configuration to set up that PHY interrupt.
 
-    - In addtion to the PHY interrupt, the Network Monitor also requires the
+    - In addition to the PHY interrupt, the Network Monitor also requires the
       following setting:
 
         CONFIG_NETDEV_PHY_IOCTL. Enable PHY IOCTL commands in the Ethernet
@@ -654,7 +652,7 @@ GNU Toolchain Options
 Freedom K66F Configuration Options
 ==================================
 
-    CONFIG_ARCH - Identifies the arch/ subdirectory.  This sould
+    CONFIG_ARCH - Identifies the arch/ subdirectory.  This should
        be set to:
 
        CONFIG_ARCH=arm
@@ -962,4 +960,3 @@ Status
     automounter is working.
     netnsh:Is building but Ehternet is not working yet. TX is called but
     not IRQ is issued.
-

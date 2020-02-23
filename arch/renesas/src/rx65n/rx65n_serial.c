@@ -43,7 +43,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <semaphore.h>
 #include <string.h>
 #include <errno.h>
 #include <debug.h>
@@ -1047,7 +1046,7 @@ static int up_setup(struct uart_dev_s *dev)
 
   up_setbrr(priv, priv->baud);
 
-  /* Then enable the transmitter and reciever */
+  /* Then enable the transmitter and receiver */
 
   priv->scr |= (RX_SCISCR_TE | RX_SCISCR_RE);
   up_serialout(priv, RX_SCI_SCR_OFFSET, priv->scr);

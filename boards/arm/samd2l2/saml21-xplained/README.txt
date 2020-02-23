@@ -324,7 +324,7 @@ IDEs
   2) Start the NuttX build at least one time from the Cygwin command line
      before trying to create your project.  This is necessary to create
      certain auto-generated files and directories that will be needed.
-  3) Set up include pathes:  You will need include/, arch/arm/src/sam34,
+  3) Set up include paths:  You will need include/, arch/arm/src/sam34,
      arch/arm/src/common, arch/arm/src/armv7-m, and sched/.
   4) All assembly files need to have the definition option -D __ASSEMBLY__
      on the command line.
@@ -750,7 +750,7 @@ Configuration sub-directories
        Sometimes NuttX and your toolchain will disagree on the underlying
        type of size_t; sometimes it is an 'unsigned int' and sometimes it is
        an 'unsigned long int'.  If this error occurs, then you may need to
-       toggle the value of CONFIG_CXX_NEWLONG.
+       toggle the value of CONFIG_ARCH_SIZET_LONG.
 
     4. WARNING: This info comes from the SAMD20 Xplained README.  I have
        not tried the I/O1 module on the SAML21!
@@ -897,4 +897,3 @@ Configuration sub-directories
         * The OLED is monochrome so the only "colors" are black and white.
           The default "colors" will give you while text on a black background.
           You can override the faults it you want black text on a while background.
-

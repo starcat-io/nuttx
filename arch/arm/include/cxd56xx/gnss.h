@@ -38,7 +38,8 @@
 
 #ifdef __cplusplus
 #define EXTERN extern "C"
-extern "C" {
+extern "C"
+{
 #else
 #define EXTERN extern
 #endif
@@ -648,7 +649,6 @@ extern "C" {
 
 struct cxd56_gnss_ope_mode_param_s
 {
-
   /* receiver operation mode
    *    0: No Change Operation
    *    1: Normal(default)
@@ -665,7 +665,7 @@ struct cxd56_gnss_ope_mode_param_s
   uint32_t cycle;
 };
 
-/* Sattelite almanac, ephemeris data */
+/* Satellite almanac, ephemeris data */
 
 struct cxd56_gnss_orbital_param_s
 {
@@ -866,4 +866,4 @@ struct cxd56_gnss_get_var_ephemeris_s
 }
 #endif
 
-#endif /* ARCH_ARM_INCLUDE_CXD56XX_GNSS_H */
+#endif /* __ARCH_ARM_INCLUDE_CXD56XX_GNSS_H */

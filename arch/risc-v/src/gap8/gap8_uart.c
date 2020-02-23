@@ -50,7 +50,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <semaphore.h>
 #include <string.h>
 #include <errno.h>
 #include <debug.h>
@@ -273,7 +272,7 @@ static int up_setup(struct uart_dev_s *dev)
       the_uart->rx_cnt = 0;
 
 #if 0
-      /* Start continous rx */
+      /* Start continuous rx */
 
       gap8_udma_rx_start(&the_uart->udma, the_uart->rx_buf, 1, 1);
 #endif

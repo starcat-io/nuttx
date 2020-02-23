@@ -53,8 +53,7 @@
  *    This chip related declarations are retained in this header file.
  *
  *    NOTE: up_ is supposed to stand for microprocessor; the u is like the
- *    Greek letter micron: µ. So it would be µP which is a common shortening
- *    of the word microprocessor.
+ *    Greek letter micron.
  *
  * 2. Microprocessor-Specific Interfaces.
  *
@@ -1332,6 +1331,12 @@ int up_shmdt(uintptr_t vaddr, unsigned int npages);
 /* See prototype in include/nuttx/elf.h */
 
 /****************************************************************************
+ * Name: up_irqinitialize
+ ****************************************************************************/
+
+void up_irqinitialize(void);
+
+/****************************************************************************
  * Name: up_interrupt_context
  *
  * Description:
@@ -1409,6 +1414,17 @@ void up_trigger_irq(int irq);
 #ifdef CONFIG_ARCH_IRQPRIO
 int up_prioritize_irq(int irq, int priority);
 #endif
+
+/****************************************************************************
+ * Function:  up_timer_initialize
+ *
+ * Description:
+ *   This function is called during start-up to initialize
+ *   the timer hardware.
+ *
+ ****************************************************************************/
+
+void up_timer_initialize(void);
 
 /****************************************************************************
  * Tickless OS Support.
@@ -2323,7 +2339,7 @@ int up_rtc_settime(FAR const struct timespec *tp);
  *             signal tasks in user space.  A value of NULL can be passed
  *             in order to detach and disable the PHY interrupt.
  *   arg     - The argument that will accompany the interrupt
- *   enable  - A function pointer that be unsed to enable or disable the
+ *   enable  - A function pointer that be unused to enable or disable the
  *             PHY interrupt.
  *
  * Returned Value:

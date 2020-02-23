@@ -395,7 +395,6 @@ Selecting the GMAC peripheral
     CONFIG_NET_ARP_SEND=y                : Use ARP to get peer address before sending
     CONFIG_NET_TCP=y                     : Enable TCP/IP networking
     CONFIG_NET_TCPBACKLOG=y              : Support TCP/IP backlog
-    CONFIG_NET_TCP_READAHEAD=y           : Enable TCP read-ahead buffering
     CONFIG_NET_TCP_WRITE_BUFFERS=y       : Enable TCP write buffering
     CONFIG_NET_UDP=y                     : Enable UDP networking
     CONFIG_NET_BROADCAST=y               : Support UDP broadcast packets
@@ -1411,7 +1410,6 @@ Configuration sub-directories
          CONFIG_PTHREAD_STACK_DEFAULT=2048
          CONFIG_POSIX_SPAWN_PROXY_STACKSIZE=1024
          CONFIG_TASK_SPAWN_DEFAULT_STACKSIZE=2048
-         CONFIG_BUILTIN_PROXY_STACKSIZE=1024
          CONFIG_NSH_TELNETD_DAEMONSTACKSIZE=2048
          CONFIG_NSH_TELNETD_CLIENTSTACKSIZE=2048
 
@@ -1694,4 +1692,3 @@ Configuration sub-directories
          most of the issues.  Things look good on real, local hardware
          (see boards/lpcxpresso-lpc54628/twm4nx).  VNC is just not mature
          enough for this kind of usage at this time.
-

@@ -46,7 +46,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <debug.h>
 
@@ -1924,7 +1923,7 @@ static int stm32can_cellinit(FAR struct stm32_can_s *priv)
  *   (but reserves CAN_NFILTERS/2 through CAN_NFILTERS-1).
  *
  *   32-bit IdMask mode is configured.  However, both the ID and the MASK
- *   are set to zero thus supressing all filtering because anything masked
+ *   are set to zero thus suppressing all filtering because anything masked
  *   with zero matches zero.
  *
  * Input Parameters:

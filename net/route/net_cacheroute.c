@@ -40,7 +40,6 @@
 #include <nuttx/config.h>
 
 #include <string.h>
-#include <semaphore.h>
 #include <assert.h>
 #include <errno.h>
 #include <debug.h>
@@ -77,7 +76,7 @@
   while (0)
 
 /****************************************************************************
- * Public Types
+ * Private Types
  ****************************************************************************/
 
 #ifdef CONFIG_ROUTE_IPv4_CACHEROUTE
@@ -470,7 +469,7 @@ static void net_reset_ipv6_cache(void)
 #endif
 
 /****************************************************************************
- * Public Function Prototypes
+ * Public Functions
  ****************************************************************************/
 
 /****************************************************************************

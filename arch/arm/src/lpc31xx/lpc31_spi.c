@@ -43,11 +43,11 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <debug.h>
 
 #include <nuttx/arch.h>
+#include <nuttx/semaphore.h>
 #include <nuttx/spi/spi.h>
 
 #include <arch/board/board.h>
@@ -685,7 +685,7 @@ static void spi_setbits(FAR struct spi_dev_s *dev, int nbits)
 static uint8_t spi_status(FAR struct spi_dev_s *dev, uint32_t devid)
 {
   /* FIXME: is there anyway to determine this
-   *        it should probably be board dependant anyway */
+   *        it should probably be board dependent anyway */
 
   return SPI_STATUS_PRESENT;
 }

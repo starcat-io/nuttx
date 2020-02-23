@@ -43,7 +43,7 @@ config LCD_FRAMEBUFFER
 		standard, NuttX frame buffer driver.
 
 		NOTE: Some LCD drivers implement an internal framebuffer for
-		effeciency reasons but do not export a framebuffer interface.  So
+		efficiency reasons but do not export a framebuffer interface.  So
 		those LCD cannot be used as framebuffer drivers.  If the option is
 		available, then such internal framebuffer support should be
 		disabled because this external common framebuffer interface will
@@ -67,7 +67,7 @@ config LCD_NOGETRUN
 	default n
 	---help---
 		Many LCD hardware interfaces provide only minimal graphics capability.  In
-		particulary, many simple LCD interfaces are write only.  That is we, can
+		particularly, many simple LCD interfaces are write only.  That is we, can
 		write graphics data to the LCD device memory, but we cannot read it back.
 		If the LCD hardware does not support reading the graphics memory, then
 		this option should be defined so that the NX layer can taking alternative
@@ -1133,6 +1133,23 @@ config LCD_ILI9341_IFACE1_RGB565
 
 endchoice
 endif
+
+config LCD_LCDDRV_SPIIF
+	bool "Generic SPI Interface Driver (for ILI9341 or others)"
+	default n
+	depends on LCD_ILI9341
+	---help---
+		SPI Interface shim to allow LCD and ePaper to be bound to
+		a normal SPI port.
+
+config LCD_LCDDRV_SPEED
+        int "Generic SPI Interface speed"
+	default 10000000
+	depends on LCD_LCDDRV_SPIIF
+	---help---
+		SPI Interface speed. According to the specification this is generally
+		quite limited, but people have had success with much faster
+		speeds than the spec sheets say. YMMV.
 
 config LCD_RA8875
 	bool "RA8875 LCD Display Controller"

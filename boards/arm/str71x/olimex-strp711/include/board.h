@@ -152,7 +152,7 @@
 /* Button definitions *******************************************************/
 
 /* The Olimex board has two buttons,
- * one labled "BUT" and the other "WAKEUP"
+ * one labeled "BUT" and the other "WAKEUP"
  */
 
 #define BUT_BUTTON              1 /* Bit 0: BUT button is depressed */
@@ -181,4 +181,4 @@ extern "C"
 #endif
 #endif
 
-#endif  /* __BOARDS_ARM_STR71X_OLIMEX_STRP711_INCLUDE_BOARD_H */
+#endif /* __BOARDS_ARM_STR71X_OLIMEX_STRP711_INCLUDE_BOARD_H */

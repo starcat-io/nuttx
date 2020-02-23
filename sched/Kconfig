@@ -455,7 +455,7 @@ config RR_INTERVAL
 	default 0
 	---help---
 		The round robin timeslice will be set this number of milliseconds;
-		Round roben scheduling (SCHED_RR) is enabled by setting this
+		Round robin scheduling (SCHED_RR) is enabled by setting this
 		interval to a positive, non-zero value.
 
 config SCHED_SPORADIC
@@ -1114,7 +1114,13 @@ config NAME_MAX
 	int "Maximum size of a file name"
 	default 32
 	---help---
-	The maximum size of a file name.
+		The maximum size of a file name.
+
+config PATH_MAX
+	int "Maximum size of path name"
+	default 256
+	---help---
+		The maximum size of path name.
 
 endmenu # Files and I/O
 
@@ -1209,7 +1215,7 @@ config BOARD_EARLY_INITIALIZE
 		phase may be used, for example, to initialize more complex,
 		board-specific device drivers.
 
-		Waiting for events, use of I2C, SPI, etc are permissable in the
+		Waiting for events, use of I2C, SPI, etc are permissible in the
 		context of board_late_initialize().  That is because
 		board_late_initialize() will run on a temporary, internal kernel
 		thread.
@@ -1257,7 +1263,7 @@ config BOARD_LATE_INITIALIZE
 		phase may be used, for example, to initialize more complex,
 		board-specific device drivers.
 
-		Waiting for events, use of I2C, SPI, etc are permissable in the
+		Waiting for events, use of I2C, SPI, etc are permissible in the
 		context of board_late_initialize().  That is because
 		board_late_initialize() will run on a temporary, internal kernel
 		thread.

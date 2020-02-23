@@ -52,13 +52,11 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <string.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <assert.h>
 #include <debug.h>
 
 #include <nuttx/arch.h>
-#include <nuttx/semaphore.h>
 #include <nuttx/fs/ioctl.h>
 #include <nuttx/mtd/mtd.h>
 #include <nuttx/mtd/nand.h>
@@ -1375,7 +1373,7 @@ static int nand_dma_write(struct sam_nandcs_s *priv,
 
   /* Setup the Memory-to-Memory DMA.  The semantics of the DMA module are
    * awkward here.  We will treat the NAND (dest) as the peripheral destination
-   * and memory as the source.  Internally, the DMA module will realize taht
+   * and memory as the source.  Internally, the DMA module will realize that
    * this is a memory to memory transfer and should do the right thing.
    */
 
@@ -1511,7 +1509,7 @@ static int nand_read(struct sam_nandcs_s *priv, uint8_t *buffer,
 #ifdef CONFIG_SAMA5_NAND_DMA
   /* Then perform the transfer via memory-to-memory DMA or not, depending
    * on if we have a DMA channel assigned and if the transfer is
-   * sufficiently large.  Small DMAs (e.g., for spare data) are not peformed
+   * sufficiently large.  Small DMAs (e.g., for spare data) are not performed
    * because the DMA context switch can take more time that the DMA itself.
    */
 
@@ -1747,7 +1745,7 @@ static int nand_nfcsram_write(struct sam_nandcs_s *priv, uint8_t *buffer,
 #ifdef CONFIG_SAMA5_NAND_DMA
   /* Then perform the transfer via memory-to-memory DMA or not, depending
    * on if we have a DMA channel assigned and if the transfer is
-   * sufficiently large.  Small DMAs (e.g., for spare data) are not peformed
+   * sufficiently large.  Small DMAs (e.g., for spare data) are not performed
    * because the DMA context switch can take more time that the DMA itself.
    */
 
@@ -1815,7 +1813,7 @@ static int nand_write(struct sam_nandcs_s *priv, uint8_t *buffer,
 #ifdef CONFIG_SAMA5_NAND_DMA
   /* Then perform the transfer via memory-to-memory DMA or not, depending
    * on if we have a DMA channel assigned and if the transfer is
-   * sufficiently large.  Small DMAs (e.g., for spare data) are not peformed
+   * sufficiently large.  Small DMAs (e.g., for spare data) are not performed
    * because the DMA context switch can take more time that the DMA itself.
    */
 
@@ -3087,4 +3085,3 @@ bool nand_checkreg(bool wr, uintptr_t regaddr, uint32_t regval)
   return true;
 }
 #endif
-

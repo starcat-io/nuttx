@@ -89,10 +89,10 @@ int board_app_initialize(uintptr_t arg)
 
   UNUSED(ret);
 #ifndef CONFIG_BOARD_LATE_INITIALIZE
-    /* Perform board initialization */
+  /* Perform board initialization */
 
-    return sam_bringup();
+  return sam_bringup();
 #else
-    return OK;
+  return OK;
 #endif
 }

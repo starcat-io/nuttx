@@ -65,20 +65,9 @@
 #ifndef CONFIG_DEV_CONSOLE
 #  undef  USE_SERIALDRIVER
 #  undef  USE_EARLYSERIALINIT
-#  undef  CONFIG_DEV_LOWCONSOLE
-#  undef  CONFIG_RAMLOG_CONSOLE
 #else
-#  if defined(CONFIG_RAMLOG_CONSOLE)
-#    undef  USE_SERIALDRIVER
-#    undef  USE_EARLYSERIALINIT
-#    undef  CONFIG_DEV_LOWCONSOLE
-#  elif defined(CONFIG_DEV_LOWCONSOLE)
-#    undef  USE_SERIALDRIVER
-#    undef  USE_EARLYSERIALINIT
-#  else
-#    define USE_SERIALDRIVER 1
-#    define USE_EARLYSERIALINIT 1
-#  endif
+#  define USE_SERIALDRIVER 1
+#  define USE_EARLYSERIALINIT 1
 #endif
 
 /* If some other device is used as the console, then the serial driver may
@@ -94,7 +83,7 @@
 /* Check if an interrupt stack size is configured */
 
 #ifndef CONFIG_ARCH_INTERRUPTSTACK
-# define CONFIG_ARCH_INTERRUPTSTACK 0
+#  define CONFIG_ARCH_INTERRUPTSTACK 0
 #endif
 
 /****************************************************************************
@@ -143,7 +132,6 @@ void up_dataabort(uint32_t *regs);
 void up_decodeirq(uint32_t *regs);
 uint32_t *up_doirq(int irq, uint32_t *regs);
 void up_fullcontextrestore(uint32_t *regs) noreturn_function;
-void up_irqinitialize(void);
 void up_prefetchabort(uint32_t *regs);
 int  up_saveusercontext(uint32_t *regs);
 void up_sigdeliver(void);
@@ -174,21 +162,9 @@ void rpmsg_serialinit(void);
 #  define rpmsg_serialinit()
 #endif
 
-/* Defined in drivers/lowconsole.c */
-
-#ifdef CONFIG_DEV_LOWCONSOLE
-void lowconsole_init(void);
-#else
-# define lowconsole_init()
-#endif
-
 /* Defined in xyz_watchdog.c */
 
 void up_wdtinit(void);
-
-/* Defined in xyz_timerisr.c */
-
-void renesas_timer_initialize(void);
 
 /* Defined in board/xyz_lcd.c */
 
@@ -227,4 +203,4 @@ void up_dumpstate(void);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif  /* ___ARCH_RENESAS_SRC_COMMON_UP_INTERNAL_H */
+#endif /* ___ARCH_RENESAS_SRC_COMMON_UP_INTERNAL_H */

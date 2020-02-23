@@ -60,18 +60,8 @@
 #ifndef CONFIG_DEV_CONSOLE
 #  undef  USE_SERIALDRIVER
 #  undef  USE_EARLYSERIALINIT
-#  undef  CONFIG_DEV_LOWCONSOLE
-#  undef  CONFIG_RAMLOG_CONSOLE
 #else
 #  if defined(CONFIG_ARM_LWL_CONSOLE)
-#    undef  USE_SERIALDRIVER
-#    undef  USE_EARLYSERIALINIT
-#    undef  CONFIG_DEV_LOWCONSOLE
-#  elif defined(CONFIG_RAMLOG_CONSOLE)
-#    undef  USE_SERIALDRIVER
-#    undef  USE_EARLYSERIALINIT
-#    undef  CONFIG_DEV_LOWCONSOLE
-#  elif defined(CONFIG_DEV_LOWCONSOLE)
 #    undef  USE_SERIALDRIVER
 #    undef  USE_EARLYSERIALINIT
 #  else
@@ -93,7 +83,7 @@
 /* Check if an interrupt stack size is configured */
 
 #ifndef CONFIG_ARCH_INTERRUPTSTACK
-# define CONFIG_ARCH_INTERRUPTSTACK 0
+#  define CONFIG_ARCH_INTERRUPTSTACK 0
 #endif
 
 /* Macros to handle saving and restoring interrupt state.  In the current ARM
@@ -337,8 +327,6 @@ void up_pminitialize(void);
 
 /* Interrupt handling *******************************************************/
 
-void up_irqinitialize(void);
-
 /* Exception handling logic unique to the Cortex-M family */
 
 #if defined(CONFIG_ARCH_CORTEXM0) || defined(CONFIG_ARCH_ARMV7M)
@@ -431,10 +419,6 @@ void up_restorefpu(const uint32_t *regs);
 #  define up_restorefpu(regs)
 #endif
 
-/* System timer *************************************************************/
-
-void arm_timer_initialize(void);
-
 /* Low level serial output **************************************************/
 
 void up_lowputc(char ch);
@@ -460,19 +444,9 @@ void rpmsg_serialinit(void);
 #endif
 
 #ifdef CONFIG_ARM_LWL_CONSOLE
-
 /* Defined in src/common/up_lwl_console.c */
 
 void lwlconsole_init(void);
-
-#elif defined(CONFIG_DEV_LOWCONSOLE)
-
-/* Defined in drivers/lowconsole.c */
-
-void lowconsole_init(void);
-
-#else
-# define lowconsole_init()
 #endif
 
 /* DMA **********************************************************************/
@@ -540,4 +514,4 @@ void up_stack_color(FAR void *stackbase, size_t nbytes);
 #endif
 #endif /* __ASSEMBLY__ */
 
-#endif  /* __ARCH_ARM_SRC_COMMON_UP_INTERNAL_H */
+#endif /* __ARCH_ARM_SRC_COMMON_UP_INTERNAL_H */

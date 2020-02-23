@@ -566,7 +566,7 @@ OpenOCD for the ESP32
 
   Single stepping works fine for me as do breakpoints:
 
-    Breakpoint 1, xtensa_timer_initialize () at chip/esp32_timerisr.c:172
+    Breakpoint 1, up_timer_initialize () at chip/esp32_timerisr.c:172
     72 {
     (gdb) n
     esp32.cpu0: Target halted, pc=0x400835BF
@@ -665,7 +665,7 @@ NOTES:
 
     Another NSH configuration, similar to nsh, but also enables
     SMP operation.  It differs from the nsh configuration only in these
-    addtional settings:
+    additional settings:
 
     SMP is enabled:
 

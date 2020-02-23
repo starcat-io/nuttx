@@ -3,6 +3,16 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
+menuconfig INPUT
+	bool "Input Device Support"
+	default n
+	---help---
+		This directory holds implementations of input device drivers.
+		This includes such things as touchscreen and keypad drivers.
+		See include/nuttx/input/*.h for registration information.
+
+if INPUT
+
 config MOUSE
 	bool "Enable mouse support"
 	default n
@@ -510,3 +520,5 @@ config NUNCHUCK_NPOLLWAITERS
 	default 2
 
 endif # INPUT_NUNCHUCK
+
+endif # INPUT

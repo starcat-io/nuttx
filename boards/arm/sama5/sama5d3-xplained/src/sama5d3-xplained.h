@@ -813,6 +813,5 @@ void weak_function sam_netinitialize(void);
 
 int sam_bringup(void);
 
-
 #endif /* __ASSEMBLY__ */
 #endif /* __BOARDS_ARM_SAMA5_SAMA5D3_XPLAINED_SRC_SAMA5D3_XPLAINED_H */

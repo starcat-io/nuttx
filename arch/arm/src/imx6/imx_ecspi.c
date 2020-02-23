@@ -46,7 +46,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <semaphore.h>
 #include <assert.h>
 #include <errno.h>
 #include <debug.h>
@@ -165,7 +164,7 @@ struct imx_spidev_s
 
   /* These are functions pointers that are configured to perform the
    * appropriate transfer for the particular kind of exchange that is
-   * occurring.  Differnt functions may be selected depending on (1)
+   * occurring.  Different functions may be selected depending on (1)
    * if the tx or txbuffer is NULL and depending on the number of bits
    * per word.
    */

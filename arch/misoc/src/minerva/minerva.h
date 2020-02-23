@@ -77,20 +77,9 @@
 #ifndef CONFIG_DEV_CONSOLE
 #  undef  USE_SERIALDRIVER
 #  undef  USE_EARLYSERIALINIT
-#  undef  CONFIG_DEV_LOWCONSOLE
-#  undef  CONFIG_RAMLOG_CONSOLE
 #else
-#  if defined(CONFIG_RAMLOG_CONSOLE)
-#    undef  USE_SERIALDRIVER
-#    undef  USE_EARLYSERIALINIT
-#    undef  CONFIG_DEV_LOWCONSOLE
-#  elif defined(CONFIG_DEV_LOWCONSOLE)
-#    undef  USE_SERIALDRIVER
-#    undef  USE_EARLYSERIALINIT
-#  else
-#    define USE_SERIALDRIVER 1
-#    define USE_EARLYSERIALINIT 1
-#  endif
+#  define USE_SERIALDRIVER 1
+#  define USE_EARLYSERIALINIT 1
 #endif
 
 /****************************************************************************
@@ -128,10 +117,6 @@ void minerva_add_region(void);
 
 void minerva_copystate(uint32_t * dest, uint32_t * src);
 
-/* IRQ initialization *******************************************************/
-
-void minerva_irq_initialize(void);
-
 /* Interrupt decode *********************************************************/
 
 uint32_t *minerva_decodeirq(uint32_t intstat, uint32_t * regs);
@@ -166,5 +151,5 @@ void minerva_flush_icache(void);
 
 void minerva_dumpstate(void);
 
-#endif  /* __ASSEMBLY__ */
-#endif  /* __ARCH_MISOC_SRC_MINERVA_MINERVA_H */
+#endif /* __ASSEMBLY__ */
+#endif /* __ARCH_MISOC_SRC_MINERVA_MINERVA_H */

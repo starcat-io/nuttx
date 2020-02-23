@@ -1,5 +1,5 @@
 ############################################################################
-# Config.mk
+# tools/Config.mk
 # Global build rules and macros.
 #
 #   Copyright (C) 2011, 2013-2014, 2018-2019 Gregory Nutt. All rights
@@ -93,8 +93,10 @@ endif
 #   CONFIG_WINDOWS_NATIVE - Defined for a Windows native build
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+  DEFINE = "$(TOPDIR)\tools\define.bat"
   INCDIR = "$(TOPDIR)\tools\incdir.bat"
 else
+  DEFINE = "$(TOPDIR)/tools/define.sh"
   INCDIR = "$(TOPDIR)/tools/incdir.sh"
 endif
 
@@ -189,7 +191,7 @@ endef
 #
 # This is only used in directories that keep object files in sub-directories.
 # Certain compilers (ZDS-II) always place the resulting files in the
-# directory where the compiler was invoked with not option to generate objects
+# directory where the compiler was invoked with no option to generate objects
 # in a different location.
 
 define MOVEOBJ
@@ -211,17 +213,9 @@ endef
 #
 #   CONFIG_WINDOWS_NATIVE - Defined for a Windows native build
 
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
 define ARCHIVE
-	@echo AR: $2
-	$(Q) $(AR) $1 $(2)
+	$(AR) $1 $(2)
 endef
-else
-define ARCHIVE
-	@echo "AR: $2"
-	$(Q) $(AR) $1 $(2) || { echo "$(AR) $1 FAILED!" ; exit 1 ; }
-endef
-endif
 
 # PRELINK - Prelink a list of files
 # This is useful when files were compiled with fvisibility=hidden.

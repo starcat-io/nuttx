@@ -74,7 +74,7 @@
 #  define CONFIG_USBDEV_EP0_MAXSIZE 64
 #endif
 
-#ifndef  CONFIG_USBDEV_MAXPOWER
+#ifndef CONFIG_USBDEV_MAXPOWER
 #  define CONFIG_USBDEV_MAXPOWER 100  /* mA */
 #endif
 
@@ -2198,7 +2198,7 @@ static int lpc214x_usbinterrupt(int irq, FAR void *context, FAR void *arg)
                 {
                   /* On the first time through the loop, pending will be
                    * the bitset of high priority pending interrupts; on the
-                   * second time throught it will be the bitset of low
+                   * second time through it will be the bitset of low
                    * priority interrupts.
                    */
 
@@ -2342,7 +2342,7 @@ static int lpc214x_usbinterrupt(int irq, FAR void *context, FAR void *arg)
         {
           /* On the first time through the loop, pending will be
            * the bitset of high priority pending interrupts; on the
-           * second time throught it will be the bitset of low
+           * second time through it will be the bitset of low
            * priority interrupts. Note that EP0 IN and OUT are
            * omitted.
            */

@@ -43,7 +43,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <debug.h>
 
@@ -51,6 +50,7 @@
 #include <nuttx/signal.h>
 #include <nuttx/fs/fs.h>
 #include <nuttx/i2c/i2c_master.h>
+#include <nuttx/semaphore.h>
 #include <nuttx/sensors/kxtj9.h>
 #include <nuttx/random.h>
 
@@ -94,7 +94,7 @@
 #define RES_8BIT        0
 #define RES_12BIT       (1 << 6)
 
-/* Data ready funtion enable bit: set during probe if using irq mode */
+/* Data ready function enable bit: set during probe if using irq mode */
 
 #define DRDYE           (1 << 5)
 

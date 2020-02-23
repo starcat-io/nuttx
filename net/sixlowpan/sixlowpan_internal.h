@@ -267,7 +267,7 @@ struct iob_s;               /* Forward reference */
  *   buf     - Data to send
  *   len     - Length of data to send
  *   destmac - The IEEE802.15.4 MAC address of the destination
- *   timeout - Send timeout in deciseconds
+ *   timeout - Send timeout in milliseconds
  *
  * Returned Value:
  *   Ok is returned on success; Othewise a negated errno value is returned.
@@ -326,7 +326,7 @@ int sixlowpan_meta_data(FAR struct radio_driver_s *radio,
  *   meta  - obfuscated meta data that describes the MAC header
  *
  * Returned Value:
- *   The frame header length is returnd on success; otherwise, a negated
+ *   The frame header length is returned on success; otherwise, a negated
  *   errno value is return on failure.
  *
  ****************************************************************************/

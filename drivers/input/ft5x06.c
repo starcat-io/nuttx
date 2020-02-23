@@ -66,7 +66,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include <semaphore.h>
 #include <poll.h>
 #include <errno.h>
 #include <assert.h>
@@ -77,6 +76,7 @@
 #include <nuttx/arch.h>
 #include <nuttx/fs/fs.h>
 #include <nuttx/i2c/i2c_master.h>
+#include <nuttx/semaphore.h>
 #include <nuttx/wqueue.h>
 #include <nuttx/wdog.h>
 
@@ -1106,7 +1106,7 @@ errout:
  *
  * Input Parameters:
  *   dev     - An I2C driver instance
- *   config  - Persistant board configuration data
+ *   config  - Persistent board configuration data
  *   minor   - The input device minor number
  *
  * Returned Value:

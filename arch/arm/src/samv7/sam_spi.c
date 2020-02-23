@@ -45,7 +45,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <assert.h>
 #include <debug.h>
@@ -192,7 +191,7 @@ struct sam_spidev_s
   sem_t spisem;                /* Assures mutually exclusive access to SPI */
   select_t select;             /* SPI select call-out */
   bool initialized;            /* TRUE: Controller has been initialized */
-  bool escape_lastxfer;        /* Dont set LASTXFER-Bit in the next transfer */
+  bool escape_lastxfer;        /* Don't set LASTXFER-Bit in the next transfer */
 #ifdef CONFIG_SAMV7_SPI_DMA
   uint8_t pid;                 /* SPI peripheral ID */
 #endif

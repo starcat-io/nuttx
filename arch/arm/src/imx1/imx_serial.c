@@ -43,7 +43,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <semaphore.h>
 #include <string.h>
 #include <fixedmath.h>
 #include <errno.h>
@@ -515,7 +514,7 @@ static int up_setup(struct uart_dev_s *dev)
 
       ucr2 &= ~UART_UCR2_IRTS;
 
-      /* CTS controled by Rx FIFO */
+      /* CTS controlled by Rx FIFO */
 
       ucr2 |= UART_UCR2_CTSC;
 
@@ -1246,5 +1245,3 @@ int up_putc(int ch)
 }
 
 #endif /* USE_SERIALDRIVER */
-
-

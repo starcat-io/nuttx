@@ -860,7 +860,7 @@ int exec(FAR const char *filename, FAR char * const *argv,
 <p>
   This non-standard interface is included as a official NuttX API only because it is needed in certain build modes: <code>exec()</code> is probably the only want to load programs in the PROTECTED mode.  Other file execution APIs rely on a symbol table provided by the OS.  In the PROTECTED build mode, the OS cannot provide any meaningful symbolic information for execution of code in the user-space blob so that is the <code>exec()</code> function is really needed in that build case
 </p>
-  The interface is available in the FLAT build mode although it is not really necessary in that case.  It is currently used by some example code under the <code>apps/</code> that that generate their own symbol tables for linking test programs.  So althought it is not necessary, it can still be useful.
+  The interface is available in the FLAT build mode although it is not really necessary in that case.  It is currently used by some example code under the <code>apps/</code> that that generate their own symbol tables for linking test programs.  So although it is not necessary, it can still be useful.
 </p>
 <p>
   The interface would be completely useless and will not be supported in the KERNEL build mode where the contrary is true:  An application process cannot provide any meaning symbolic information for use in linking a different process.
@@ -4359,9 +4359,7 @@ FAR struct tm *localtime(FAR const time_t *timep);
 </p>
 <ul><pre>
 #include &lt;time.h&gt;
-#if defined(CONFIG_LIBC_LOCALTIME) || defined(CONFIG_TIME_EXTENDED)
 FAR char *asctime(FAR const struct tm *tp);
-#endif
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -4388,9 +4386,7 @@ FAR char *asctime(FAR const struct tm *tp);
 </p>
 <ul><pre>
 #include &lt;time.h&gt;
-#if defined(CONFIG_LIBC_LOCALTIME) || defined(CONFIG_TIME_EXTENDED)
 FAR char *ctime(FAR const time_t *timep);
-#endif
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -4479,9 +4475,7 @@ FAR struct tm *localtime_r(FAR const time_t *timep, FAR struct tm *result);
 </p>
 <ul><pre>
 #include &lt;time.h&gt;
-#if defined(CONFIG_LIBC_LOCALTIME) || defined(CONFIG_TIME_EXTENDED)
 FAR char *asctime_r(FAR const struct tm *tp, FAR char *buf);
-#endif
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -4511,9 +4505,7 @@ FAR char *asctime_r(FAR const struct tm *tp, FAR char *buf);
 </p>
 <ul><pre>
 #include &lt;time.h&gt;
-#if defined(CONFIG_LIBC_LOCALTIME) || defined(CONFIG_TIME_EXTENDED)
 FAR char *ctime_r(FAR const time_t *timep, FAR char *buf);
-#endif
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -8639,8 +8631,6 @@ interface of the same name.
 <ul>
   <li><code>CONFIG_NET</code> Defined for general network support</li>
   <li><code>CONFIG_NET_TCP</code> Defined for TCP/IP support</li>
-  <li><code>CONFIG_NET_TCP_READAHEAD</code> Define to enable read-ahead buffering</li>
-  <li><code>CONFIG_NET_NTCP_READAHEAD_BUFFERS</code> Defined to be greater than zero</li>
 </ul>
 <p>
   In order to for select to work with incoming connections, you must also select:

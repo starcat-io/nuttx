@@ -421,7 +421,7 @@ struct stm32_hrtim_capture_s
 
 struct stm32_hrtim_timcmn_s
 {
-  uint32_t base;                 /* The base adress of the timer */
+  uint32_t base;                 /* The base address of the timer */
   uint64_t fclk;                 /* The frequency of the peripheral clock
                                   * that drives the timer module.
                                   */
@@ -597,7 +597,7 @@ struct stm32_hrtim_burst_s
 
 struct stm32_hrtim_s
 {
-  uint32_t base;                     /* Base adress of HRTIM block */
+  uint32_t base;                     /* Base address of HRTIM block */
   struct stm32_hrtim_tim_s *master;  /* Master Timer */
 #ifdef CONFIG_STM32_HRTIM_TIMA
   struct stm32_hrtim_tim_s *tima;    /* HRTIM Timer A */
@@ -803,7 +803,7 @@ static const struct file_operations hrtim_fops =
   , NULL              /* unlink */
 #endif
 };
-#endif  /* CONFIG_STM32_HRTIM_DISABLE_CHARDRV */
+#endif /* CONFIG_STM32_HRTIM_DISABLE_CHARDRV */
 
 /* Master Timer data */
 
@@ -1902,14 +1902,14 @@ errout:
  * Name: hrtim_base_get
  *
  * Description:
- *   Get base adress offset for given HRTIM Timer index
+ *   Get base address offset for given HRTIM Timer index
  *
  * Input Parameters:
  *   priv    - A reference to the HRTIM block
  *   timer   - An HRTIM Timer index to get
  *
  * Returned Value:
- *   Base adress offset for given Timer index
+ *   Base address offset for given Timer index
  *
  ****************************************************************************/
 
@@ -3517,7 +3517,7 @@ static int hrtim_dma_cfg(FAR struct stm32_hrtim_s *priv)
 
   return OK;
 }
-#endif  /* CONFIG_STM32_HRTIM_DAM */
+#endif /* CONFIG_STM32_HRTIM_DAM */
 
 #ifdef CONFIG_STM32_HRTIM_DEADTIME
 /****************************************************************************
@@ -3755,7 +3755,7 @@ static int hrtim_deadtime_config(FAR struct stm32_hrtim_s *priv)
 
   return OK;
 }
-#endif  /* CONFIG_STM32_HRTIM_DEADTIME */
+#endif /* CONFIG_STM32_HRTIM_DEADTIME */
 
 #ifdef CONFIG_STM32_HRTIM_CHOPPER
 /****************************************************************************
@@ -4608,7 +4608,7 @@ static int hrtim_events_config(FAR struct stm32_hrtim_s *priv)
 
   return OK;
 }
-#endif  /* CONFIG_STM32_HRTIM_FAULTS */
+#endif /* CONFIG_STM32_HRTIM_FAULTS */
 
 #ifdef CONFIG_STM32_HRTIM_INTERRUPTS
 
@@ -4727,7 +4727,7 @@ static uint16_t hrtim_irq_get(FAR struct hrtim_dev_s *dev, uint8_t timer)
 
   return (uint16_t)regval;
 }
-#endif  /* CONFIG_STM32_HRTIM_INTERRUPTS */
+#endif /* CONFIG_STM32_HRTIM_INTERRUPTS */
 
 /****************************************************************************
  * Name: hrtim_tim_mode_set
@@ -4831,7 +4831,7 @@ static void hrtim_mode_config(FAR struct stm32_hrtim_s *priv)
  *
  * Description:
  *   This function returns not significant bits in counter/capture
- *   regsiters for given HRTIM Timer index.
+ *   registers for given HRTIM Timer index.
  *
  * Input Parameters:
  *   priv   - A reference to the HRTIM structure
@@ -5783,7 +5783,7 @@ static int stm32_hrtimconfig(FAR struct stm32_hrtim_s *priv)
   regval |= HRTIM_MCR_TECEN;
 #  endif
 
-#endif  /* CONFIG_STM32_HRTIM_NO_ENABLE_TIMERS */
+#endif /* CONFIG_STM32_HRTIM_NO_ENABLE_TIMERS */
 
   /* Write enable bits at once */
 
@@ -5904,7 +5904,7 @@ int hrtim_register(FAR const char *path, FAR struct hrtim_dev_s *dev)
 
   return ret;
 }
-#endif  /* CONFIG_STM32_HRTIM_DISABLE_CHARDRV */
+#endif /* CONFIG_STM32_HRTIM_DISABLE_CHARDRV */
 
-#endif  /* CONFIG_STM32_STM32F33XX */
-#endif  /* CONFIG_STM32_HRTIM1 */
+#endif /* CONFIG_STM32_STM32F33XX */
+#endif /* CONFIG_STM32_HRTIM1 */

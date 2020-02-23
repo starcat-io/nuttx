@@ -67,7 +67,7 @@
 struct symtab_s
 {
   FAR const char *sym_name;          /* A pointer to the symbol name string */
-  FAR const void *sym_value;         /* The value associated witht the string */
+  FAR const void *sym_value;         /* The value associated with the string */
 };
 
 /****************************************************************************
@@ -156,4 +156,3 @@ void symtab_sortbyname(FAR struct symtab_s *symtab, int nsyms);
 #endif
 
 #endif /* __INCLUDE_NUTTX_SYMTAB_H */
-

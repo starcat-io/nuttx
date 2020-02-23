@@ -321,7 +321,7 @@ static void inline ioctl_get_ipv4broadcast(FAR struct sockaddr *outaddr,
  *
  * Input Parameters:
  *   outaddr - Pointer to the user-provided memory to receive the address.
- *   inaddr - The source IP adress in the device structure.
+ *   inaddr - The source IP address in the device structure.
  *
  ****************************************************************************/
 
@@ -976,7 +976,8 @@ static int netdev_ifr_ioctl(FAR struct socket *psock, int cmd,
           if (dev)
             {
 #ifdef CONFIG_NET_ETHERNET
-              if (dev->d_lltype == NET_LL_ETHERNET)
+              if (dev->d_lltype == NET_LL_ETHERNET ||
+                  dev->d_lltype == NET_LL_IEEE80211)
                 {
                   memcpy(dev->d_mac.ether.ether_addr_octet,
                          req->ifr_hwaddr.sa_data, IFHWADDRLEN);
@@ -1796,4 +1797,3 @@ void netdev_ifdown(FAR struct net_driver_s *dev)
 #endif
     }
 }
-

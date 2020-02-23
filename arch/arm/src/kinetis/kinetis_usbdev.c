@@ -2833,7 +2833,7 @@ static int khci_interrupt(int irq, void *context, FAR void *arg)
       goto interrupt_exit;
     }
 
-#ifdef  CONFIG_KINETIS_USBOTG
+#ifdef CONFIG_KINETIS_USBOTG
   /* Check if the ID Pin Changed State */
 
   if ((otgir & USB_OTGISTAT_IDCHG) != 0)
@@ -2965,7 +2965,7 @@ static int khci_interrupt(int irq, void *context, FAR void *arg)
 
 interrupt_exit:
   kinetis_clrpend(KINETIS_IRQ_USBOTG);
-#ifdef  CONFIG_KINETIS_USBOTG
+#ifdef CONFIG_KINETIS_USBOTG
   usbtrace(TRACE_INTEXIT(KHCI_TRACEINTID_INTERRUPT), usbir | otgir);
 #else
   usbtrace(TRACE_INTEXIT(KHCI_TRACEINTID_INTERRUPT), usbir);
@@ -3653,7 +3653,7 @@ static int khci_epbdtstall(struct usbdev_ep_s *ep, bool resume, bool epin)
 
       /* Check for the EP0 OUT endpoint.  This is a special case because we
        * need to set it up to receive the next setup packet (Hmmm... what
-       * if there are queued outgoing reponses.  We need to revisit this.)
+       * if there are queued outgoing responses.  We need to revisit this.)
        */
 
       if (epno == 0 && !epin)

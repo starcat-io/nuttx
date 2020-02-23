@@ -579,6 +579,7 @@ An on-chip FLASH driver was added and verified on 2015-11-13.  These
 configuration options were enabled to test the on-chip FLASH support:
 
   CONFIG_MTD_PROGMEM=y
+  CONFIG_ARCH_RAMFUNCS=y
   CONFIG_SAMV7_PROGMEM=y
   CONFIG_SAMV7_PROGMEM_NSECTORS=8
 
@@ -711,7 +712,6 @@ Selecting the GMAC peripheral
     CONFIG_NET_ARP_SEND=y                : Use ARP to get peer address before sending
     CONFIG_NET_TCP=y                     : Enable TCP/IP networking
     CONFIG_NET_TCPBACKLOG=y              : Support TCP/IP backlog
-    CONFIG_NET_TCP_READAHEAD=y           : Enable TCP read-ahead buffering
     CONFIG_NET_TCP_WRITE_BUFFERS=y       : Enable TCP write buffering
     CONFIG_NET_UDP=y                     : Enable UDP networking
     CONFIG_NET_BROADCAST=y               : Support UDP broadcast packets
@@ -1878,7 +1878,6 @@ Configuration sub-directories
 
        Device Drivers:
          CONFIG_RAMLOG=y             : Enable the RAM-based logging feature.
-         CONFIG_RAMLOG_CONSOLE=n     : (We don't use the RAMLOG console)
          CONFIG_RAMLOG_SYSLOG=y      : This enables the RAM-based logger as the
                                      system logger.
          CONFIG_RAMLOG_NONBLOCKING=y : Needs to be non-blocking for dmesg
@@ -1904,7 +1903,6 @@ Configuration sub-directories
        following in the .config file:
 
          CONFIG_SYSLOG_CONSOLE=y
-         CONFIG_SYSLOG_SERIAL_CONSOLE=y
 
     7. Telnet:  The clicker2-stm32 star point configuration supports the
        Telnet daemon, but not the Telnet client; the star hub configuration
@@ -2097,7 +2095,6 @@ Configuration sub-directories
          CONFIG_PTHREAD_STACK_DEFAULT=2048
          CONFIG_POSIX_SPAWN_PROXY_STACKSIZE=1024
          CONFIG_TASK_SPAWN_DEFAULT_STACKSIZE=2048
-         CONFIG_BUILTIN_PROXY_STACKSIZE=1024
          CONFIG_NSH_TELNETD_DAEMONSTACKSIZE=2048
          CONFIG_NSH_TELNETD_CLIENTSTACKSIZE=2048
 

@@ -43,7 +43,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <semaphore.h>
 #include <assert.h>
 #include <errno.h>
 #include <debug.h>
@@ -3566,7 +3565,7 @@ static int lpc31_rh_enumerate(FAR struct usbhost_connection_s *conn,
    *   01b         K-state   Low-speed device, release ownership of port
    *
    * NOTE: Low-speed devices could be detected by examining the PORTSC PSPD
-   * field after resetting the device.  The more convential way here, however,
+   * field after resetting the device.  The more conventional way here, however,
    * also appears to work.
    */
 
@@ -5244,7 +5243,7 @@ FAR struct usbhost_connection_s *lpc31_ehci_initialize(int controller)
 
   lpc31_putreg(regval, &HCOR->usbcmd);
 
-  /* Start the host controller by setting the RUN bit in the USBCMD regsiter. */
+  /* Start the host controller by setting the RUN bit in the USBCMD register. */
 
   regval  = lpc31_getreg(&HCOR->usbcmd);
   regval |= EHCI_USBCMD_RUN;
