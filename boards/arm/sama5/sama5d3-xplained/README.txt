@@ -790,7 +790,9 @@ Networking
   Networking support via the can be added to NSH by selecting the following
   configuration options.  The SAMA5D36 supports two different Ethernet MAC
   peripherals:  (1) The 10/100Base-T EMAC peripheral and (2) the
-  10/100/1000Base-T GMAC peripheral.
+  10/100/1000Base-T GMAC peripheral. Ethernet over USB using the
+  CDC ECM driver is also supported, and should work on Linux, macOS, and
+  Windows.
 
   Selecting the EMAC peripheral
   -----------------------------
@@ -833,6 +835,19 @@ Networking
 
   PHY selection.  Later in the configuration steps, you will need to select
   the  KSZ9081 PHY for GMAC (See below)
+
+  Selecting Ethernet over USB (CDC ECM driver)
+  --------------------------------------------
+
+  This uses the USB 2.0 connector labeled USB-A. On the host computer you will
+  need to configure the CDC ECM driver.
+
+    CONFIG_USBDEV=y
+    CONFIG_USBDEV_DMA=y
+    CONFIG_USBDEV_DUALSPEED=y
+    CONFIG_NET_CDCECM=y
+    CONFIG_NET_ETH_PKTSIZE=1514
+
 
   Common configuration settings
   -----------------------------
@@ -1018,6 +1033,47 @@ Networking
       CONFIG_NSH_NETINIT_MONITOR=y          : Enable the network monitor
       CONFIG_NSH_NETINIT_RETRYMSEC=2000     : Configure the network monitor as you like
       CONFIG_NSH_NETINIT_SIGNO=18
+
+
+
+  Ethernet Over USB Configuration Script
+  --------------------------------------
+
+  There is a configuration script for Linux that will configure the USB Ethernet interface,
+  it is in `tools/netusb.sh`. You can use it as follows:
+
+  $ ifconfig -a
+
+  ens33: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+          inet 192.168.46.156  netmask 255.255.255.0  broadcast 192.168.46.255
+          inet6 fe80::20c:29ff:fe57:d0f8  prefixlen 64  scopeid 0x20<link>
+          ether 00:0c:29:57:d0:f8  txqueuelen 1000  (Ethernet)
+          RX packets 7628014  bytes 2002078802 (2.0 GB)
+          RX errors 0  dropped 0  overruns 0  frame 0
+          TX packets 6040388  bytes 5327276865 (5.3 GB)
+          TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+  ens160u4u2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+          inet6 fe80::ff:fe11:2233  prefixlen 64  scopeid 0x20<link>
+          ether 02:00:00:11:22:33  txqueuelen 1000  (Ethernet)
+          RX packets 36798  bytes 51705300 (51.7 MB)
+          RX errors 0  dropped 0  overruns 0  frame 0
+          TX packets 24196  bytes 1312512 (1.3 MB)
+          TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+  ens33 is the host Ethernet or wireless LAN interface. ens160u4u2 is the USB Ethernet
+  interface.
+
+  This will bring up the interface, configure it, and set up routes and IP Tables rules so the
+  nuttx system can access the internet:
+
+  $ sudo ./tools/netusb.sh ens33 ens160u4u2 on
+
+  This will bring down the interface, configure it, and delete routes and IP Tables rules:
+
+  $ sudo ./tools/netusb.sh ens33 ens160u4u2 off
+
+
 
 AT25 Serial FLASH
 =================
