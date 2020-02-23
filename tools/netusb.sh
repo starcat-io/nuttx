@@ -2,7 +2,9 @@
 set -x
 
 # USB Ethernet Gadget interface
-#IF_USB=ens160u4u2
+# helper script - sets up nuttx to access 
+# the internet via a host route and 
+# IP tables.
 
 IP_NET="10.0.0.0/24"
 IP_NETMASK="255.255.255.0"
