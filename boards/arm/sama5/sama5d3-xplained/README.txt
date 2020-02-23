@@ -848,6 +848,8 @@ Networking
     CONFIG_NET_CDCECM=y
     CONFIG_NET_ETH_PKTSIZE=1514
 
+  You can also use the defconfig file in `boards/arm/sama5/sama5d3-xplained/configs/ethernet-over-usb-2-high-speed`.
+
 
   Common configuration settings
   -----------------------------
@@ -1072,6 +1074,8 @@ Networking
   This will bring down the interface, configure it, and delete routes and IP Tables rules:
 
   $ sudo ./tools/netusb.sh ens33 ens160u4u2 off
+
+
 
 
 
