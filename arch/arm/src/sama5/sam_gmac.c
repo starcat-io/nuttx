@@ -709,7 +709,6 @@ static int sam_transmit(struct sam_gmac_s *priv)
       return -EBUSY;
     }
 
-  // af
   // mark buffer as used temporarily so DMA send doesn't operate on it
   status = GMACTXD_STA_USED | GMACTXD_STA_LAST;
   txdesc->status = status;
@@ -729,7 +728,6 @@ static int sam_transmit(struct sam_gmac_s *priv)
 
   /* Update TX descriptor status. */
 
-  // af
   status = dev->d_len & GMAC_STATUS_LENGTH_MASK;
   status = dev->d_len | GMACTXD_STA_LAST;
 
@@ -960,9 +958,6 @@ static int sam_recvframe(struct sam_gmac_s *priv)
   up_invalidate_dcache((uintptr_t)rxdesc,
                        (uintptr_t)rxdesc + sizeof(struct gmac_rxdesc_s));
 
-  ninfo("rxndx: %d\n", rxndx);
-  custinfo("::::::: recvframe\n");
-
   while ((rxdesc->addr & GMACRXD_ADDR_OWNER) != 0)
     {
       /* The start of frame bit indicates the beginning of a frame.  Discard
@@ -1158,9 +1153,6 @@ static int sam_recvframe(struct sam_gmac_s *priv)
     {
       priv->rxndx = rxndx;
     }
-  // af
-  custinfo("::::::: rx bufinfo\n");
-  sam_rx_bufinfo(priv);
 
   ninfo("rxndx: %d\n", priv->rxndx);
   return -EAGAIN;
@@ -1348,8 +1340,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
   ninfo("sam_txdone: d_len: %d txhead: %d txtail: %d\n",
         dev->d_len, priv->txhead, priv->txtail);
 
-//  custinfo("::::::::: start txdone\n");
-
   while (priv->txhead != priv->txtail)
     {
       /* Yes.. check the next buffer at the tail of the list */
@@ -1380,19 +1370,16 @@ static void sam_txdone(struct sam_gmac_s *priv)
             }
           else if ( ((txdesc->status & GMACTXD_STA_USED) == 0) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
             {
-              custinfo("TX chain: end of multiple buffer transmit chain (%d)\n", priv->txtail);
               sam_tx_bufinfo(priv, txdesc);
               txdesc->status = (uint32_t) dev->d_len | GMACTXD_STA_USED | GMACTXD_STA_LAST;
               up_clean_dcache((uintptr_t)txdesc,
                               (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
-              custinfo("d_len: %d txhead: %d txtail: %d\n", dev->d_len, priv->txhead, priv->txtail);
             }
           else
             {
               /* Otherwise, the descriptor is truly in use.  Break out of the
                * loop now.
                */
-              custinfo("TX chain: TX descriptor still in use. (%d)\n", priv->txtail);
               sam_tx_bufinfo(priv, txdesc);
               break;
             }
@@ -1415,77 +1402,9 @@ static void sam_txdone(struct sam_gmac_s *priv)
       sam_putreg(priv, SAM_GMAC_IER, GMAC_INT_RCOMP);
     }
 
-
-  // af
-  //
-  // wait a bit to let DMA settle
-//  int txwait_ms = 1;
-//  custinfo("sleeping %d ms\n", txwait_ms);
-//  usleep(txwait_ms * 1000);
-
-  /* Then poll the network for new XMIT data */
-//  custinfo("about to sam_dopoll\n");
   sam_dopoll(priv);
 
-//  custinfo("::::::::: end txdone\n");
 }
-
-// af debugging routines
-
-
-void sam_tx_bufinfo(struct sam_gmac_s *priv, struct gmac_txdesc_s *txdesc)
-{
-      custinfo("total number of tx buffers: %d\n", CONFIG_SAMA5_GMAC_NTXBUFFERS);
-      custinfo("number of free tx buffers: %d\n", sam_txfree(priv));
-      custinfo("number of in-use tx buffers: %d\n", sam_txinuse(priv));
-      custinfo("txdesc->status: 0x%08x\n", txdesc->status);
-      custinfo("txdesc->status: ");
-      printBits(sizeof(txdesc->status), &(txdesc->status));
-}
-
-int sam_rxfree(struct sam_gmac_s *priv)
-{
-    volatile struct gmac_rxdesc_s *rxdesc;
-    int rx_free_buffers = 0;
-    for (int i=0; i<CONFIG_SAMA5_GMAC_NRXBUFFERS; i++) {
-       rxdesc = &priv->rxdesc[i];
-       if ((rxdesc->addr & GMACRXD_ADDR_OWNER) != 0) {
-           // owned by software
-           rx_free_buffers++;
-       }
-    }
-    return rx_free_buffers;
-}
-
-void sam_rx_bufinfo(struct sam_gmac_s *priv)
-{
-    int rx_free_buffers = sam_rxfree(priv);
-    custinfo("total number of rx buffers: %d\n", CONFIG_SAMA5_GMAC_NRXBUFFERS);
-    custinfo("rxndx : %d\n", priv->rxndx);
-    custinfo("number of software-owned rx buffers: %d\n", rx_free_buffers);
-    custinfo("number of free rx buffers: %d\n", CONFIG_SAMA5_GMAC_NRXBUFFERS - rx_free_buffers);
-}
-
-//assumes little endian
-void printBits(size_t const size, void const * const ptr)
-{
-#ifdef CONFIG_DEBUG_CUSTOM_INFO
-    unsigned char *b = (unsigned char*) ptr;
-    unsigned char byte;
-    int i, j;
-
-    for (i=size-1;i>=0;i--)
-    {
-        for (j=7;j>=0;j--)
-        {
-            byte = (b[i] >> j) & 1;
-            printf("%u", byte);
-        }
-    }
-    puts("\n");
-#endif
-}
-
 
 /****************************************************************************
  * Function: sam_interrupt_work
@@ -1525,8 +1444,6 @@ static void sam_interrupt_work(FAR void *arg)
 
   pending = isr & ~(imr | GMAC_INT_UNUSED);
   ninfo("isr: %08x pending: %08x\n", isr, pending);
-  // af
-  custinfo("tsr:  %08x isr: %08x pending: %08x\n", tsr, isr, pending);
 
   /* Check for the completion of a transmission.  This should be done before
    * checking for received data (because receiving can cause another transmission
@@ -1540,7 +1457,6 @@ static void sam_interrupt_work(FAR void *arg)
   if ((pending & GMAC_INT_TCOMP) != 0 || (tsr & GMAC_TSR_TXCOMP) != 0)
     {
       /* A frame has been transmitted */
-      custinfo("error checking\n");
 
       clrbits = GMAC_TSR_TXCOMP;
 
@@ -1659,7 +1575,6 @@ static void sam_interrupt_work(FAR void *arg)
         {
           nerr("ERROR: Buffer not available RSR: %08x\n", rsr);
           clrbits |= GMAC_RSR_BNA;
-          // af
           sam_rx_bufinfo(priv);
         }
 
@@ -1737,8 +1652,6 @@ static int sam_gmac_interrupt(int irq, void *context, FAR void *arg)
    */
 
   up_disable_irq(SAM_IRQ_GMAC);
-  // af
-//  custinfo("::: gmac interrupt.\n");
 
   /* Check for the completion of a transmission.  Careful:
    *
@@ -1749,16 +1662,12 @@ static int sam_gmac_interrupt(int irq, void *context, FAR void *arg)
    */
 
   tsr = sam_getreg(priv, SAM_GMAC_TSR);
-  // af
-  custinfo("::: gmac tsr: 0x%08x\n");
   if ((tsr & GMAC_TSR_TXCOMP) != 0)
     {
       /* If a TX transfer just completed, then cancel the TX timeout so
        * there will be no race condition between any subsequent timeout
        * expiration and the deferred interrupt processing.
        */
-      // af
-//      custinfo("::: gmac txtimeout cancel.\n");
       wd_cancel(priv->txtimeout);
     }
 
@@ -1934,8 +1843,6 @@ static int sam_ifup(struct net_driver_s *dev)
   /* Configure the GMAC interface for normal operation. */
 
   ninfo("Initialize the GMAC\n");
-  // af
-  custinfo("Initialize the GMAC\n");
   sam_gmac_configure(priv);
 
   /* Set the MAC address (should have been configured while we were down) */
