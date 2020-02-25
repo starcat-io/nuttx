@@ -53,6 +53,7 @@ EZ80_S_FLAG	EQU	80h		; Bit 7: Sign flag
 ;**************************************************************************
 
 	xref	_ez80_handlers
+	xref	_handlersize
 	xref	_ez80_startup
 	xref	_z80_doirq
 
@@ -148,7 +149,7 @@ _ez80_rstcommon:
 	push	bc					; Offset 0: I with interrupt state in parity
 	di							; (not necessary)
 
-	; Call the interrupt decode logic. SP points to the beggining of the reg structure
+	; Call the interrupt decode logic. SP points to the beginning of the reg structure
 
 	ld		hl, #0				; Argument #2 is the beginning of the reg structure
 	add		hl, sp				;
@@ -212,7 +213,7 @@ _ez80_initvectors:
 	ld		bc, 4
 	ld		b, NVECTORS
 	xor		a, a				; Clear carry
-	ld		de, handlersize		; Length of one irq handler in de
+	ld		de, _handlersize	; Length of one irq handler in de
 	ld		hl, _ez80_handlers 	; Start of handlers in hl
 
 	ld		a, 0

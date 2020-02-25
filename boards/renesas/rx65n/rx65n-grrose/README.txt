@@ -36,7 +36,7 @@ Status/Open Issues
 ==================
 Ethernet
 ---------
-1.Observed instability in Link Management, due to difference in hardware design.(No Seperate Interrupt line for PHY)
+1.Observed instability in Link Management, due to difference in hardware design.(No Separate Interrupt line for PHY)
 2.Currently tested only ping and udpblaster application.
 3. Executed long run ping and udpblaster stress test for 12 hrs. Code is able to execute for 12hrs without any breakage.
 
@@ -238,7 +238,7 @@ CONFIG_DEBUG_SYMBOLS = y (Set this option, using menuconfig only, DO NOT Enable 
 
 Flashing NuttX
 ===============
-Alternativly, NuttX binary can be flashed using Renesas flash programmer tool without using e2 studio/Cygwin
+Alternatively, NuttX binary can be flashed using Renesas flash programmer tool without using e2 studio/Cygwin
 
 Below are the steps mentioned to flash NuttX binary using Renesas flash programmer tool(RFP).
 

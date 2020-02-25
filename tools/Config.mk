@@ -186,17 +186,6 @@ define INSTALL_LIB
 	$(Q) install -m 0644 $1 $2
 endef
 
-# MOVEOBJ - Default macro to move an object file to the correct location
-# Example: $(call MOVEOBJ, prefix, directory)
-#
-# This is only used in directories that keep object files in sub-directories.
-# Certain compilers (ZDS-II) always place the resulting files in the
-# directory where the compiler was invoked with not option to generate objects
-# in a different location.
-
-define MOVEOBJ
-endef
-
 # ARCHIVE - Add a list of files to an archive
 # Example: $(call ARCHIVE, archive-file, "file1 file2 file3 ...")
 #
@@ -213,17 +202,9 @@ endef
 #
 #   CONFIG_WINDOWS_NATIVE - Defined for a Windows native build
 
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
 define ARCHIVE
-	@echo AR: $2
-	$(Q) $(AR) $1 $(2)
+	$(AR) $1 $(2)
 endef
-else
-define ARCHIVE
-	@echo "AR: $2"
-	$(Q) $(AR) $1 $(2) || { echo "$(AR) $1 FAILED!" ; exit 1 ; }
-endef
-endif
 
 # PRELINK - Prelink a list of files
 # This is useful when files were compiled with fvisibility=hidden.

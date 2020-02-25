@@ -64,7 +64,7 @@ SYSLOG Interfaces
     * Kernel Build:  The kernel build is compliant with the POSIX requirement:
       There will be one mask for for each user process, controlling the
       SYSLOG output only form that process.  There will be a separate mask
-      accessable only in the kernel code to control kernel SYSLOG output.
+      accessible only in the kernel code to control kernel SYSLOG output.
      *
 
   These are all standard interfaces as defined at http://pubs.opengroup.org/onlinepubs/009695399/functions/closelog.html
@@ -156,7 +156,7 @@ SYSLOG Channels
     available to applications.  It may be called numerous times as
     necessary to change channel interfaces.
 
-  Input Parmeters:
+  Input Parameters:
 
      * channel - Provides the interface to the channel to be used.
 
@@ -299,7 +299,7 @@ SYSLOG Channel Options
       selected when a UART or USART is configured as the system console.
       There is no user selection.
     * CONFIG_SYSLOG_CONSOLE.  This configuration option is manually selected
-      from the SYSLOG menu.  This is the option that acutally enables the
+      from the SYSLOG menu.  This is the option that actually enables the
       SYSLOG console device.  It depends on CONFIG_DEV_CONSOLE.
     * CONFIG_ARCH_LOWPUTC.  This is an indication from the architecture
       configuration that the platform supports the up_putc() interface.

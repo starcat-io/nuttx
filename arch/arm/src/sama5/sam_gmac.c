@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/sama5/sam_gmac.c
+ *    * `NuttX Coding Standard <https://cwiki.apache.org/confluence/display/NUTTX/Coding+Standard>`_ arch/arm/src/sama5/sam_gmac.c
  *
  *   Copyright (C) 2013-2019 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
@@ -534,7 +534,7 @@ static uint16_t sam_txfree(struct sam_gmac_s *priv)
  *
  * Description:
  *   Allocate aligned TX and RX descriptors and buffers.  For the case of
- *   pre-allocated structures, the function degenerates to a few assignements.
+ *   pre-allocated structures, the function degenerates to a few assignments.
  *
  * Input Parameters:
  *   priv - The GMAC driver state
@@ -3090,7 +3090,7 @@ static int sam_autonegotiate(struct sam_gmac_s *priv)
 
   ninfo(" MCR: 0x%X\n", phyval);
 
-  /* Wait for autonegotion to complete */
+  /* Wait for autonegotiation to complete */
 
   timeout = 0;
   for (; ; )
