@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/sama5/sam_gmac.c
+ *    * `NuttX Coding Standard <https://cwiki.apache.org/confluence/display/NUTTX/Coding+Standard>`_ arch/arm/src/sama5/sam_gmac.c
  *
  *   Copyright (C) 2013-2019 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
@@ -690,6 +690,7 @@ static int sam_transmit(struct sam_gmac_s *priv)
 
   /* Check parameter */
 
+
   if (dev->d_len > GMAC_TX_UNITSIZE)
     {
       nerr("ERROR: Packet too big: %d\n", dev->d_len);
@@ -708,7 +709,14 @@ static int sam_transmit(struct sam_gmac_s *priv)
       return -EBUSY;
     }
 
-  /* Setup/Copy data to transmission buffer */
+  /* Mark buffer as used temporarily so DMA doesn't operate on it */
+
+  status = GMACTXD_STA_USED | GMACTXD_STA_LAST;
+  txdesc->status = status;
+  up_clean_dcache((uint32_t)txdesc,
+                  (uint32_t)txdesc + sizeof(struct gmac_txdesc_s));
+
+  /* Setup/Copy data to transmition buffer */
 
   if (dev->d_len > 0)
     {
@@ -721,7 +729,9 @@ static int sam_transmit(struct sam_gmac_s *priv)
 
   /* Update TX descriptor status. */
 
+  status = dev->d_len & GMAC_STATUS_LENGTH_MASK;
   status = dev->d_len | GMACTXD_STA_LAST;
+
   if (priv->txhead == CONFIG_SAMA5_GMAC_NTXBUFFERS-1)
     {
       status |= GMACTXD_STA_WRAP;
@@ -1323,6 +1333,7 @@ static void sam_receive(struct sam_gmac_s *priv)
 static void sam_txdone(struct sam_gmac_s *priv)
 {
   struct gmac_txdesc_s *txdesc;
+  struct net_driver_s *dev = &priv->dev;
 
   /* Are there any outstanding transmissions?  Loop until either (1) all of
    * the TX descriptors have been examined, or (2) until we encounter the
@@ -1337,8 +1348,9 @@ static void sam_txdone(struct sam_gmac_s *priv)
       up_invalidate_dcache((uintptr_t)txdesc,
                            (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
 
-      /* Is this TX descriptor still in use? */
 
+      // Is this TX descriptor done transmitting? (SAMA5D36 datasheet, p. 934)
+      // First TX descriptor in chain GMACTXD_STA_USED = 1
       if ((txdesc->status & GMACTXD_STA_USED) == 0)
         {
           /* Yes.. the descriptor is still in use.  However, I have seen a
@@ -1347,12 +1359,17 @@ static void sam_txdone(struct sam_gmac_s *priv)
            * descriptor, then we should also have TQBD equal to the descriptor
            * address.  If it is not, then treat is as used anyway.
            */
-
-#warning REVISIT
           if (priv->txtail == 0 &&
               sam_physramaddr((uintptr_t)txdesc) != sam_getreg(priv, SAM_GMAC_TBQB))
             {
-              txdesc->status = (uint32_t)GMACTXD_STA_USED;
+              ninfo("TX buffer marked in-use: unusual startup case (%d)\n", priv->txtail);
+              txdesc->status = (uint32_t) dev->d_len | GMACTXD_STA_USED;
+              up_clean_dcache((uintptr_t)txdesc,
+                              (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
+            }
+          else if ( ((txdesc->status & GMACTXD_STA_USED) == 0) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
+            {
+              txdesc->status = (uint32_t) dev->d_len | GMACTXD_STA_USED | GMACTXD_STA_LAST;
               up_clean_dcache((uintptr_t)txdesc,
                               (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
             }
@@ -1361,7 +1378,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
               /* Otherwise, the descriptor is truly in use.  Break out of the
                * loop now.
                */
-
               break;
             }
         }
@@ -1642,14 +1658,13 @@ static int sam_gmac_interrupt(int irq, void *context, FAR void *arg)
    *   one to this bit.
    */
 
-  tsr = sam_getreg(priv, SAM_GMAC_TSR_OFFSET);
+  tsr = sam_getreg(priv, SAM_GMAC_TSR);
   if ((tsr & GMAC_TSR_TXCOMP) != 0)
     {
       /* If a TX transfer just completed, then cancel the TX timeout so
-       * there will be do race condition between any subsequent timeout
+       * there will be no race condition between any subsequent timeout
        * expiration and the deferred interrupt processing.
        */
-
       wd_cancel(priv->txtimeout);
     }
 
