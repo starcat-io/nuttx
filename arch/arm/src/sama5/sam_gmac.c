@@ -1333,6 +1333,7 @@ static void sam_receive(struct sam_gmac_s *priv)
 static void sam_txdone(struct sam_gmac_s *priv)
 {
   struct gmac_txdesc_s *txdesc;
+  struct net_driver_s *dev = &priv->dev;
 
   /* Are there any outstanding transmissions?  Loop until either (1) all of
    * the TX descriptors have been examined, or (2) until we encounter the
@@ -1368,7 +1369,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
             }
           else if ( ((txdesc->status & GMACTXD_STA_USED) == 0) && ((txdesc->status & GMACTXD_STA_LAST) != 0) )
             {
-              sam_tx_bufinfo(priv, txdesc);
               txdesc->status = (uint32_t) dev->d_len | GMACTXD_STA_USED | GMACTXD_STA_LAST;
               up_clean_dcache((uintptr_t)txdesc,
                               (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
