@@ -296,9 +296,6 @@ void icmp_input(FAR struct net_driver_s *dev)
 
       ninfo("Outgoing ICMP packet length: %d (%d)\n",
             dev->d_len, (ipv4->len[0] << 8) | ipv4->len[1]);
-      // af
-      custinfo("Outgoing ICMP packet length: %d (%d)\n",
-            dev->d_len, (ipv4->len[0] << 8) | ipv4->len[1]);
 
 #ifdef CONFIG_NET_STATISTICS
       g_netstats.icmp.sent++;

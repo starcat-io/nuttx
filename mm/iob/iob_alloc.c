@@ -275,8 +275,6 @@ FAR struct iob_s *iob_tryalloc(bool throttled, enum iob_user_e consumerid)
            */
 
           g_iob_sem.semcount--;
-          // af
-          custinfo("iob semaphore count: %d\n", g_iob_sem.semcount);
           DEBUGASSERT(g_iob_sem.semcount >= 0);
 
 #if CONFIG_IOB_THROTTLE > 0
