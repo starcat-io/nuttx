@@ -684,7 +684,7 @@ static int sam_transmit(struct sam_gmac_s *priv)
   uint32_t regval;
   uint32_t status;
 
-  ninfo("sam_transmit d_len: %d txhead: %d txtail: %d\n",
+  ninfo("d_len: %d txhead: %d txtail: %d\n",
         dev->d_len, priv->txhead, priv->txtail);
   sam_dumppacket("Transmit packet", dev->d_buf, dev->d_len);
 
@@ -709,7 +709,8 @@ static int sam_transmit(struct sam_gmac_s *priv)
       return -EBUSY;
     }
 
-  // mark buffer as used temporarily so DMA send doesn't operate on it
+  /* Mark buffer as used temporarily so DMA doesn't operate on it */
+
   status = GMACTXD_STA_USED | GMACTXD_STA_LAST;
   txdesc->status = status;
   up_clean_dcache((uint32_t)txdesc,
@@ -957,6 +958,8 @@ static int sam_recvframe(struct sam_gmac_s *priv)
 
   up_invalidate_dcache((uintptr_t)rxdesc,
                        (uintptr_t)rxdesc + sizeof(struct gmac_rxdesc_s));
+
+  ninfo("rxndx: %d\n", rxndx);
 
   while ((rxdesc->addr & GMACRXD_ADDR_OWNER) != 0)
     {
@@ -1336,10 +1339,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
    * first descriptor that is still in use by the hardware.
    */
 
-  struct net_driver_s *dev = &priv->dev;
-  ninfo("sam_txdone: d_len: %d txhead: %d txtail: %d\n",
-        dev->d_len, priv->txhead, priv->txtail);
-
   while (priv->txhead != priv->txtail)
     {
       /* Yes.. check the next buffer at the tail of the list */
@@ -1363,7 +1362,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
               sam_physramaddr((uintptr_t)txdesc) != sam_getreg(priv, SAM_GMAC_TBQB))
             {
               ninfo("TX buffer marked in-use: unusual startup case (%d)\n", priv->txtail);
-              sam_tx_bufinfo(priv, txdesc);
               txdesc->status = (uint32_t) dev->d_len | GMACTXD_STA_USED;
               up_clean_dcache((uintptr_t)txdesc,
                               (uintptr_t)txdesc + sizeof(struct gmac_txdesc_s));
@@ -1380,7 +1378,6 @@ static void sam_txdone(struct sam_gmac_s *priv)
               /* Otherwise, the descriptor is truly in use.  Break out of the
                * loop now.
                */
-              sam_tx_bufinfo(priv, txdesc);
               break;
             }
         }
@@ -1402,8 +1399,9 @@ static void sam_txdone(struct sam_gmac_s *priv)
       sam_putreg(priv, SAM_GMAC_IER, GMAC_INT_RCOMP);
     }
 
-  sam_dopoll(priv);
+  /* Then poll the network for new XMIT data */
 
+  sam_dopoll(priv);
 }
 
 /****************************************************************************
@@ -1575,7 +1573,6 @@ static void sam_interrupt_work(FAR void *arg)
         {
           nerr("ERROR: Buffer not available RSR: %08x\n", rsr);
           clrbits |= GMAC_RSR_BNA;
-          sam_rx_bufinfo(priv);
         }
 
       /* Check for HRESP not OK (HNO) */
