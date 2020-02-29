@@ -136,9 +136,10 @@
 #  define SAM_TDES_OFFSET        0x0003c000 /* 0x0003c000-0x0003ffff: TDES */
 #  define SAM_TRNG_OFFSET        0x00040000 /* 0x00040000-0x00043fff: TRNG */
                                             /* 0x00044000-0x00ffbfff: Reserved */
-#define SAM_SYSC_PSECTION        0xfff00000 /* 0xfff00000-0xffffffff: System Controller */
-#define SAM_SYSC_PADDR           0xffffc000 /* 0xffffc000-0xffffffff: System Controller */
+#  define SAM_SYSC_PSECTION      0xfff00000 /* 0xfff00000-0xffffbfff: System Controller */
+#  define SAM_SYSC_PADDR         0xffffc000 /* 0xffffc000-0xffffffff: System Controller */
 #  define SAM_SYSC_OFFSET        0x00000000 /* 0x0fffc000-0x0fffffff: System Controller */
+
 
 /* System Controller Peripheral Offsets.  All relative to the beginning of the
  * 16KB virtual or physical SYSC region (SAM_SYSC_VADDR or SAM_SYSC_PADDR).
@@ -374,8 +375,8 @@
 #define SAM_PERIPH_VSECTION      0xf0000000 /* 0xf0000000-0xffffffff: Internal Peripherals */
 #  define SAM_PERIPHA_VSECTION   0xf0000000 /* 0xf0000000-0xf7ffffff: Internal Peripherals A */
 #  define SAM_PERIPHB_VSECTION   0xf8000000 /* 0xf8000000-0xffefffff: Internal Peripherals B */
-#  define SAM_SYSC_VSECTION      0xfff00000 /* 0xfff00000-0xffffbfff: System Controller */
-#  define SAM_SYSC_VADDR         0xffffc000 /* 0xffffc000-0xffffffff: System Controller */
+#  define SAM_SYSC_VSECTION      0xf8048000 /* 0xf8048000-0xf8048fff: System Controller */
+#  define SAM_SYSC_VADDR         0xf80fc000 /* 0xf8048000-0xf8048fff: System Controller */
 #else
 #define SAM_PERIPH_VSECTION      0xf0000000 /* 0xf0000000-0xffffffff: Internal Peripherals */
 #  define SAM_PERIPHA_VSECTION   0xf0000000 /* 0xf0000000-0xf00fffff: Internal Peripherals A */

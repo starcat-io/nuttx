@@ -705,7 +705,7 @@ void __ramfunc__ sam_clockconfig(void)
 #ifdef ATSAMA5D2
   /* Enable clocking to the PIO module */
 
-  sam_pio_enableclk();
+  sam_pioa_enableclk();
 #endif
 
   /* Setup USB clocking */

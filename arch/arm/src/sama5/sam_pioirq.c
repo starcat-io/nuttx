@@ -423,6 +423,7 @@ void sam_pioirq(pio_pinset_t pinset)
 
   /* Are any additional interrupt modes selected? */
 
+#ifdef _PIO_INT_AIM
   if ((pinset & _PIO_INT_AIM) != 0)
     {
       /* Yes.. Enable additional interrupt mode */
@@ -457,6 +458,7 @@ void sam_pioirq(pio_pinset_t pinset)
 
       putreg32(pin, base + SAM_PIO_AIMDR_OFFSET);
     }
+#endif
 
 #if defined(SAM_PIO_ISLR_OFFSET)
   /* Disable writing to PIO registers */
