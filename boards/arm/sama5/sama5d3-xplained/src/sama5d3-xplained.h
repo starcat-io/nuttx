@@ -319,12 +319,12 @@
 
 /* HSMCI Card Slots *********************************************************/
 
-/* The SAMA5D3-Xplained provides a two SD memory card slots:
+/* The SAMA5D3-Xplained provides two SD memory card slots:
  *  (1) a full size SD card slot (J10), and
  *  (2) a microSD memory card slot (J11).
  *
  * The full size SD card slot connects via HSMCI0.  The card detect discrete
- * is available on PD17 (pulled high).  The write protect descrete is tied to
+ * is available on PD17 (pulled high).  The write protect discrete is tied to
  * ground (via PP6) and not available to software.  The slot supports 8-bit
  * wide transfer mode, but the NuttX driver currently uses only the 4-bit
  * wide transfer mode
