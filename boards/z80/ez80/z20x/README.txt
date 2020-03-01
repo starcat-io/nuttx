@@ -92,8 +92,7 @@ Memory Constaints
   exceed the ROM address space.
 
   The sdboot configuration will fit into the ROM address space, but NOT if
-  you enable assertions, debug outputs, or even debug symbols.  It is very
-  unlikely that the nsh_flash configuration will fit into FLASH at all!
+  you enable assertions, debug outputs, or even debug symbols.
 
 Serial Console
 ==============
@@ -205,37 +204,24 @@ Common Configuration Notes
 Configuration Subdirectories
 ----------------------------
 
-  nsh_flash, nsh_ram:
+  nsh_ram:
 
-    These configuration build the NuttShell (NSH).  That code can be
+    This configuration builds the NuttShell (NSH).  That code can be
     found in apps/system/nsh and apps/system/nshlib..  For more
     information see:  apps/system/nsh/README.txt and
     Documentation/NuttShell.html.
 
-    UNVERIFIED!  I doubt that the nsh_flash program will fit into the
-    smaller FLASH memory of the eZ80F92 part.
-
     NOTES:
 
-    1. The two configurations different only in that one builds for
-       execution entirely from FLASH and the other for execution entirely
-       from RAM.  A bootloader of some kind is required to support such
-       execution from RAM!  This difference is reflected in a single
-       configuration setting:
-
-         CONFIG_BOOT_RUNFROMFLASH=y    # Execute from flash (default)
-         CONFIG_BOOT_RUNFROMEXTSRAM=y  # Execute from external SRAM
-
-       A third configuration is possible but not formalized with its own
-       defconfig file:  You can also configure the code to boot from FLASH,
-       copy the code to external SRAM, and then execute from RAM.  Such a
-       configuration needs the following settings in the .config file:
+    1. This configuration builds for execution entirely from RAM.  A
+       bootloader of some kind is required to support such execution from
+       RAM!  This is reflected in a single configuration setting:
 
          CONFIG_BOOT_RUNFROMEXTSRAM=y  # Execute from external SRAM
-         CONFIG_Z20X_COPYTORAM=y  # Boot from FLASH but copy to SRAM
 
-       Why execute from SRAM at all?  Because you will get MUCH better
-       performance because of the zero wait state SRAM implementation.
+       Why execute from SRAM?  Because you will get MUCH better performance
+       because of the zero wait state SRAM implementation and you will not
+       be constrained by the eZ80F92's small FLASH size.
 
     2. The eZ80 RTC, the procFS file system, and SD card support in included.
        The procFS file system will be auto-mounted at /proc when the board
@@ -331,3 +317,33 @@ Configuration Subdirectories
     SRAM.
 
     The boot loader source is located at boards/z20x/src/sd_main.c.
+
+    NOTES:
+
+    1. This version of the eZ80 bootloader is not usable in its current
+       state.  That is because the the eZ80F92 Interrupt Controller is
+       not as robust as the eZ80F91 Interrupt Controller.  A consequence
+       is that the interrupt vectors must always reside within the first
+       64Kb of FLASH memory.  It will not be possible to run programs in
+       SRAM *unless* some mechanism is developed to redirect interrupts
+       from ROM and into loaded SRAM logic.
+
+       For example, it might be possible to implement this kind of
+       vectoring to get to a RAM based interrupt handler:
+
+       a. The initial 16-bit address in the interrupt vector table can
+          transfer the interrupt to a larger jump table also in lower
+          flash memory.
+       b. That jump table could vector to another jump table at a known
+          location RAM.
+       c. The RAM jump table could then jump to the final RAM-based
+          interrupt handler.
+
+       This would effect the logic in arch/z80/src/ez80/ez80f92_handlers.am
+       and possible the z20x *.linkcmd files.
+
+    2. Another thing that would have to be done before this configuration
+       would be usable is to partition the external in some way so that
+       there is no collision between the bootloader's use of SRAM and the
+       SRAM required by the newly loaded program.
+
