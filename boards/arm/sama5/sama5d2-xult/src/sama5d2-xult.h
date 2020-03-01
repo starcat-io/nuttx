@@ -65,6 +65,206 @@
 #define HAVE_USBMONITOR 1
 #define HAVE_NETWORK    1
 
+/* HSMCI */
+
+/* Can't support MMC/SD if the card interface(s) are not enable */
+
+#if !defined(CONFIG_SAMA5_HSMCI0) && !defined(CONFIG_SAMA5_HSMCI1)
+#  undef HAVE_HSMCI
+#endif
+
+/* Can't support MMC/SD features if mountpoints are disabled */
+
+#if defined(HAVE_HSMCI) && defined(CONFIG_DISABLE_MOUNTPOINT)
+#  warning Mountpoints disabled.  No MMC/SD support
+#  undef HAVE_HSMCI
+#endif
+
+/* We need PIO interrupts on PIOD to support card detect interrupts */
+
+#if defined(HAVE_HSMCI) && !defined(CONFIG_SAMA5_PIOD_IRQ)
+#  warning PIOD interrupts not enabled.  No MMC/SD support.
+#  undef HAVE_HSMCI
+#endif
+
+/* NAND FLASH */
+
+/* Can't support the NAND device if NAND flash is not configured on EBI CS3 */
+
+#ifndef CONFIG_SAMA5_EBICS3_NAND
+#  undef HAVE_NAND
+#endif
+
+/* Can't support NAND features if mountpoints are disabled or if we were not
+ * asked to mount the NAND part
+ */
+
+#if defined(CONFIG_DISABLE_MOUNTPOINT) || !defined(CONFIG_SAMA5D3XPLAINED_NAND_BLOCKMOUNT)
+#  undef HAVE_NAND
+#endif
+
+/* Can't support NAND if the MTD feature is not enabled */
+
+#if !defined(CONFIG_MTD) || !defined(CONFIG_MTD_NAND)
+#  undef HAVE_NAND
+#endif
+
+/* If we are going to mount the NAND, then they user must also have told
+ * us what to do with it by setting one of CONFIG_SAMA5D3XPLAINED_NAND_FTL or
+ * CONFIG_SAMA5D3XPLAINED_NAND_NXFFS.
+ */
+
+#ifndef CONFIG_MTD
+#  undef CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
+#  undef CONFIG_SAMA5D3XPLAINED_NAND_FTL
+#endif
+
+#if !defined(CONFIG_FS_NXFFS) || !defined(CONFIG_NXFFS_NAND)
+#  undef CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
+#endif
+
+#if !defined(CONFIG_SAMA5D3XPLAINED_NAND_FTL) && !defined(CONFIG_SAMA5D3XPLAINED_NAND_NXFFS)
+#  undef HAVE_NAND
+#endif
+
+#if defined(CONFIG_SAMA5D3XPLAINED_NAND_FTL) && defined(CONFIG_SAMA5D3XPLAINED_NAND_NXFFS)
+#  warning Both CONFIG_SAMA5D3XPLAINED_NAND_FTL and CONFIG_SAMA5D3XPLAINED_NAND_NXFFS are set
+#  warning Ignoring CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
+#  undef CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
+#endif
+
+/* AT25 Serial FLASH */
+
+/* Can't support the AT25 device if it SPI0 or AT25 support are not enabled */
+
+#if !defined(CONFIG_SAMA5_SPI0) || !defined(CONFIG_MTD_AT25)
+#  undef HAVE_AT25
+#endif
+
+/* Can't support AT25 features if mountpoints are disabled or if we were not
+ * asked to mount the AT25 part
+ */
+
+#if defined(CONFIG_DISABLE_MOUNTPOINT) || !defined(CONFIG_SAMA5D3XPLAINED_AT25_AUTOMOUNT)
+#  undef HAVE_AT25
+#endif
+
+/* If we are going to mount the AT25, then they user must also have told
+ * us what to do with it by setting one of these.
+ */
+
+#ifndef CONFIG_FS_NXFFS
+#  undef CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
+#endif
+
+#if !defined(CONFIG_SAMA5D3XPLAINED_AT25_FTL) && !defined(CONFIG_SAMA5D3XPLAINED_AT25_NXFFS)
+#  undef HAVE_AT25
+#endif
+
+#if defined(CONFIG_SAMA5D3XPLAINED_AT25_FTL) && defined(CONFIG_SAMA5D3XPLAINED_AT25_NXFFS)
+#  warning Both CONFIG_SAMA5D3XPLAINED_AT25_FTL and CONFIG_SAMA5D3XPLAINED_AT25_NXFFS are set
+#  warning Ignoring CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
+#  undef CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
+#endif
+
+/* Assign minor device numbers.  For example, if we also use MINOR number 0
+ * for the AT25, it should appear as /dev/mtdblock0
+ */
+
+#define _NAND_MINOR 0
+
+#ifdef HAVE_NAND
+#  define NAND_MINOR  _NAND_MINOR
+#  define _AT25_MINOR (_NAND_MINOR+1)
+#else
+#  define _AT25_MINOR _NAND_MINOR
+#endif
+
+#ifdef HAVE_AT25
+#  define AT25_MINOR  _AT25_MINOR
+#endif
+
+/* MMC/SD minor numbers:  The NSH device minor extended is extended to support
+ * two devices.  If CONFIG_NSH_MMCSDMINOR is zero, these will be:  /dev/mmcsd0
+ * and /dev/mmcsd1.
+ */
+
+#ifndef CONFIG_NSH_MMCSDMINOR
+#  define CONFIG_NSH_MMCSDMINOR 0
+#endif
+
+#ifdef HAVE_HSMCI
+
+#  define HSMCI0_SLOTNO 0
+#  define HSMCI1_SLOTNO 1
+
+#  ifdef CONFIG_SAMA5_HSMCI0
+#     define HSMCI0_MINOR  CONFIG_NSH_MMCSDMINOR
+#     define HSMCI1_MINOR  (CONFIG_NSH_MMCSDMINOR+1)
+#  else
+#     define HSMCI1_MINOR  CONFIG_NSH_MMCSDMINOR
+#  endif
+#else
+#endif
+
+/* USB Host / USB Device */
+
+/* Either CONFIG_SAMA5_UHPHS or CONFIG_SAMA5_UDPHS must be defined,
+ * or there is no USB of any kind.
+ */
+
+#if !defined(CONFIG_SAMA5_UHPHS)
+#  undef CONFIG_SAMA5_OHCI
+#  undef CONFIG_SAMA5_EHCI
+#endif
+
+#if !defined(CONFIG_SAMA5_UDPHS)
+#  undef HAVE_USBDEV
+#endif
+
+/* CONFIG_USBDEV and CONFIG_USBHOST must also be defined */
+
+#if !defined(CONFIG_USBDEV)
+#  undef HAVE_USBDEV
+#endif
+
+#if defined(CONFIG_USBHOST)
+#  if !defined(CONFIG_SAMA5_OHCI) && !defined(CONFIG_SAMA5_EHCI)
+#    warning CONFIG_USBHOST is defined, but neither CONFIG_SAMA5_OHCI nor CONFIG_SAMA5_EHCI are defined
+#  endif
+#else
+#  undef CONFIG_SAMA5_OHCI
+#  undef CONFIG_SAMA5_EHCI
+#endif
+
+#if !defined(CONFIG_SAMA5_OHCI) && !defined(CONFIG_SAMA5_EHCI)
+#  undef HAVE_USBHOST
+#endif
+
+/* Check if we should enable the USB monitor before starting NSH */
+
+#ifndef CONFIG_USBMONITOR
+#  undef HAVE_USBMONITOR
+#endif
+
+#ifndef HAVE_USBDEV
+#  undef CONFIG_USBDEV_TRACE
+#endif
+
+#ifndef HAVE_USBHOST
+#  undef CONFIG_USBHOST_TRACE
+#endif
+
+#if !defined(CONFIG_USBDEV_TRACE) && !defined(CONFIG_USBHOST_TRACE)
+#  undef HAVE_USBMONITOR
+#endif
+
+/* Networking */
+
+#if !defined(CONFIG_NET) || (!defined(CONFIG_SAMA5_EMACA) && !defined(CONFIG_SAMA5_GMAC))
+#  undef HAVE_NETWORK
+#endif
+
 /* procfs File System */
 
 #ifdef CONFIG_FS_PROCFS
@@ -114,6 +314,34 @@
 #define PIO_BTN_USER (PIO_INPUT | PIO_CFG_PULLUP | PIO_CFG_DEGLITCH | \
                       PIO_INT_BOTHEDGES | PIO_PORT_PIOB | PIO_PIN6)
 #define IRQ_BTN_USER  SAM_IRQ_PB6
+
+/* HSMCI Card Slots *********************************************************/
+
+/* The SAMA5D2-XULT provides a SD memory card slots:
+ *  a full size SD card slot (J19)
+ *
+ * The full size SD card slot connects via HSMCI0.  The card detect discrete
+ * is available on PD17 (pulled high).  The write protect discrete is tied to
+ * ground (via PP6) and not available to software.  The slot supports 8-bit
+ * wide transfer mode, but the NuttX driver currently uses only the 4-bit
+ * wide transfer mode
+ *
+ *   PD17 MCI0_CD
+ *   PD1  MCI0_DA0
+ *   PD2  MCI0_DA1
+ *   PD3  MCI0_DA2
+ *   PD4  MCI0_DA3
+ *   PD5  MCI0_DA4
+ *   PD6  MCI0_DA5
+ *   PD7  MCI0_DA6
+ *   PD8  MCI0_DA7
+ *   PD9  MCI0_CK
+ *   PD0  MCI0_CDA
+ */
+
+#define PIO_MCI0_CD  (PIO_INPUT | PIO_CFG_DEFAULT | PIO_CFG_DEGLITCH | \
+                      PIO_INT_BOTHEDGES | PIO_PORT_PIOA | PIO_PIN11)
+#define IRQ_MCI0_CD   SAM_IRQ_PA11
 
 /* USB Ports ****************************************************************/
 
