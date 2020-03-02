@@ -429,5 +429,33 @@
 
 int sam_bringup(void);
 
+/****************************************************************************
+ * Name: sam_usbinitialize
+ *
+ * Description:
+ *   Called from sam_usbinitialize very early in initialization to setup
+ *   USB-related PIO pins for the SAMA5D2-XULT board.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_SAMA5_UHPHS) || defined(CONFIG_SAMA5_UDPHS)
+void weak_function sam_usbinitialize(void);
+#endif
+
+/****************************************************************************
+ * Name: stm32_usbhost_initialize
+ *
+ * Description:
+ *   Called at application startup time to initialize the USB host
+ *   functionality.
+ *   This function will start a thread that will monitor for device
+ *   connection/disconnection events.
+ *
+ ****************************************************************************/
+
+#ifdef HAVE_USBHOST
+int sam_usbhost_initialize(void);
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __BOARDS_ARM__SAMA5SAMA5D2_XULT_SRC_SAMA5D2_XULT_H */

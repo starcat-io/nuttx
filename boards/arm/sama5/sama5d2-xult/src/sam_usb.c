@@ -271,9 +271,7 @@ void weak_function sam_usbinitialize(void)
   /* Configure Port B to support the USB OHCI/EHCI function */
 
   sam_configpio(PIO_USBB_VBUS_ENABLE); /* VBUS enable, initially OFF */
-#endif
 
-#if defined(CONFIG_SAMA5_UHPHS_RHPORT2)
   /* Configure Port B VBUS overrcurrent detection */
 
   sam_configpio(PIO_USBB_VBUS_OVERCURRENT); /* VBUS overcurrent */
@@ -356,8 +354,8 @@ int sam_usbhost_initialize(void)
 
   /* Start a thread to handle device connection. */
 
-  pid = kthread_create("OHCI Monitor", CONFIG_SAMA5D3XPLAINED_USBHOST_PRIO,
-                       CONFIG_SAMA5D3XPLAINED_USBHOST_STACKSIZE,
+  pid = kthread_create("OHCI Monitor", CONFIG_SAMA5D2XULT_USBHOST_PRIO,
+                       CONFIG_SAMA5D2XULT_USBHOST_STACKSIZE,
                        (main_t)ohci_waiter, (FAR char * const *)NULL);
   if (pid < 0)
     {
@@ -378,8 +376,8 @@ int sam_usbhost_initialize(void)
 
   /* Start a thread to handle device connection. */
 
-  pid = kthread_create("EHCI Monitor", CONFIG_SAMA5D3XPLAINED_USBHOST_PRIO,
-                       CONFIG_SAMA5D3XPLAINED_USBHOST_STACKSIZE,
+  pid = kthread_create("EHCI Monitor", CONFIG_SAMA5D2XULT_USBHOST_PRIO,
+                       CONFIG_SAMA5D2XULT_USBHOST_STACKSIZE,
                        (main_t)ehci_waiter, (FAR char * const *)NULL);
   if (pid < 0)
     {
@@ -427,7 +425,7 @@ void sam_usbhost_vbusdrive(int rhport, bool enable)
       return;
 
 #elif !defined(PIO_USBA_VBUS_ENABLE)
-      /* SAMA5D3-Xplained has no port A VBUS enable */
+      /* SAMA5D2-XULT has no port A VBUS enable */
 
       uerr("ERROR: RHPort1 has no VBUS enable\n");
       return;
@@ -450,19 +448,19 @@ void sam_usbhost_vbusdrive(int rhport, bool enable)
       return;
     }
 
-  /* Then enable or disable VBUS power (active low for SP2526A-2) */
+  /* Then enable or disable VBUS power (active high) */
 
   if (enable)
     {
-      /* Enable the Power Switch by driving the enable pin low */
+      /* Enable the Power Switch by driving the enable pin high */
 
-      sam_piowrite(pinset, false);
+      sam_piowrite(pinset, true);
     }
   else
     {
-      /* Disable the Power Switch by driving the enable pin high */
+      /* Disable the Power Switch by driving the enable pin low */
 
-      sam_piowrite(pinset, true);
+      sam_piowrite(pinset, false);
     }
 }
 #endif

@@ -43,6 +43,29 @@
 #include <syslog.h>
 #include <debug.h>
 
+#include <nuttx/irq.h>
+#include <nuttx/kthread.h>
+#include <nuttx/usb/usbdev.h>
+#include <nuttx/usb/usbhost.h>
+#include <nuttx/usb/usbdev_trace.h>
+
+#ifdef CONFIG_CDCACM
+#  include <nuttx/usb/cdcacm.h>
+#endif
+
+#ifdef CONFIG_NET_CDCECM
+#  include <nuttx/usb/cdcecm.h>
+#  include <net/if.h>
+#endif
+
+#ifdef CONFIG_USBMONITOR
+#  include <nuttx/usb/usbmonitor.h>
+#endif
+
+#ifdef CONFIG_RNDIS
+#  include <nuttx/usb/rndis.h>
+#endif
+
 #include "sama5d2-xult.h"
 
 /****************************************************************************
