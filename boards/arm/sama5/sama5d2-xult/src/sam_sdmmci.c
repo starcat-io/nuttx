@@ -18,7 +18,7 @@
  *
  ****************************************************************************/
 
-/* The SAMA5D2-Xplained provides one SD full-size memory card slot at J19.
+/* The SAMA5D2-XULT provides one SD full-size memory card slot at J19.
  *
  * The full size SD card slot connects via SDMMC0.  The card detect discrete
  * is available on PA30 (pulled high).  The write protect discrete is tied to
@@ -52,7 +52,7 @@
 #include "sam_pio.h"
 #include "sam_sdmmc.h"
 
-#include "sama5d3-xplained.h"
+#include "sama5d2-xult.h"
 
 #ifdef HAVE_SDMMC
 
