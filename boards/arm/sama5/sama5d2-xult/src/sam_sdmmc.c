@@ -1,5 +1,5 @@
 /****************************************************************************
- *  boards/arm/sama5/sama5d2-xult/src/sam_hsmci.c
+ *  boards/arm/sama5/sama5d2-xult/src/sam_sdmmc.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -18,38 +18,21 @@
  *
  ****************************************************************************/
 
-/* The SAMA5D3-Xplained provides a two SD memory card slots:
- *  (1) a full size SD card slot (J10), and
- *  (2) a microSD memory card slot (J11).
+/* The SAMA5D2-Xplained provides one SD full-size memory card slot at J19.
  *
- * The full size SD card slot connects via HSMCI0.  The card detect discrete
- * is available on PB17 (pulled high).  The write protect descrete is tied to
- * ground (via PP6) and not available to software.  The slot supports 8-bit
- * wide transfer mode, but the NuttX driver currently uses only the 4-bit
- * wide transfer mode
+ * The full size SD card slot connects via SDMMC0.  The card detect discrete
+ * is available on PA30 (pulled high).  The write protect discrete is tied to
+ * ground and not available to software.  The slot only supports 4-bit wide
+ * transfer mode.
  *
- *   PD17 MCI0_CD
- *   PD1  MCI0_DA0
- *   PD2  MCI0_DA1
- *   PD3  MCI0_DA2
- *   PD4  MCI0_DA3
- *   PD5  MCI0_DA4
- *   PD6  MCI0_DA5
- *   PD7  MCI0_DA6
- *   PD8  MCI0_DA7
- *   PD9  MCI0_CK
- *   PD0  MCI0_CDA
+ *   PA30  SDMMC0_CD
+ *   PA18  SDMMC0_DAT0
+ *   PA19  SDMMC0_DAT1
+ *   PA20  SDMMC0_DAT2
+ *   PA21  SDMMC0_DAT2
+ *   PD22  SDMMC0_CK
+ *   PA28  SDMMC0_CDA
  *
- * The microSD connects vi HSMCI1.  The card detect discrete is available on
- * PB18 (pulled high):
- *
- *   PD18  MCI1_CD
- *   PB20  MCI1_DA0
- *   PB21  MCI1_DA1
- *   PB22  MCI1_DA2
- *   PB23  MCI1_DA3
- *   PB24  MCI1_CK
- *   PB19  MCI1_CDA
  */
 
 /****************************************************************************
@@ -71,7 +54,7 @@
 
 #include "sama5d3-xplained.h"
 
-#ifdef HAVE_HSMCI
+#ifdef HAVE_SDMMC
 
 /****************************************************************************
  * Private Types
@@ -79,7 +62,7 @@
 
 /* This structure holds static information unique to one HSMCI peripheral */
 
-struct sam_hsmci_state_s
+struct sam_sdmmc_state_s
 {
   struct sdio_dev_s *hsmci;   /* R/W device handle */
   pio_pinset_t pincfg;        /* Card detect PIO pin configuration */
@@ -93,12 +76,12 @@ struct sam_hsmci_state_s
  * Private Data
  ****************************************************************************/
 
-/* HSCMI device state */
+/* SDMMC device state */
 
-#ifdef CONFIG_SAMA5_HSMCI0
-static int sam_hsmci0_cardetect(int irq, void *regs, FAR void *arg);
+#ifdef CONFIG_SAMA5_SDMMC0
+static int sam_sdmmc0_cardetect(int irq, void *regs, FAR void *arg);
 
-static struct sam_hsmci_state_s g_hsmci0 =
+static struct sam_sdmmc_state_s g_sdmmc0 =
 {
   .pincfg  = PIO_MCI0_CD,
   .irq     = IRQ_MCI0_CD,
@@ -224,14 +207,14 @@ static struct sam_hsmci_state_s *sam_hsmci_state(int slotno)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: sam_hsmci_initialize
+ * Name: sam_sdmmc_initialize
  *
  * Description:
  *   Perform architecture specific initialization
  *
  ****************************************************************************/
 
-int sam_hsmci_initialize(int slotno, int minor)
+int sam_sdmmc_initialize(int slotno, int minor)
 {
   struct sam_hsmci_state_s *state;
   int ret;

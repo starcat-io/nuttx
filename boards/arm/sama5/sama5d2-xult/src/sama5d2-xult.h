@@ -42,7 +42,7 @@
 
 /* Configuration ************************************************************/
 
-#define HAVE_HSMCI      1
+#define HAVE_SDMMC      1
 #define HAVE_AT25       1
 #define HAVE_NAND       1
 #define HAVE_USBHOST    1
@@ -54,22 +54,22 @@
 
 /* Can't support MMC/SD if the card interface(s) are not enable */
 
-#if !defined(CONFIG_SAMA5_HSMCI0) && !defined(CONFIG_SAMA5_HSMCI1)
-#  undef HAVE_HSMCI
+#if !defined(CONFIG_SAMA5_SDMMC) && !defined(CONFIG_SAMA5_SDMMC1)
+#  undef HAVE_SDMMC
 #endif
 
 /* Can't support MMC/SD features if mountpoints are disabled */
 
-#if defined(HAVE_HSMCI) && defined(CONFIG_DISABLE_MOUNTPOINT)
+#if defined(HAVE_SDMMC) && defined(CONFIG_DISABLE_MOUNTPOINT)
 #  warning Mountpoints disabled.  No MMC/SD support
-#  undef HAVE_HSMCI
+#  undef HAVE_SDMCC
 #endif
 
 /* We need PIO interrupts on PIOD to support card detect interrupts */
 
-#if defined(HAVE_HSMCI) && !defined(CONFIG_SAMA5_PIOD_IRQ)
-#  warning PIOD interrupts not enabled.  No MMC/SD support.
-#  undef HAVE_HSMCI
+#if defined(HAVE_SDMMC) && !defined(CONFIG_SAMA5_PIOA_IRQ)
+#  warning PIOA interrupts not enabled.  No MMC/SD support.
+#  undef HAVE_SDMMC
 #endif
 
 /* NAND FLASH */
@@ -95,27 +95,27 @@
 #endif
 
 /* If we are going to mount the NAND, then they user must also have told
- * us what to do with it by setting one of CONFIG_SAMA5D3XPLAINED_NAND_FTL or
- * CONFIG_SAMA5D3XPLAINED_NAND_NXFFS.
+ * us what to do with it by setting one of CONFIG_SAMA5D2XULT_NAND_FTL or
+ * CONFIG_SAMA5D2XULT_NAND_NXFFS.
  */
 
 #ifndef CONFIG_MTD
-#  undef CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
-#  undef CONFIG_SAMA5D3XPLAINED_NAND_FTL
+#  undef CONFIG_SAMA5D2XULT_NAND_NXFFS
+#  undef CONFIG_SAMA5D2XULT_NAND_FTL
 #endif
 
 #if !defined(CONFIG_FS_NXFFS) || !defined(CONFIG_NXFFS_NAND)
-#  undef CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
+#  undef CONFIG_SAMA5D2XULT_NAND_NXFFS
 #endif
 
-#if !defined(CONFIG_SAMA5D3XPLAINED_NAND_FTL) && !defined(CONFIG_SAMA5D3XPLAINED_NAND_NXFFS)
+#if !defined(CONFIG_SAMA5D2XULT_NAND_FTL) && !defined(CONFIG_SAMA5D2XULT_NAND_NXFFS)
 #  undef HAVE_NAND
 #endif
 
-#if defined(CONFIG_SAMA5D3XPLAINED_NAND_FTL) && defined(CONFIG_SAMA5D3XPLAINED_NAND_NXFFS)
-#  warning Both CONFIG_SAMA5D3XPLAINED_NAND_FTL and CONFIG_SAMA5D3XPLAINED_NAND_NXFFS are set
-#  warning Ignoring CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
-#  undef CONFIG_SAMA5D3XPLAINED_NAND_NXFFS
+#if defined(CONFIG_SAMA5D2XULT_NAND_FTL) && defined(CONFIG_SAMA5D2XULT_NAND_NXFFS)
+#  warning Both CONFIG_SAMA5D2XULT_NAND_FTL and CONFIG_SAMA5D2XULT_NAND_NXFFS are set
+#  warning Ignoring CONFIG_SAMA5D2XULT_NAND_NXFFS
+#  undef CONFIG_SAMA5DXULT_NAND_NXFFS
 #endif
 
 /* AT25 Serial FLASH */
@@ -142,14 +142,14 @@
 #  undef CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
 #endif
 
-#if !defined(CONFIG_SAMA5D3XPLAINED_AT25_FTL) && !defined(CONFIG_SAMA5D3XPLAINED_AT25_NXFFS)
+#if !defined(CONFIG_SAMA5D2XULT_AT25_FTL) && !defined(CONFIG_SAMA5D2XULT_AT25_NXFFS)
 #  undef HAVE_AT25
 #endif
 
-#if defined(CONFIG_SAMA5D3XPLAINED_AT25_FTL) && defined(CONFIG_SAMA5D3XPLAINED_AT25_NXFFS)
-#  warning Both CONFIG_SAMA5D3XPLAINED_AT25_FTL and CONFIG_SAMA5D3XPLAINED_AT25_NXFFS are set
-#  warning Ignoring CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
-#  undef CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
+#if defined(CONFIG_SAMA5D2XULT_AT25_FTL) && defined(CONFIG_SAMA5D2XULT_AT25_NXFFS)
+#  warning Both CONFIG_SAMA5D2XULT_AT25_FTL and CONFIG_SAMA5D2XULT_AT25_NXFFS are set
+#  warning Ignoring CONFIG_SAMA5D2XULT_AT25_NXFFS
+#  undef CONFIG_SAMA5D2XULT_AT25_NXFFS
 #endif
 
 /* Assign minor device numbers.  For example, if we also use MINOR number 0
