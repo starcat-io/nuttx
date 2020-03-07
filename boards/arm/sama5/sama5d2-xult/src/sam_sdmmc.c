@@ -50,7 +50,7 @@
 #include <nuttx/mmcsd.h>
 
 #include "sam_pio.h"
-#include "sam_hsmci.h"
+#include "sam_sdmmc.h"
 
 #include "sama5d3-xplained.h"
 
@@ -60,11 +60,11 @@
  * Private Types
  ****************************************************************************/
 
-/* This structure holds static information unique to one HSMCI peripheral */
+/* This structure holds static information unique to one SDMMC peripheral */
 
 struct sam_sdmmc_state_s
 {
-  struct sdio_dev_s *hsmci;   /* R/W device handle */
+  struct sdio_dev_s *sdmmc;   /* R/W device handle */
   pio_pinset_t pincfg;        /* Card detect PIO pin configuration */
   uint8_t irq;                /* Interrupt number (same as pid) */
   uint8_t slotno;             /* Slot number */
@@ -86,19 +86,19 @@ static struct sam_sdmmc_state_s g_sdmmc0 =
   .pincfg  = PIO_MCI0_CD,
   .irq     = IRQ_MCI0_CD,
   .slotno  = 0,
-  .handler = sam_hsmci0_cardetect,
+  .handler = sam_sdmmc0_cardetect,
 };
 #endif
 
-#ifdef CONFIG_SAMA5_HSMCI1
-static int sam_hsmci1_cardetect(int irq, void *regs, FAR void *arg);
+#ifdef CONFIG_SAMA5_SDMMC1
+static int sam_sdmmc1_cardetect(int irq, void *regs, FAR void *arg);
 
-static struct sam_hsmci_state_s g_hsmci1 =
+static struct sam_sdmmc_state_s g_sdmmc1 =
 {
   .pincfg  = PIO_MCI1_CD,
   .irq     = IRQ_MCI1_CD,
   .slotno  = 1,
-  .handler = sam_hsmci1_cardetect,
+  .handler = sam_sdmmc1_cardetect,
 };
 #endif
 
@@ -110,11 +110,11 @@ static struct sam_hsmci_state_s g_hsmci1 =
  * Name: sam_cardinserted_internal
  *
  * Description:
- *   Check if a card is inserted into the selected HSMCI slot
+ *   Check if a card is inserted into the selected SDMMC slot
  *
  ****************************************************************************/
 
-bool sam_cardinserted_internal(struct sam_hsmci_state_s *state)
+bool sam_cardinserted_internal(struct sam_sdmmc_state_s *state)
 {
   bool inserted;
 
@@ -126,14 +126,14 @@ bool sam_cardinserted_internal(struct sam_hsmci_state_s *state)
 }
 
 /****************************************************************************
- * Name: sam_hsmci_cardetect, sam_hsmci0_cardetect, and sam_hsmci1_cardetect
+ * Name: sam_sdmmc_cardetect, sam_sdmmc0_cardetect, and sam_sdmmc1_cardetect
  *
  * Description:
  *   Card detect interrupt handlers
  *
  ****************************************************************************/
 
-static int sam_hsmci_cardetect(struct sam_hsmci_state_s *state)
+static int sam_sdmmc_cardetect(struct sam_sdmmc_state_s *state)
 {
   /* Get the current card insertion state */
 
@@ -143,59 +143,59 @@ static int sam_hsmci_cardetect(struct sam_hsmci_state_s *state)
 
   if (cd != state->cd)
     {
-      /* Yes... remember that new state and inform the HSMCI driver */
+      /* Yes... remember that new state and inform the SDMMC driver */
 
       state->cd = cd;
 
       /* Report the new state to the SDIO driver */
 
-      sdio_mediachange(state->hsmci, cd);
+      sdio_mediachange(state->sdmmc, cd);
     }
 
   return OK;
 }
 
-#ifdef CONFIG_SAMA5_HSMCI0
-static int sam_hsmci0_cardetect(int irq, void *regs, FAR void *arg)
+#ifdef CONFIG_SAMA5_SDMMC0
+static int sam_sdmmc0_cardetect(int irq, void *regs, FAR void *arg)
 {
-  return sam_hsmci_cardetect(&g_hsmci0);
+  return sam_sdmmc_cardetect(&g_sdmmc0);
 }
 #endif
 
-#ifdef CONFIG_SAMA5_HSMCI1
-static int sam_hsmci1_cardetect(int irq, void *regs, FAR void *arg)
+#ifdef CONFIG_SAMA5_SDMMC1
+static int sam_sdmmc1_cardetect(int irq, void *regs, FAR void *arg)
 {
-  return sam_hsmci_cardetect(&g_hsmci1);
+  return sam_sdmmc_cardetect(&g_sdmmc1);
 }
 #endif
 
 /****************************************************************************
- * Name: sam_hsmci_state
+ * Name: sam_sdmmc_state
  *
  * Description:
- *   Initialize HSMCI PIOs.
+ *   Initialize SDMMC PIOs.
  *
  ****************************************************************************/
 
-static struct sam_hsmci_state_s *sam_hsmci_state(int slotno)
+static struct sam_sdmmc_state_s *sam_sdmmc_state(int slotno)
 {
-  struct sam_hsmci_state_s *state = NULL;
+  struct sam_sdmmc_state_s *state = NULL;
 
-#ifdef CONFIG_SAMA5_HSMCI0
-#ifdef CONFIG_SAMA5_HSMCI1
+#ifdef CONFIG_SAMA5_SDMMC0
+#ifdef CONFIG_SAMA5_SDMMC1
   if (slotno == 0)
 #endif
     {
-      state = &g_hsmci0;
+      state = &g_sdmmc0;
     }
-#ifdef CONFIG_SAMA5_HSMCI1
+#ifdef CONFIG_SAMA5_SDMMC1
   else
 #endif
 #endif
 
-#ifdef CONFIG_SAMA5_HSMCI1
+#ifdef CONFIG_SAMA5_SDMMC1
     {
-      state = &g_hsmci1;
+      state = &g_sdmmc1;
     }
 #endif
 
@@ -216,12 +216,12 @@ static struct sam_hsmci_state_s *sam_hsmci_state(int slotno)
 
 int sam_sdmmc_initialize(int slotno, int minor)
 {
-  struct sam_hsmci_state_s *state;
+  struct sam_sdmmc_state_s *state;
   int ret;
 
   /* Get the static HSMI description */
 
-  state = sam_hsmci_state(slotno);
+  state = sam_sdmmc_state(slotno);
   if (!state)
     {
       ferr("ERROR: No state for slotno %d\n", slotno);
@@ -236,8 +236,8 @@ int sam_sdmmc_initialize(int slotno, int minor)
 
   /* First, get an instance of the SDIO interface */
 
-  state->hsmci = sdio_initialize(slotno);
-  if (!state->hsmci)
+  state->sdmmc = sdio_initialize(slotno);
+  if (!state->sdmmc)
     {
       ferr("ERROR: Failed to initialize SDIO slot %d\n",  slotno);
       return -ENODEV;
@@ -245,7 +245,7 @@ int sam_sdmmc_initialize(int slotno, int minor)
 
   /* Now bind the SDIO interface to the MMC/SD driver */
 
-  ret = mmcsd_slotinitialize(minor, state->hsmci);
+  ret = mmcsd_slotinitialize(minor, state->sdmmc);
   if (ret != OK)
     {
       ferr("ERROR: Failed to bind SDIO to the MMC/SD driver: %d\n", ret);
@@ -257,10 +257,10 @@ int sam_sdmmc_initialize(int slotno, int minor)
   sam_pioirq(state->pincfg);
   irq_attach(state->irq, state->handler, NULL);
 
-  /* Then inform the HSMCI driver if there is or is not a card in the slot. */
+  /* Then inform the SDMMC driver if there is or is not a card in the slot. */
 
   state->cd = sam_cardinserted_internal(state);
-  sdio_mediachange(state->hsmci, state->cd);
+  sdio_mediachange(state->sdmmc, state->cd);
 
   /* Enable card detect interrupts */
 
@@ -272,17 +272,17 @@ int sam_sdmmc_initialize(int slotno, int minor)
  * Name: sam_cardinserted
  *
  * Description:
- *   Check if a card is inserted into the selected HSMCI slot
+ *   Check if a card is inserted into the selected SDMMC slot
  *
  ****************************************************************************/
 
 bool sam_cardinserted(int slotno)
 {
-  struct sam_hsmci_state_s *state;
+  struct sam_sdmmc_state_s *state;
 
-  /* Get the HSMI description */
+  /* Get the SDMMC description */
 
-  state = sam_hsmci_state(slotno);
+  state = sam_sdmmc_state(slotno);
   if (!state)
     {
       ferr("ERROR: No state for slotno %d\n", slotno);
@@ -298,7 +298,7 @@ bool sam_cardinserted(int slotno)
  * Name: sam_writeprotected
  *
  * Description:
- *   Check if a card is inserted into the selected HSMCI slot
+ *   Check if a card is inserted into the selected SDMMC slot
  *
  ****************************************************************************/
 
@@ -309,4 +309,4 @@ bool sam_writeprotected(int slotno)
   return false;
 }
 
-#endif /* HAVE_HSMCI */
+#endif /* HAVE_SDMMC */
