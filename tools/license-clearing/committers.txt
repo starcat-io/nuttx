@@ -10,10 +10,11 @@ David Sidrane david_s5@usa.net	davids5 	davids5 	PPMC, Committer
 Flavio Paiva Junqueira	fpj@apache.org	fpj 	fpj 	Mentor, IPMC, PPMC, Committer 	
 Gregory Nutt	gnutt@nuttx.org	gnutt 	patacongo 	PPMC, Committer 	
 Gregory Nutt	spudaneco@gmail.com 	gnutt 	patacongo 	PPMC, Committer 	
-Gregory Nutt gnutt@linux-qpx1.site 	gnutt 	patacongo 	PPMC, Committer 	
-Gregory Nutt gnutt@nuttx.org 	gnutt 	patacongo 	PPMC, Committer 	
-Gregory Nutt gnutt@linux-qpx1.site 	gnutt 	patacongo 	PPMC, Committer 	
-Gregory Nutt gnutt@nuttx.org 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@linux-qpx1.site 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@nuttx.org 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@linux-qpx1.site 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@nuttx.org 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	patacongo@42af7a65-404d-4744-a932-0658087f49c3	gnutt 	patacongo 	PPMC, Committer 	
 Justin Mclean 	justin@classsoftware.com	jmclean 	justinmclean 	Mentor, IPMC, PPMC, Committer 	
 Junping Du	junping_du@apache.org	junping_du 	JunpingDu 	Champion, Mentor, IPMC, PPMC, Committer 	
 Masayuki Ishikawa	masayuki.ishikawa@gmail.com 	masayuki 	masayuki2009 	PPMC, Committer 	
