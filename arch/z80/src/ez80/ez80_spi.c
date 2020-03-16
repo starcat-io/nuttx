@@ -74,7 +74,7 @@ static int    spi_lock(FAR struct spi_dev_s *dev, bool lock);
 static uint32_t spi_setfrequency(FAR struct spi_dev_s *dev,
                 uint32_t frequency);
 static void   spi_setmode(FAR struct spi_dev_s *dev, enum spi_mode_e mode);
-static uint16_t spi_send(FAR struct spi_dev_s *dev, uint16_t wd);
+static uint32_t spi_send(FAR struct spi_dev_s *dev, uint32_t wd);
 #ifdef CONFIG_SPI_EXCHANGE
 static void   spi_exchange(FAR struct spi_dev_s *dev,
                 FAR const void *txbuffer, FAR void *rxbuffer,
@@ -236,7 +236,8 @@ static uint32_t spi_setfrequency(FAR struct spi_dev_s *dev,
       outp(EZ80_SPI_BRG_L, brg & 0xff);
       outp(EZ80_SPI_BRG_H, (brg >> 8) & 0xff);
 
-      g_spi_actual = ((EZ80_SYS_CLK_FREQ + 1) / 2 + brg - 1) / brg;
+      g_spi_frequency = frequency;
+      g_spi_actual    = ((EZ80_SYS_CLK_FREQ + 1) / 2 + brg - 1) / brg;
 
       finfo("BRG=%lu Actual=%lu\n",
             (unsigned long)brg, (unsigned long)g_spi_actual);
@@ -404,7 +405,7 @@ static int spi_transfer(uint8_t chout, FAR uint8_t *chin)
  *
  ****************************************************************************/
 
-static uint16_t spi_send(FAR struct spi_dev_s *dev, uint16_t wd)
+static uint32_t spi_send(FAR struct spi_dev_s *dev, uint32_t wd)
 {
   uint8_t response;
   int ret;
@@ -413,11 +414,11 @@ static uint16_t spi_send(FAR struct spi_dev_s *dev, uint16_t wd)
   if (ret < 0)
     {
       spierr("ERROR: spi_transfer returned %d\n", ret);
-      return (uint16_t)0xff;
+      return (uint32_t)0xff;
     }
 
-  spiinfo("ch: %04x response: %02x\n", wd, response);
-  return (uint16_t)response;
+  spiinfo("cmd: %04x resp: %02x\n", wd, response);
+  return (uint32_t)response;
 }
 
 /****************************************************************************
@@ -580,10 +581,10 @@ static void spi_recvblock(FAR struct spi_dev_s *dev, FAR void *buffer,
  *   prior to calling this function.  Specifically:  GPIOs should have
  *   been configured for output, and all chip selects disabled.
  *
- *   One GPIO, SS (PB2 on the eZ8F091) is reserved as a chip select.  However,
- *   If multiple devices on on the bus, then multiple chip selects will be
- *   required.  Therefore, all GPIO chip management is deferred to board-
- *   specific logic.
+ *   One GPIO, SS (PB2 on the eZ8F091) is reserved as a chip select.
+ *   However, if multiple devices on on the bus, then multiple chip
+ *   selects will be required.  Therefore, all GPIO chip management is
+ *   deferred to board-specific logic.
  *
  * Input Parameters:
  *   Port number (for hardware that has multiple SPI interfaces)

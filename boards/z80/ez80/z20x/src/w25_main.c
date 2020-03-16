@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <termios.h>
 #include <errno.h>
 #include <debug.h>
 #include <hex2bin.h>
@@ -108,12 +109,14 @@ static int w25_read_hex(FAR uint24_t *len)
       return ret;
     }
 
-  /* Wrap stdin as an IN stream that can get the HEX data over the serial port */
+  /* Wrap stdin as an IN stream that can get the HEX data over the serial
+   * port.
+   */
 
   lib_rawinstream(&rawinstream, 0);
 
-  /* Wrap the memory area used to hold the program as a seek-able OUT stream in
-   * which we can buffer the binary data.
+  /* Wrap the memory area used to hold the program as a seek-able OUT stream
+   * in which we can buffer the binary data.
    */
 
   lib_memsostream(&memoutstream, (FAR char *)PROGSTART, PROGSIZE);
@@ -141,7 +144,9 @@ static int w25_read_hex(FAR uint24_t *len)
       return ret;
     }
 
-  printf("Successfully loaded the Intel HEX file into memory...\n");
+  printf("Intel HEX file into memory loaded into RAM...\n");
+  fflush(stdout);
+
   *len = memoutstream.public.nput;
   return OK;
 }
@@ -207,22 +212,22 @@ static int w25_write_binary(FAR const struct prog_header_s *hdr)
       return ret;
     }
 
-  /* Write the hdr to the W25 */
+  /* Write the header to the W25 */
 
   ret = w25_write(fd, hdr, sizeof(struct prog_header_s));
-  if (fd < 0)
+  if (ret < 0)
     {
-      ret = -get_errno();
       fprintf(stderr, "ERROR: Failed write program header: %d\n", ret);
       goto errout;
     }
 
-  printf("Writing %lu bytes to the W25 Serial FLASH\n", (unsigned long)hdr->len);
+  printf("Writing %lu bytes to the W25 Serial FLASH\n",
+         (unsigned long)hdr->len);
+  fflush(stdout);
 
   ret = w25_write(fd, (FAR const void *)PROGSTART, hdr->len);
   if (ret < 0)
     {
-      ret = -get_errno();
       fprintf(stderr, "ERROR: Failed write program header: %d\n", ret);
     }
 
@@ -287,42 +292,48 @@ static int w25_read_binary(FAR struct prog_header_s *hdr)
   if (fd < 0)
     {
       ret = -get_errno();
-      fprintf(stderr, "ERROR: Failed to open %s: %d\n", W25_CHARDEV, ret);
       return ret;
     }
 
   /* Read the header at the beginning of the partition */
 
-  ret = w25_read(fd, hdr, sizeof(hdr));
+  ret = w25_read(fd, hdr, sizeof(struct prog_header_s));
   if (ret < 0)
     {
-      ret = -get_errno();
       fprintf(stderr, "ERROR: Failed read program header: %d\n", ret);
       goto errout;
     }
 
   /* Check for a valid program header */
 
+  /* A valid program should have a MAGIC number */
+
   if (hdr->magic != PROG_MAGIC)
     {
-      fprintf(stderr, "ERROR: No program in FLASH\n");
       ret = -ENOENT;
       goto errout;
     }
 
-  if (hdr->len != PROGSIZE)
+  /* A valid program should fit in RAM */
+
+  if (hdr->len >= PROGSIZE)
     {
       fprintf(stderr, "ERROR: Program too big\n");
       ret = -E2BIG;
       goto errout;
     }
 
-  /* Read the program binary */
+  /* Read the program binary.  A valid program should also have a matching
+   * CRC after loaded to memory.
+   */
+
+  printf("Reading %lu bytes from the W25 Serial FLASH\n",
+         (unsigned long)hdr->len);
+  fflush(stdout);
 
   ret = w25_read(fd, (FAR void *)PROGSTART, hdr->len);
   if (ret < 0)
     {
-      ret = -get_errno();
       fprintf(stderr, "ERROR: Failed read program header: %d\n", ret);
     }
 
@@ -340,17 +351,22 @@ errout:
  *
  ****************************************************************************/
 
-uint24_t w25_crc24(uint32_t len)
+static uint24_t w25_crc24(uint24_t len)
 {
+#if 0 /* Very slow */
   FAR const uint8_t *src = (FAR const uint8_t *)PROGSTART;
   uint32_t crc = 0;
-  int i;
+  uint24_t i;
   int j;
+
+  /* Loop for each byte in the binary image */
 
   for (i = 0; i < len; i++)
     {
       uint8_t val = *src++;
       crc ^= (uint32_t)val << 16;
+
+      /* Loop for each bit in each byte */
 
       for (j = 0; j < 8; j++)
         {
@@ -363,6 +379,52 @@ uint24_t w25_crc24(uint32_t len)
     }
 
   return (uint24_t)crc;
+#else
+  FAR const uint24_t *src = (FAR const uint24_t *)PROGSTART;
+  uint24_t chksum = 0;
+  uint24_t remaining;
+
+  /* Loop for each uint24_t in the binary image */
+
+  for (remaining  = len;
+       remaining >= sizeof(uint24_t);
+       remaining -= sizeof(uint24_t))
+    {
+      uint24_t val = *src++;
+
+      /* Simple checksum */
+
+      chksum += val;
+    }
+
+  /* Handle trailing partial uint24_t's (assumes little endian) */
+
+  if (remaining > 0)
+    {
+      uint24_t val = *src;
+
+      switch (remaining)
+        {
+          case 1:
+            val &= 0x0000ff;
+            break;
+
+          case 2:
+            val &= 0x00ffff;
+            break;
+
+          default:  /* Shouldn't happen */
+            val = 0;
+            break;
+        }
+
+      /* Simple checksum */
+
+      chksum += val;
+    }
+
+  return chksum;
+#endif
 }
 
 /****************************************************************************
@@ -386,21 +448,18 @@ static int w25_read_verify(void)
   ret = w25_read_binary(&hdr);
   if (ret < 0)
     {
-      ret = -get_errno();
-      fprintf(stderr, "ERROR: Failed to read binary: %d\n", ret);
       return ret;
     }
 
-  printf("Verifying %lu bytes in the W25 Serial FLASH\n",
-         (unsigned long)hdr.len);
+  printf("Verifying %lu bytes in RAM\n", (unsigned long)hdr.len);
+  fflush(stdout);
 
   /* Compare CRCs */
 
   crc = w25_crc24(hdr.len);
   if (crc == hdr.crc)
     {
-      printf("Successfully verified %lu bytes in the W25 Serial FLASH\n",
-             (unsigned long)hdr.len);
+      printf("Successfully verified %lu bytes\n", (unsigned long)hdr.len);
     }
   else
     {
@@ -409,6 +468,243 @@ static int w25_read_verify(void)
     }
 
   return OK;
+}
+
+/****************************************************************************
+ * Name: w25_write_program
+ *
+ * Description:
+ *   Read the HEX program from serial and write to FLASH.
+ *
+ ****************************************************************************/
+
+static int w25_write_program(void)
+{
+  struct prog_header_s hdr;
+  int ret;
+
+  /* Read the HEX data into RAM */
+
+  memset(&hdr, 0, sizeof(struct prog_header_s));
+  hdr.magic = PROG_MAGIC;
+
+  ret = w25_read_hex(&hdr.len);
+  if (ret < 0)
+    {
+      fprintf(stderr, "ERROR: Failed to load HEX: %d\n", ret);
+      return ret;
+    }
+
+  /* Calculate a CRC24 checksum */
+
+  hdr.crc = w25_crc24(hdr.len);
+
+  /* The HEX file load was successful, write the data to FLASH */
+
+  ret = w25_write_binary(&hdr);
+  if (ret < 0)
+    {
+      fprintf(stderr, "ERROR: Failed to write to W25: %d\n", ret);
+      return ret;
+    }
+
+  /* Now verify that the image in memory and the image in FLASH are
+   * truly the same.
+   */
+
+  ret = w25_read_verify();
+  if (ret < 0)
+    {
+      fprintf(stderr, "ERROR: Failed to verify program: %d\n", ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: w25_boot_program
+ *
+ * Description:
+ *   Load the program binary from FLASH and execute it
+ *
+ ****************************************************************************/
+
+static int w25_boot_program(void)
+{
+  int ret;
+
+  printf("Booting...\n");
+  fflush(stdout);
+
+  /* Load the program into memory and verify it. */
+
+  ret = w25_read_verify();
+  if (ret < 0)
+    {
+      fprintf(stderr, "ERROR: Failed to verify program: %d\n", ret);
+      return ret;
+    }
+
+#ifdef CONFIG_SERIAL_TERMIOS
+  /* Drain all pending Tx output in stdout. "Booting..." message will be
+   * lost if the outgoing Tx bytes are not drained.
+   */
+
+  ret = tcdrain(1);
+  if (ret < 0)
+    {
+      ret = -get_errno();
+      fprintf(stderr, "ERROR: tcdrain() failed: %d\n", ret);
+      return ret;
+    }
+#endif
+
+  /* Start the successfully loaded program */
+
+  SRAM_ENTRY();
+  return ret;    /* Should not get here */
+}
+
+/****************************************************************************
+ * Name: w25_wait_keypress
+ *
+ * Description:
+ *   Wait the specified number of seconds on or until one of the specified
+ *   keys is pressed.
+ *
+ ****************************************************************************/
+
+static int w25_wait_keypress(FAR char *keyset, int nseconds)
+{
+  char ch = '\0';
+  ssize_t nread;
+  int count = 0;
+  int oflags;
+  int ret;
+  int fd;
+  int i;
+  int j;
+
+  /* Duplicate the file descriptor associated with stdin. */
+
+  fd = dup(0);
+  if (fd < 0)
+    {
+      ret = -get_errno();
+      fprintf(stderr, "ERROR: Failed to dup stdin: %d\n", ret);
+      return ret;
+    }
+
+  /* Make the duplicated file descriptor non-blocking. */
+
+  ret = fcntl(fd, F_GETFL, 0);
+  if (ret >= 0)
+    {
+      ret = fcntl(fd, F_SETFL, ret | O_NONBLOCK);
+    }
+
+  if (ret < 0)
+    {
+      ret = -get_errno();
+      fprintf(stderr, "ERROR: fcnt() failed: %d\n", ret);
+      close(fd) ;
+      return ret;
+    }
+
+  /* Loop for the requested number of seconds */
+
+  for (i = 0; i < nseconds; i++)
+    {
+      /* Check for input every 50 milliseconds */
+
+      for (j = 0; j < 20; j++)
+        {
+          char tmpch;
+
+          /* Read handling retries.  We get out of this loop if a key is press. */
+
+          for (; ; )
+            {
+              /* Read one character */
+
+              nread = read(fd, &tmpch, 1);
+
+              /* Check for errors */
+
+              if (nread < 0)
+                {
+                  int errcode = get_errno();
+
+                  /* If is not an error if a signal occurred or if there is
+                   * no key pressed.
+                   */
+
+                  if (errcode == EAGAIN)
+                    {
+                      /* If no key is pressed, then break out of this inner
+                       * loop, delay, and read again.
+                       */
+
+                      break;
+                    }
+
+                  /* If we were awakened by a signal, then loop and read
+                   * again immediately.
+                   */
+
+                  if (errcode != EINTR)
+                    {
+                      /* Punt on all other errors */
+
+                      fprintf(stderr, "ERROR: Read from stdin failed: %d\n",
+                              errcode);
+                      return -errcode;
+                    }
+                }
+              else if (nread != 1)
+                {
+                  /* This should never happen */
+
+                  fprintf(stderr, "ERROR: Bad read size: %d\n", (int)nread);
+                  return -EIO;
+                }
+
+              /* A key was pressed.  Is it one we care about? */
+
+              else if (strchr(keyset, tmpch) != NULL)
+                {
+                  /* Yes, return the key */
+
+                  ch = tmpch;
+                  goto errout;
+                }
+              else
+                {
+                  /* No... delay and try again */
+
+                  break;
+                }
+            }
+
+          /* Delay 50 Milliseconds  */
+
+          usleep(50 * 1000);
+
+          /* Output a dot to stdout every 10 * 50 = 500 milliseconds */
+
+          if (++count == 10)
+            {
+              putchar('.');
+              fflush(stdout);
+              count = 0;
+            }
+        }
+    }
+
+errout:
+  close(fd);
+  putchar('\n');
+  return ch;
 }
 
 /****************************************************************************
@@ -433,7 +729,7 @@ static int w25_read_verify(void)
 
 int w25_main(int argc, char *argv)
 {
-  struct prog_header_s hdr;
+  bool disable = false;
   int ret;
 
 #ifndef CONFIG_BOARD_LATE_INITIALIZE
@@ -449,42 +745,84 @@ int w25_main(int argc, char *argv)
     }
 #endif
 
+  /* Verify the program in FLASH. */
+
+  ret = w25_read_verify();
+  if (ret < 0)
+    {
+      printf("No valid program in FLASH: %d\n", ret);
+      disable = true;
+    }
+
+  /* Now loop, providing the user with options to load a new program into
+   * FLASH or to boot from an existing program in FLASH.
+   */
+
   for (; ; )
     {
-      /* Read the HEX data into RAM */
+      /* Disable booting if there is nothing valid in the FLASH */
 
-      memset(&hdr, 0, sizeof(struct prog_header_s));
-      hdr.magic = PROG_MAGIC;
-
-      ret = w25_read_hex(&hdr.len);
-      if (ret < 0)
+      if (disable)
         {
-          fprintf(stderr, "ERROR: Failed to load HEX: %d\n", ret);
-          return EXIT_FAILURE;
+          ret = w25_write_program();
+          if (ret >= 0)
+            {
+              /* There is now a valid program in FLASH */
+
+              disable = false;
+            }
         }
 
-      /* Calculate a CRC24 checksum */
+      /* Both booting from FLASH and loading to flash are possible */
 
-      hdr.crc = w25_crc24(hdr.len);
-
-      /* The HEX file load was successful, write the data to FLASH */
-
-      ret = w25_write_binary(&hdr);
-      if (ret < 0)
+      else
         {
-          fprintf(stderr, "ERROR: Failed to write to W25: %d\n", ret);
-          return EXIT_FAILURE;
+          /* Wait up to 5 seconds for (L)oad or (B) keys. */
+
+          printf("[L]oad [B]oot\n");
+          fflush(stdout);
+
+          ret = w25_wait_keypress("LlBb", 5);
+          if (ret < 0)
+            {
+              return EXIT_FAILURE;
+            }
+
+          /* Load HEX command */
+
+          else if (ret == 'L' || ret == 'l')
+            {
+              ret = w25_write_program();
+              if (ret < 0)
+                {
+                  /* Assume that the program in FLASH has been corrupted. */
+
+                  disable = true;
+                }
+            }
+
+          /* Boot from FLASH or timeout */
+
+          else /* if (ret == 'B' || ret == 'b' || ret == 0) */
+            {
+              /* REVISIT:  The program is probably already in RAM.  We may
+               * not have to reload and verify it.
+               */
+
+              ret = w25_boot_program();
+
+              /* Shouldn't get here unless the FLASH content is bad */
+
+              UNUSED(ret);
+              disable = true;
+            }
         }
 
-      /* Now verify that the image in memory and the image in FLASH are
-       * truly the same.
-       */
+      /* Check for a failure */
 
-      ret = w25_read_verify();
       if (ret < 0)
         {
-          fprintf(stderr, "ERROR: Failed to verify program: %d\n", ret);
-          return EXIT_FAILURE;
+          fprintf(stderr, "ERROR: Operation failed: %d\n", ret);
         }
     }
 

@@ -27,13 +27,6 @@ jobs:
         path: nuttx
         fetch-depth: 0
 
-    - name: Checkout apps repo
-      uses: actions/checkout@v2
-      with:
-        repository: apache/incubator-nuttx-apps
-        path: apps
-        fetch-depth: 0
-
     - name: Check Pull Request
       run: |
         cd nuttx
@@ -44,7 +37,6 @@ jobs:
         ./tools/checkpatch.sh -g $commits
 
   build:
-    needs: check
     runs-on: ubuntu-18.04
     container: liuguo09/ubuntu-nuttx:18.04
 
