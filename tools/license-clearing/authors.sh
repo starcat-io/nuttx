@@ -8,4 +8,4 @@ if [ "$FILE" = "-h" ]; then
 fi
 
 echo $FILE > $REPORT  
-git log --follow "$FILE" | grep Author | sort | uniq | sed 's/Author://g' >> $REPORT
+git log --pretty=format:"%an	%ae" --follow "$FILE" | sort | uniq  >> $REPORT
