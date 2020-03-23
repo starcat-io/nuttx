@@ -13,7 +13,7 @@ if [ "$FILE1" = "-h" ]; then
 fi
 
 result=$(comm -13 <(cat "$APPROVED_AUTHORS" | tr A-Z a-z | cut -f2 | tail -n+2 |sort -u) \
-                  <(cat "$FILE_AUTHORS" | grep -v / | tr A-Z a-z | cut -f2 -d\<|sed 's/>//g'|sort -u) )
+                  <(cat "$FILE_AUTHORS" | grep -v / | tr A-Z a-z | cut -f2 |sort -u) )
 
 # empty result means $FILE1 only contains lines from $FILE2
 if [ -z "$result" ]; then
