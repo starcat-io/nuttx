@@ -121,6 +121,10 @@ config SAMA5_HAVE_EMAC1
 	bool
 	default n
 
+config SAMA5_HAVE_SDMMC
+	bool
+	default n
+
 config SAMA5_HAVE_HSMCI2
 	bool
 	default n
@@ -285,6 +289,8 @@ config ARCH_CHIP_ATSAMA5D27
 	select SAMA5_HAVE_CAN0
 	select SAMA5_HAVE_CAN1
 	select SAMA5_HAVE_DDR32
+	select SAMA5_HAVE_SDMMC
+	select SAMA5_HAVE_GMAC
 
 config ARCH_CHIP_ATSAMA5D28
 	bool "Atmel ATSAMA5D28"
@@ -544,6 +550,12 @@ config SAMA5_TWI3
 	bool "Two-Wire Interface 3 (TWI3)"
 	default n
 	depends on SAMA5_HAVE_TWI3
+
+config SAMA5_SDMMC
+	bool "Secure Digital Multimedia Card Interface (SDMMC)"
+	default n
+	depends on SAMA5_HAVE_SDMMC
+	select ARCH_HAVE_SDIO
 
 config SAMA5_HSMCI0
 	bool "High Speed Multimedia Card Interface 0 (HSMCI0)"

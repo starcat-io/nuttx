@@ -450,7 +450,7 @@
  * (2) a microSD memory card slot (J6 labeled MCI1).
  *
  * The full size SD card slot connects via HSMCI0.  The card detect discrete
- * is available on PB17 (pulled high).  The write protect descrete is tied to
+ * is available on PB17 (pulled high).  The write protect discrete is tied to
  * ground (via PP6) and not available to software.  The slot supports 8-bit
  * wide transfer mode, but the NuttX driver currently uses only the 4-bit
  * wide transfer mode
@@ -602,7 +602,7 @@
    * (MICREL KSZ9021/31) operating at 10/100/1000 Mbps.
    * The board supports RGMII interface mode. The Ethernet interface
    * consists of 4 pairs of low voltage differential pair signals
-   * designated from GRX± and GTx± plus control signals for link
+   * designated from GRXï¿½ and GTxï¿½ plus control signals for link
    * activity indicators. These signals can be used to connect to a
    * 10/100/1000 BaseT RJ45 connector integrated on the main board.
    *

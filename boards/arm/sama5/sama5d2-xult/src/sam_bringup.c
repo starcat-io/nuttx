@@ -34,6 +34,8 @@
 #include <nuttx/usb/usbhost.h>
 #include <nuttx/usb/usbdev_trace.h>
 
+#include "sama5d2-xult.h"
+
 #ifdef CONFIG_CDCACM
 #  include <nuttx/usb/cdcacm.h>
 #endif
@@ -51,7 +53,11 @@
 #  include <nuttx/usb/rndis.h>
 #endif
 
-#include "sama5d2-xult.h"
+#ifdef CONFIG_MMCSD
+#  include <nuttx/mmcsd.h>
+#  include "sam_sdmmc.h"
+#endif
+
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -125,6 +131,104 @@ static void sam_i2ctool(void)
 #endif
 
 /****************************************************************************
+ * Name: nsh_sdmmc_initialize
+ *
+ * Description:
+ *   Initialize SDMMC drivers
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_SAMA5_SDMMC
+static int nsh_sdmmc_initialize(void)
+{
+  struct sdio_dev_s *sdmmc0;
+  struct sdio_dev_s *sdmmc1;
+  int ret = 0;
+
+  /* Get an instance of the SDIO interface */
+
+//#ifdef CONFIG_SAMA5_SDMMC0
+#ifdef _SDMMC0_UNUSED
+  sdmmc0 = sam_sdmmc_sdio_initialize(SDMMC0_SLOTNO);
+  custinfo("sdmmc1 priv: %08x\n", sdmmc1);
+  if (!sdmmc0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize SD/MMC\n");
+    }
+  else
+    {
+      /* Bind the SDIO interface to the MMC/SD driver */
+
+      custinfo("about to mmcsd_slotinitnitialize 0\n");
+      ret = mmcsd_slotinitialize(SDMMC0_MINOR, sdmmc0);
+      if (ret != OK)
+        {
+          syslog(LOG_ERR,
+                 "ERROR: Failed to bind SDIO to the MMC/SD driver (slot 0): %d\n",
+                 ret);
+        }
+    }
+
+#ifdef CONFIG_SAMA5D27_SDMMC0_MOUNT
+  /* Mount the volume on SDMMC0 */
+
+  ret = mount(CONFIG_SAMA5D27_SDMMC0_MOUNT_BLKDEV,
+              CONFIG_SAMA5D27_SDMMC0_MOUNT_MOUNTPOINT,
+              CONFIG_SAMA5D27_SDMMC0_MOUNT_FSTYPE,
+              0, NULL);
+
+  if (ret < 0)
+    {
+      _err("ERROR: Failed to mount %s: %d\n",
+           CONFIG_SAMA5D27_SDMMC0_MOUNT_MOUNTPOINT, errno);
+    }
+#endif
+#endif
+
+#ifdef CONFIG_SAMA5_SDMMC1
+  sdmmc1 = sam_sdmmc_sdio_initialize(SDMMC1_SLOTNO);
+  custinfo("sdmmc1 priv: %08x\n", sdmmc1);
+  if (!sdmmc1)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize SD/MMC\n");
+    }
+  else
+    {
+      /* Bind the SDIO interface to the MMC/SD driver */
+
+      custinfo("about to mmcsd_slotinitnitialize 1\n");
+      ret = mmcsd_slotinitialize(SDMMC1_MINOR, sdmmc1);
+      if (ret != OK)
+        {
+          syslog(LOG_ERR,
+                 "ERROR: Failed to bind SDIO to the MMC/SD driver (slot 0): %d\n",
+                 ret);
+        }
+    }
+
+#ifdef CONFIG_SAMA5D27_SDMMC1_MOUNT
+  /* Mount the volume on SDMMC1 */
+
+  ret = mount(CONFIG_SAMA5D27_SDMMC1_MOUNT_BLKDEV,
+              CONFIG_SAMA5D27_SDMMC1_MOUNT_MOUNTPOINT,
+              CONFIG_SAMA5D27_SDMMC1_MOUNT_FSTYPE,
+              0, NULL);
+
+  if (ret < 0)
+    {
+      _err("ERROR: Failed to mount %s: %d\n",
+           CONFIG_SAMA5D27_SDMMC1_MOUNT_MOUNTPOINT, errno);
+    }
+#endif
+#endif
+
+  return OK;
+}
+#else
+#  define nsh_sdmmc_initialize() (OK)
+#endif
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -143,6 +247,16 @@ int sam_bringup(void)
   /* Register I2C drivers on behalf of the I2C tool */
 
   sam_i2ctool();
+
+  custinfo("custinfo: Here 1.1\n");
+  mcinfo("mcinfo: Here 1.2\n");
+#ifdef HAVE_SDMMC
+#ifdef CONFIG_SAMA5_SDMMC
+  /* Initialize SDMCC-based MMC/SD card support */
+  // af
+  nsh_sdmmc_initialize();
+#endif
+#endif
 
 #ifdef HAVE_HSMCI
 #ifdef CONFIG_SAMA5_HSMCI0
@@ -209,6 +323,7 @@ int sam_bringup(void)
 #endif
 #endif
 #endif
+
 
 #ifdef HAVE_AUTOMOUNTER
   /* Initialize the auto-mounter */

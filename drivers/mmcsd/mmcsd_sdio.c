@@ -479,15 +479,19 @@ static int mmsd_get_scr(FAR struct mmcsd_state_s *priv, uint32_t scr[2])
 
   /* Setup up to receive data with interrupt mode */
 
+  custinfo("blocksetup\n");
   SDIO_BLOCKSETUP(priv->dev, 8, 1);
+  custinfo("recvsetup\n");
   SDIO_RECVSETUP(priv->dev, (FAR uint8_t *)scr, 8);
 
+  custinfo("waitenable\n");
   SDIO_WAITENABLE(priv->dev,
                   SDIOWAIT_TRANSFERDONE | SDIOWAIT_TIMEOUT |
                   SDIOWAIT_ERROR);
 
   /* Send CMD55 APP_CMD with argument as card's RCA */
 
+  custinfo("CMD55\n");
   mmcsd_sendcmdpoll(priv, SD_CMD55, (uint32_t)priv->rca << 16);
   ret = mmsd_recv_r1(priv, SD_CMD55);
   if (ret != OK)
@@ -498,6 +502,7 @@ static int mmsd_get_scr(FAR struct mmcsd_state_s *priv, uint32_t scr[2])
 
   /* Send ACMD51 SD_APP_SEND_SCR with argument as 0 to start data receipt */
 
+  custinfo("CMD51 SEND_SCR\n");
   mmcsd_sendcmdpoll(priv, SD_ACMD51, 0);
   ret = mmsd_recv_r1(priv, SD_ACMD51);
   if (ret != OK)
@@ -509,6 +514,7 @@ static int mmsd_get_scr(FAR struct mmcsd_state_s *priv, uint32_t scr[2])
 
   /* Wait for data to be transferred */
 
+  custinfo("mmcsd_eventwait\n");
   ret = mmcsd_eventwait(priv, SDIOWAIT_TIMEOUT | SDIOWAIT_ERROR,
                         MMCSD_SCR_DATADELAY);
   if (ret != OK)
@@ -1331,6 +1337,7 @@ static int mmcsd_setblocklen(FAR struct mmcsd_state_s *priv,
   int ret = OK;
 
   /* Is the block length already selected in the card? */
+  custinfo("Entry blocklen: %d\n", blocklen);
 
   if (priv->selblocklen != blocklen)
     {
@@ -1344,6 +1351,7 @@ static int mmcsd_setblocklen(FAR struct mmcsd_state_s *priv,
       if (ret == OK)
         {
           priv->selblocklen = blocklen;
+          custinfo("Set blocklen %d succeeded\n", blocklen);
         }
       else
         {
@@ -3084,7 +3092,9 @@ static int mmcsd_cardidentify(FAR struct mmcsd_state_s *priv)
 
   /* Then send CMD0 (twice just to be sure) */
 
+  custinfo("About to mmcsd_sendcmdpoll 1...\n");
   mmcsd_sendcmdpoll(priv, MMCSD_CMD0, 0);
+  custinfo("About to mmcsd_sendcmdpoll 2...\n");
   mmcsd_sendcmdpoll(priv, MMCSD_CMD0, 0);
   up_udelay(MMCSD_IDLE_DELAY);
 
@@ -3569,6 +3579,9 @@ static int mmcsd_hwinitialize(FAR struct mmcsd_state_s *priv)
       return ret;
     }
 
+//  custinfo("About to sdhci_reset_all\n");
+//  sdhci_reset_all(&priv);
+
   /* Get the capabilities of the SDIO driver */
 
   priv->caps = SDIO_CAPABILITIES(priv->dev);
@@ -3700,6 +3713,7 @@ int mmcsd_slotinitialize(int minor, FAR struct sdio_dev_s *dev)
 
   /* Allocate a MMC/SD state structure */
 
+  custinfo("in mmcd_slotinitnitialize\n");
   priv = (FAR struct mmcsd_state_s *)
     kmm_malloc(sizeof(struct mmcsd_state_s));
   if (priv)
@@ -3715,6 +3729,7 @@ int mmcsd_slotinitialize(int minor, FAR struct sdio_dev_s *dev)
 
       /* Initialize the hardware associated with the slot */
 
+      custinfo("about to mmcd_hwinitialize\n");
       ret = mmcsd_hwinitialize(priv);
 
       /* Was the slot initialized successfully? */
