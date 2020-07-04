@@ -389,7 +389,6 @@ static inline int sam_configperiph(uintptr_t base, uint32_t pin,
   /* Configure the pin as a peripheral */
 
   putreg32(regval, base + SAM_PIO_CFGR_OFFSET);
-  custinfo("::: config periph: base: %08x offset: %08x regval: %08x\n", base, SAM_PIO_CFGR_OFFSET, regval);
   return OK;
 }
 
@@ -468,7 +467,6 @@ int sam_configpio(pio_pinset_t cfgset)
   /* Set the mask register to modify only the specific pin being configured. */
 
   putreg32(pin, base + SAM_PIO_MSKR_OFFSET);
-  custinfo("::: config pio: base: %08x offset: %08x regval: %08x\n", base, SAM_PIO_MSKR_OFFSET, pin);
 
   /* Put the pin in an initial state -- a vanilla input pin */
 

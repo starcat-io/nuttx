@@ -147,10 +147,8 @@ static int nsh_sdmmc_initialize(void)
 
   /* Get an instance of the SDIO interface */
 
-//#ifdef CONFIG_SAMA5_SDMMC0
-#ifdef _SDMMC0_UNUSED
+#ifdef CONFIG_SAMA5_SDMMC0
   sdmmc0 = sam_sdmmc_sdio_initialize(SDMMC0_SLOTNO);
-  custinfo("sdmmc1 priv: %08x\n", sdmmc1);
   if (!sdmmc0)
     {
       syslog(LOG_ERR, "ERROR: Failed to initialize SD/MMC\n");
@@ -159,7 +157,6 @@ static int nsh_sdmmc_initialize(void)
     {
       /* Bind the SDIO interface to the MMC/SD driver */
 
-      custinfo("about to mmcsd_slotinitnitialize 0\n");
       ret = mmcsd_slotinitialize(SDMMC0_MINOR, sdmmc0);
       if (ret != OK)
         {
@@ -187,7 +184,6 @@ static int nsh_sdmmc_initialize(void)
 
 #ifdef CONFIG_SAMA5_SDMMC1
   sdmmc1 = sam_sdmmc_sdio_initialize(SDMMC1_SLOTNO);
-  custinfo("sdmmc1 priv: %08x\n", sdmmc1);
   if (!sdmmc1)
     {
       syslog(LOG_ERR, "ERROR: Failed to initialize SD/MMC\n");
@@ -196,7 +192,6 @@ static int nsh_sdmmc_initialize(void)
     {
       /* Bind the SDIO interface to the MMC/SD driver */
 
-      custinfo("about to mmcsd_slotinitnitialize 1\n");
       ret = mmcsd_slotinitialize(SDMMC1_MINOR, sdmmc1);
       if (ret != OK)
         {
@@ -248,7 +243,6 @@ int sam_bringup(void)
 
   sam_i2ctool();
 
-  custinfo("custinfo: Here 1.1\n");
   mcinfo("mcinfo: Here 1.2\n");
 #ifdef HAVE_SDMMC
 #ifdef CONFIG_SAMA5_SDMMC

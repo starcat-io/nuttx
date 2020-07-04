@@ -66,7 +66,8 @@
 #include <nuttx/mmcsd.h>
 
 #include "chip.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "sam_pio.h"
 #include "sam_sdmmc.h"
@@ -330,7 +331,6 @@ bool sam_writeprotected(int slotno)
 
   return false;
 }
-
 
 #endif /* HAVE_SDMMC */
 

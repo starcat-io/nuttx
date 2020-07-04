@@ -63,7 +63,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "sam_config.h"
 #include "sam_pio.h"
@@ -459,13 +460,13 @@ struct sam_dev_s g_sdmmcdev[SAM_MAX_SDMMC_DEV_SLOTS] =
 #endif
       .cancel           = sam_cancel,
       .waitresponse     = sam_waitresponse,
-      .recvR1           = sam_recvshortcrc,
-      .recvR2           = sam_recvlong,
-      .recvR3           = sam_recvshort,
-      .recvR4           = sam_recvshort,
-      .recvR5           = sam_recvshortcrc,
-      .recvR6           = sam_recvshortcrc,
-      .recvR7           = sam_recvshort,
+      .recv_r1          = sam_recvshortcrc,
+      .recv_r2          = sam_recvlong,
+      .recv_r3          = sam_recvshort,
+      .recv_r4          = sam_recvshort,
+      .recv_r5          = sam_recvshortcrc,
+      .recv_r6          = sam_recvshortcrc,
+      .recv_r7          = sam_recvshort,
       .waitenable       = sam_waitenable,
       .eventwait        = sam_eventwait,
       .callbackenable   = sam_callbackenable,
@@ -517,13 +518,13 @@ struct sam_dev_s g_sdmmcdev[SAM_MAX_SDMMC_DEV_SLOTS] =
 #endif
       .cancel           = sam_cancel,
       .waitresponse     = sam_waitresponse,
-      .recvR1           = sam_recvshortcrc,
-      .recvR2           = sam_recvlong,
-      .recvR3           = sam_recvshort,
-      .recvR4           = sam_recvshort,
-      .recvR5           = sam_recvshortcrc,
-      .recvR6           = sam_recvshortcrc,
-      .recvR7           = sam_recvshort,
+      .recv_r1          = sam_recvshortcrc,
+      .recv_r2          = sam_recvlong,
+      .recv_r3          = sam_recvshort,
+      .recv_r4          = sam_recvshort,
+      .recv_r5          = sam_recvshortcrc,
+      .recv_r6          = sam_recvshortcrc,
+      .recv_r7          = sam_recvshort,
       .waitenable       = sam_waitenable,
       .eventwait        = sam_eventwait,
       .callbackenable   = sam_callbackenable,
@@ -2285,13 +2286,13 @@ static int sam_sendcmd(FAR struct sdio_dev_s *dev, uint32_t cmd,
    */
 
   timeout = SDMMC_CMDTIMEOUT;
-  start   = clock_systimer();
+  start   = clock_systime_ticks();
   while ((sam_getreg(priv, SAMA5_SDMMC_PRSSTAT_OFFSET) &
           SDMMC_PRSSTAT_CIHB) != 0)
     {
       /* Calculate the elapsed time */
 
-      elapsed = clock_systimer() - start;
+      elapsed = clock_systime_ticks() - start;
       if (elapsed >= timeout)
         {
           mcerr("ERROR: Timeout (waiting CIHB) cmd: %08x PRSSTAT: %08x\n",
@@ -2576,12 +2577,12 @@ static int sam_waitresponse(FAR struct sdio_dev_s *dev, uint32_t cmd)
    * (except Auto CMD12).
    */
 
-  start = clock_systimer();
+  start = clock_systime_ticks();
   while ((sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET) & SDMMC_INT_CC) == 0)
     {
       /* Calculate the elapsed time */
 
-      elapsed = clock_systimer() - start;
+      elapsed = clock_systime_ticks() - start;
       if (elapsed >= timeout)
         {
           mcerr("ERROR: Timeout cmd: %08x IRQSTAT: %08x\n", cmd,
@@ -2606,7 +2607,7 @@ static int sam_waitresponse(FAR struct sdio_dev_s *dev, uint32_t cmd)
 }
 
 /****************************************************************************
- * Name: sam_recvRx
+ * Name: sam_recv_rx
  *
  * Description:
  *   Receive response to SDIO command.  Only the critical payload is
@@ -3575,7 +3576,7 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
    * have priority inheritance enabled.
    */
 
-  nxsem_setprotocol(&priv->waitsem, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->waitsem, SEM_PRIO_NONE);
 
   /* Create a watchdog timer */
 
