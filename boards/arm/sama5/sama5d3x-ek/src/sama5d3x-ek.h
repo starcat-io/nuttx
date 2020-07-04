@@ -171,8 +171,8 @@
 
 /* AT24 Serial EEPROM
  *
- * A AT24C512 Serial EEPPROM was used for tested I2C.  There are other I2C/TWI
- * devices on-board, but the serial EEPROM is the simplest test.
+ * A AT24C512 Serial EEPPROM was used for tested I2C.  There are other
+ * I2C/TWI devices on-board, but the serial EEPROM is the simplest test.
  *
  * There is, however, no AT24 EEPROM on board the SAMA5D3x-EK:  The Serial
  * EEPROM was mounted on an external adaptor board and connected to the
@@ -243,9 +243,9 @@
 #  define AT24_MINOR  _AT24_MINOR
 #endif
 
-/* MMC/SD minor numbers:  The NSH device minor extended is extended to support
- * two devices.  If CONFIG_NSH_MMCSDMINOR is zero, these will be:  /dev/mmcsd0
- * and /dev/mmcsd1.
+/* MMC/SD minor numbers:  The NSH device minor extended is extended to
+ * support two devices.  If CONFIG_NSH_MMCSDMINOR is zero, these will be:
+ * /dev/mmcsd0 and /dev/mmcsd1.
  */
 
 #ifndef CONFIG_NSH_MMCSDMINOR
