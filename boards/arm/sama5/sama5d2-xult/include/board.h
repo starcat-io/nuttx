@@ -65,8 +65,8 @@
 #if defined(CONFIG_SAMA5_BOOT_SDRAM)
 /* When booting from SDRAM, NuttX is loaded in SDRAM by an intermediate
  * bootloader.
- * That bootloader had to have already configured the PLL and SDRAM for proper
- * operation.
+ * That bootloader had to have already configured the PLL and SDRAM for
+ * proper operation.
  *
  * In this case, we don not reconfigure the clocking.
  * Rather, we need to query the register settings to determine the clock

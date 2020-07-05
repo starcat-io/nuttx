@@ -58,7 +58,6 @@
 #  include "sam_sdmmc.h"
 #endif
 
-
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -161,7 +160,8 @@ static int nsh_sdmmc_initialize(void)
       if (ret != OK)
         {
           syslog(LOG_ERR,
-                 "ERROR: Failed to bind SDIO to the MMC/SD driver (slot 0): %d\n",
+                 "ERROR: Failed to bind SDIO to the MMC/SD driver (slot 0): "
+                 "%d\n",
                  ret);
         }
     }
@@ -196,7 +196,8 @@ static int nsh_sdmmc_initialize(void)
       if (ret != OK)
         {
           syslog(LOG_ERR,
-                 "ERROR: Failed to bind SDIO to the MMC/SD driver (slot 0): %d\n",
+                 "ERROR: Failed to bind SDIO to the MMC/SD driver (slot 0): "
+                 "%d\n",
                  ret);
         }
     }
@@ -243,11 +244,10 @@ int sam_bringup(void)
 
   sam_i2ctool();
 
-  mcinfo("mcinfo: Here 1.2\n");
 #ifdef HAVE_SDMMC
 #ifdef CONFIG_SAMA5_SDMMC
   /* Initialize SDMCC-based MMC/SD card support */
-  // af
+
   nsh_sdmmc_initialize();
 #endif
 #endif
@@ -299,7 +299,7 @@ int sam_bringup(void)
 #ifdef CONFIG_SAMA5D4EK_HSMCI1_MOUNT
   else
     {
-      /* REVISIT:  A delay seems to be required here or the mount will fail. */
+      /* REVISIT: A delay seems required here or the mount will fail. */
 
       /* Mount the volume on HSMCI1 */
 
@@ -317,7 +317,6 @@ int sam_bringup(void)
 #endif
 #endif
 #endif
-
 
 #ifdef HAVE_AUTOMOUNTER
   /* Initialize the auto-mounter */

@@ -1,4 +1,4 @@
-/************************************************************************************
+/****************************************************************************
  * arch/arm/src/sama5/hardware/sam_sdmmc.h
  *
  *   Copyright (C) 2018 Gregory Nutt. All rights reserved.
@@ -33,24 +33,24 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- ************************************************************************************/
+ ****************************************************************************/
 
 #ifndef __ARCH_ARM_SRC_SAMA5_HARDWARE_SAMA5_SDMMC_H
 #define __ARCH_ARM_SRC_SAMA5_HARDWARE_SAMA5_SDMMC_H
 
-/************************************************************************************
+/****************************************************************************
  * Included Files
- ************************************************************************************/
+ ****************************************************************************/
 
 #include <nuttx/config.h>
 
 #include "chip.h"
 
-/************************************************************************************
+/****************************************************************************
  * Pre-processor Definitions
- ************************************************************************************/
+ ****************************************************************************/
 
-/* Register Offsets *****************************************************************/
+/* Register Offsets *********************************************************/
 
 #define SAMA5_SDMMC_DSADDR_OFFSET        0x0000 /* DMA System Address Register */
 #define SAMA5_SDMMC_BLKATTR_OFFSET       0x0004 /* Block Attributes Register */
@@ -104,8 +104,7 @@
                                                 /* 0x0234 – 0x023C Reserved */
 #define SAMA5_SDMMC_CALCR_OFFSET         0x0240 /* Calibration Control Register */
 
-
-/* Register Addresses ***************************************************************/
+/* Register Addresses *******************************************************/
 
 /* For SDMMC0... */
 
@@ -172,7 +171,7 @@
 #define SAMA5_SDMMC1_VENDOR2             (SAM_SDMMC1_VBASE + SAMA5_SDMMC_VENDOR2_OFFSET)
 #define SAMA5_SDMMC1_TC                  (SAM_SDMMC1_VBASE + SAMA5_SDMMC_TC_OFFSET)
 
-/* Register Bit Definitions *********************************************************/
+/* Register Bit Definitions *************************************************/
 
 /* DMA System Address Register */
 
@@ -350,8 +349,8 @@
 
 #define SDMMC_TCR_MASK                  (0x0f)        /* Bits 0-3 */
 
-/* Interrupt Status Register, Interrupt Status Enable Register and Interrupt Signal Enable Register
- * Common interrupt bit definitions
+/* Interrupt Status Register, Interrupt Status Enable Register and Interrupt
+ * Signal Enable Register Common interrupt bit definitions
  */
 
 #define SDMMC_INT_CC                     (1 << 0)     /* Bit 0:  Command Complete */
@@ -558,23 +557,25 @@
 #define  SDMMC_H2CR_PRESET_VAL_ENABLE       (0x8000)
 
 /* SDMMC bus modes */
-enum bus_mode {
-    MMC_LEGACY,
-    SD_LEGACY,
-    MMC_HS,
-    SD_HS,
-    MMC_HS_52,
-    MMC_DDR_52,
-    UHS_SDR12,              /* Single data rate, 12Mhz - default */
-    UHS_SDR25,              /* Single data rate, 25Mhz */
-    UHS_SDR50,              /* Single data rate, 50Mhz */
-    UHS_DDR50,              /* Double data rate, 50Mhz */
-    UHS_SDR104,             /* Single data rate, 100Mhz */
-    MMC_HS_200,
-    MMC_HS_400,
-    MMC_HS_400_ES,
-    MMC_MODES_END
-};
+
+enum bus_mode
+  {
+     MMC_LEGACY,
+     SD_LEGACY,
+     MMC_HS,
+     SD_HS,
+     MMC_HS_52,
+     MMC_DDR_52,
+     UHS_SDR12,              /* Single data rate, 12Mhz - default */
+     UHS_SDR25,              /* Single data rate, 25Mhz */
+     UHS_SDR50,              /* Single data rate, 50Mhz */
+     UHS_DDR50,              /* Double data rate, 50Mhz */
+     UHS_SDR104,             /* Single data rate, 100Mhz */
+     MMC_HS_200,
+     MMC_HS_400,
+     MMC_HS_400_ES,
+     MMC_MODES_END
+  };
 
 /* MMC Power */
 
@@ -584,16 +585,12 @@ enum bus_mode {
 #define MMCSD_VDD_32_33             ((uint32_t)1 << 20)    /* VDD voltage 3.2-3.3 */
 #define MMCSD_VDD_33_34             ((uint32_t)1 << 21)    /* VDD voltage 3.3-3.4 */
 
-/************************************************************************************
+/****************************************************************************
  * Public Types
- ************************************************************************************/
+ ****************************************************************************/
 
-/************************************************************************************
+/****************************************************************************
  * Public Data
- ************************************************************************************/
-
-/************************************************************************************
- * Public Functions
- ************************************************************************************/
+ ****************************************************************************/
 
 #endif /* __ARCH_ARM_SRC_SAMA5_HARDWARE_SAMA5_SDMMC_H */
