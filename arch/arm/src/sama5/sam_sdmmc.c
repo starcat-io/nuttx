@@ -77,7 +77,7 @@
 #ifdef CONFIG_SAMA5_SDMMC
 
 /****************************************************************************
-*  Pre-processor Definitions
+ *  Pre-processor Definitions
  ****************************************************************************/
 
 /* Configuration ************************************************************/
@@ -166,7 +166,6 @@
 #define SDMMC_INT_DMAE                   (1 << 28)    /* Bit 28: DMA Error */
                                                       /* Bits 29-31: Reserved */
 
-
 /* CD Detect Types */
 
 /* For DMA operations DINT is not interesting TC will indicate completions */
@@ -179,12 +178,13 @@
                                      SDMMC_DMADONE_INTS)
 
 #define  SDMMC_INT_CMD_MASK     (SDMMC_INT_CC | SDMMC_INT_CTOE | \
-		SDMMC_INT_CCE | SDMMC_INT_CEBE | SDMMC_INT_CIE)
+                                 SDMMC_INT_CCE | SDMMC_INT_CEBE | \
+                                 SDMMC_INT_CIE)
 
 #define  SDMMC_INT_DATA_MASK    (SDMMC_INT_TC | SDMMC_INT_DINT | \
-		SDMMC_INT_BRR | SDMMC_INT_BWR | \
-		SDMMC_INT_CTOE | SDMMC_INT_CCE | \
-		SDMMC_INT_DEBE | SDMMC_INT_ADMAE)
+                                 SDMMC_INT_BRR | SDMMC_INT_BWR | \
+                                 SDMMC_INT_CTOE | SDMMC_INT_CCE | \
+                                 SDMMC_INT_DEBE | SDMMC_INT_ADMAE)
 
 /* Register logging support */
 
@@ -254,7 +254,6 @@ struct sam_dev_s
   uint32_t           vallast;    /* Last value */
   int                ntimes;     /* Number of times */
 #endif
-
 };
 
 /* Register logging support */
@@ -309,7 +308,8 @@ static void sam_configxfrints(struct sam_dev_s *priv, uint32_t xfrints);
 
 #ifdef CONFIG_SDIO_XFRDEBUG
 static void sam_sampleinit(void);
-static void sam_sdmmcsample(struct sam_dev_s *priv, struct sam_sdmmcregs_s *regs);
+static void sam_sdmmcsample(struct sam_dev_s *priv,
+                            struct sam_sdmmcregs_s *regs);
 static void sam_sample(struct sam_dev_s *priv, int index);
 static void sam_dumpsample(struct sam_dev_s *priv,
               struct sam_sdmmcregs_s *regs, const char *msg);
@@ -415,7 +415,8 @@ static int  sam_dmasendsetup(FAR struct sdio_dev_s *dev,
 /* Initialization/uninitialization/reset ************************************/
 
 static void sam_callback(void *arg);
-void sam_set_uhs_timing(FAR struct sam_dev_s *priv, enum bus_mode selected_mode);
+void sam_set_uhs_timing(FAR struct sam_dev_s *priv,
+                        enum bus_mode selected_mode);
 static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock);
 static void sam_power(FAR struct sam_dev_s *priv);
 static int sam_set_interrupts(FAR struct sam_dev_s *priv);
@@ -556,6 +557,7 @@ static struct sam_sdmmcregs_s g_sampleregs[DEBUG_NSAMPLES];
 /****************************************************************************
  * Low-level Helpers
  ****************************************************************************/
+
 /****************************************************************************
  * Name: sam_checkreg
  *
@@ -608,7 +610,9 @@ static bool sam_checkreg(struct sam_dev_s *priv, bool wr, uint32_t value,
 
   return true;
 }
+
 #endif
+
 /****************************************************************************
  * Name: sam_getreg8
  *
@@ -617,7 +621,8 @@ static bool sam_checkreg(struct sam_dev_s *priv, bool wr, uint32_t value,
  *
  ****************************************************************************/
 
-static inline uint32_t sam_getreg8(struct sam_dev_s *priv, unsigned int offset)
+static inline uint32_t sam_getreg8(struct sam_dev_s *priv,
+                                   unsigned int offset)
 {
   uint32_t address = priv->base + offset;
   uint32_t value = getreg8(address);
@@ -640,7 +645,8 @@ static inline uint32_t sam_getreg8(struct sam_dev_s *priv, unsigned int offset)
  *
  ****************************************************************************/
 
-static inline uint32_t sam_getreg16(struct sam_dev_s *priv, unsigned int offset)
+static inline uint32_t sam_getreg16(struct sam_dev_s *priv,
+                                    unsigned int offset)
 {
   uint32_t address = priv->base + offset;
   uint32_t value = getreg16(address);
@@ -663,7 +669,8 @@ static inline uint32_t sam_getreg16(struct sam_dev_s *priv, unsigned int offset)
  *
  ****************************************************************************/
 
-static inline uint32_t sam_getreg32(struct sam_dev_s *priv, unsigned int offset)
+static inline uint32_t sam_getreg32(struct sam_dev_s *priv,
+                                    unsigned int offset)
 {
   uint32_t address = priv->base + offset;
   uint32_t value = getreg32(address);
@@ -685,9 +692,11 @@ static inline uint32_t sam_getreg32(struct sam_dev_s *priv, unsigned int offset)
  *  Read a 32-bit SDMMC register
  *
  ****************************************************************************/
-static inline uint32_t sam_getreg(struct sam_dev_s *priv, unsigned int offset)
+
+static inline uint32_t sam_getreg(struct sam_dev_s *priv,
+                                  unsigned int offset)
 {
-    return sam_getreg32(priv, offset);
+  return sam_getreg32(priv, offset);
 }
 
 /****************************************************************************
@@ -770,7 +779,7 @@ static inline void sam_putreg32(struct sam_dev_s *priv, uint32_t value,
 static inline void sam_putreg(struct sam_dev_s *priv, uint32_t value,
                               unsigned int offset)
 {
-    return sam_putreg32(priv, value, offset);
+  return sam_putreg32(priv, value, offset);
 }
 
 /****************************************************************************
@@ -859,8 +868,6 @@ static void sam_configxfrints(struct sam_dev_s *priv, uint32_t xfrints)
   flags = enter_critical_section();
   priv->xfrints = xfrints;
 
-  // hack to clear TC bit
-  // TODO: needed?
   sam_putreg(priv, priv->xfrints | priv->waitints | priv->cintints,
            SAMA5_SDMMC_IRQSIGEN_OFFSET);
   regval  = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
@@ -892,7 +899,8 @@ static void sam_sampleinit(void)
  ****************************************************************************/
 
 #ifdef CONFIG_SDIO_XFRDEBUG
-static void sam_sdmmcsample(struct sam_dev_s *priv, struct sam_sdmmcregs_s *regs)
+static void sam_sdmmcsample(struct sam_dev_s *priv,
+                            struct sam_sdmmcregs_s *regs)
 {
   regs->dsaddr    = sam_getreg32(priv, SAMA5_SDMMC_DSADDR_OFFSET);
   regs->blkattr   = sam_getreg32(priv, SAMA5_SDMMC_BLKATTR_OFFSET);
@@ -1038,8 +1046,7 @@ static void sam_showregs(struct sam_dev_s *priv, const char *msg)
  *
  ****************************************************************************/
 
-// TODO: inline this function
-static void sam_dataconfig(struct sam_dev_s *priv, bool bwrite,
+static inline void sam_dataconfig(struct sam_dev_s *priv, bool bwrite,
                              unsigned int datalen, unsigned int timeout)
 {
   sam_sample(priv, SAMPLENDX_BEFORE_SETUP);
@@ -1320,7 +1327,8 @@ static void sam_endtransfer(struct sam_dev_s *priv,
 #ifdef CONFIG_SAMA5_SDMMC_DMA
   /* DMA modified the buffer, so we need to flush its cache lines. */
 
-  up_invalidate_dcache((uintptr_t) priv->buffer, (uintptr_t) priv->bufferend);
+  up_invalidate_dcache((uintptr_t) priv->buffer,
+                       (uintptr_t) priv->bufferend);
 #endif
 
   /* Debug instrumentation */
@@ -1335,7 +1343,6 @@ static void sam_endtransfer(struct sam_dev_s *priv,
 
       sam_endwait(priv, wkupevent);
     }
-
 }
 
 /****************************************************************************
@@ -1433,7 +1440,7 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
         }
     }
 
-  /* Handle Card interrupt events *****************************************/
+  /* Handle Card interrupt events *******************************************/
 
   pending = enabled & priv->cintints;
   if ((pending & SDMMC_INT_CINT) != 0)
@@ -1456,7 +1463,8 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
         {
           /* Yes.. queue it */
 
-          mcinfo("Queuing callback to %p(%p)\n", priv->callback, priv->cbarg);
+          mcinfo("Queuing callback to %p(%p)\n", priv->callback,
+                  priv->cbarg);
           (void)work_queue(HPWORK, &priv->cbwork, (worker_t)priv->callback,
                           priv->cbarg, 0);
         }
@@ -1545,7 +1553,7 @@ static int sam_lock(FAR struct sdio_dev_s *dev, bool lock)
 
 static void sam_reset(FAR struct sdio_dev_s *dev)
 {
-  unsigned long timeout_ms = 100;
+  unsigned long timeout_ms;
   FAR struct sam_dev_s *priv = (FAR struct sam_dev_s *)dev;
 
   /* Turn SDMMC peripheral off and then on */
@@ -1571,7 +1579,6 @@ static void sam_reset(FAR struct sdio_dev_s *dev)
           SDMMC_SYSCTL_RSTA) != 0)
     {
     }
-
 
   /* Make sure that all clocking is disabled */
 
@@ -1613,17 +1620,21 @@ static void sam_reset(FAR struct sdio_dev_s *dev)
   /* SDMMC software reset - wait for a maximum of  100 ms */
 
   sam_putreg8(priv, SDMMC_RESET_ALL, SAMA5_SDMMC_SRR_OFFSET);
-  while (sam_getreg8(priv, SAMA5_SDMMC_SRR_OFFSET) & SDMMC_RESET_ALL) {
-      if (timeout_ms == 0) {
+  timeout_ms = 1000;
+  while (sam_getreg8(priv, SAMA5_SDMMC_SRR_OFFSET) & SDMMC_RESET_ALL)
+    {
+      if (timeout_ms == 0)
+        {
           mcinfo("%s: Reset 0x%x never completed.\n",
                  __func__, (int)SDMMC_RESET_ALL);
           return;
-      }
-      timeout_ms--;
-      usleep(1000);
-  }
-  mcinfo("Reset complete\n");
+        }
 
+      timeout_ms--;
+      usleep(100);
+    }
+
+    mcinfo("Reset complete\n");
 }
 
 /****************************************************************************
@@ -1726,6 +1737,7 @@ static sdio_statset_t sam_status(FAR struct sdio_dev_s *dev)
     {
       priv->cdstatus &= ~SDIO_STATUS_PRESENT;
     }
+
   mcinfo("cdstatus=%02x\n", priv->cdstatus);
 
   return priv->cdstatus;
@@ -1802,9 +1814,9 @@ static void sam_frequency(FAR struct sdio_dev_s *dev, uint32_t frequency)
    *
    * The prescaler is available only for the values: 2, 4, 8, 16, 32,
    * 64, 128, and 256.  Pick the smallest value of SDCLKFS that would
-   * result in an in-range frequency. For example, if the base clock frequency
-   * is 96 MHz, and the target frequency is 25 MHz, the following logic
-   * will select prescaler:
+   * result in an in-range frequency. For example, if the base clock
+   * frequency is 96 MHz, and the target frequency is 25 MHz, the following
+   * logic will select prescaler:
    *
    *  96MHz / 2 <= 25MHz <= 96MHz / 2 /16 -- YES, prescaler == 2
    *
@@ -1954,8 +1966,10 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
 
         mcinfo("IDMODE\n");
 
-        /* Wait for at least 74 SD Clock cycles, as per SD Card specification.
-         * The e.MMC Electrical Standard specifies tRSCA >= 200 usec. */
+        /* Wait for at least 74 SD Clock cycles, as per SD Card
+         * specification. The e.MMC Electrical Standard specifies
+         * tRSCA >= 200 usec.
+         */
 
         regval |= (BOARD_SDMMC_IDMODE_PRESCALER |
                    BOARD_SDMMC_IDMODE_DIVISOR |
@@ -2001,9 +2015,10 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
       break;
     }
 
-  if (wait_microseconds > 0) {
+  if (wait_microseconds > 0)
+    {
      usleep(wait_microseconds);
-  }
+    }
 }
 
 /****************************************************************************
@@ -2094,7 +2109,6 @@ static int sam_sendcmd(FAR struct sdio_dev_s *dev, uint32_t cmd,
   clock_t elapsed;
   uint32_t regval;
   uint32_t cmdidx;
-
 
   /* Initialize the command index */
 
@@ -2197,7 +2211,6 @@ static int sam_sendcmd(FAR struct sdio_dev_s *dev, uint32_t cmd,
         }
      }
 
-
   /* Configure response type bits */
 
   switch (cmd & MMCSD_RESPONSE_MASK)
@@ -2249,10 +2262,13 @@ static int sam_sendcmd(FAR struct sdio_dev_s *dev, uint32_t cmd,
 
 #ifdef CONFIG_SAMA5_SDMMC_DMA
   /* Enable DMA */
+
   regval |= SDMMC_XFERTYP_DMAEN;
 #endif
 
-  /* Check for abort. TODO: Check Suspend/Resume bits too in XFR_TYP::CMDTYP */
+  /* Check for abort. */
+
+  /* TODO: Check Suspend/Resume bits too in XFR_TYP::CMDTYP */
 
   if (cmd & MMCSD_STOPXFR)
     {
@@ -2356,8 +2372,9 @@ static void sam_blocksetup(FAR struct sdio_dev_s *dev,
  *   (interrupt driven mode).  This method will do whatever controller setup
  *   is necessary.  This would be called for SD memory just BEFORE sending
  *   CMD13 (SEND_STATUS), CMD17 (READ_SINGLE_BLOCK), CMD18
- *   (READ_MULTIPLE_BLOCKS), ACMD51 (SEND_SCR), etc.  Normally, SDIO_WAITEVENT
- *   will be called to receive the indication that the transfer is complete.
+ *   (READ_MULTIPLE_BLOCKS), ACMD51 (SEND_SCR), etc.  Normally,
+ *   SDIO_WAITEVENT will be called to receive the indication that the
+ *   transfer is complete.
  *
  * Input Parameters:
  *   dev    - An instance of the SDIO device interface
@@ -2381,8 +2398,9 @@ static int sam_recvsetup(FAR struct sdio_dev_s *dev, FAR uint8_t *buffer,
 
   sam_sampleinit();
 
-  mcinfo("nbytes: %d priv->remaining: %d IRQSTAT: %08x\n", nbytes, priv->remaining,
-         sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET));
+  mcinfo("nbytes: %d priv->remaining: %d IRQSTAT: %08x\n", nbytes,
+          priv->remaining,
+          sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET));
   sam_sample(priv, SAMPLENDX_BEFORE_SETUP);
 
   /* Save the destination buffer information for use by the interrupt
@@ -2598,8 +2616,9 @@ static int sam_waitresponse(FAR struct sdio_dev_s *dev, uint32_t cmd)
   enerrors = sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET) & errors;
   if (enerrors != 0)
     {
-      mcerr("ERROR: cmd: %08x errors: %08x, fired %08x IRQSTAT: %08x\n", cmd, \
-        errors, enerrors, sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET));
+      mcerr("ERROR: cmd: %08x errors: %08x, fired %08x IRQSTAT: %08x\n",
+              cmd, errors, enerrors,
+              sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET));
         ret = -EIO;
     }
 
@@ -2692,8 +2711,8 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
     }
 
   /* Return the R1/R1b/R6 response.  These responses are returned in CDMRSP0.
-   * NOTE: This is not true for R1b (Auto CMD12 response) which is returned in
-   * CMDRSP3.
+   * NOTE: This is not true for R1b (Auto CMD12 response) which is returned
+   * in CMDRSP3.
    */
 
   *rshort = sam_getreg(priv, SAMA5_SDMMC_CMDRSP0_OFFSET);
@@ -3084,14 +3103,15 @@ static int sam_dmarecvsetup(FAR struct sdio_dev_s *dev,
 
   /* DMA modified the buffer, so we need to flush its cache lines. */
 
-  up_invalidate_dcache((uintptr_t) priv->buffer, (uintptr_t) priv->bufferend);
-
+  up_invalidate_dcache((uintptr_t) priv->buffer,
+                       (uintptr_t) priv->bufferend);
 
   /* Then set up the SDIO data path */
 
   sam_dataconfig(priv, false, buflen, SDMMC_DTOCV_MAXTIMEOUT);
 
   /* Turn on SDMA mode */
+
   uint32_t regval;
   regval = sam_getreg(priv, SAMA5_SDMMC_PROCTL_OFFSET);
   regval &= ~SDMMC_PROCTL_DMAS_MASK;
@@ -3148,7 +3168,8 @@ static int sam_dmasendsetup(FAR struct sdio_dev_s *dev,
   priv->bufferend = (uint32_t *)(buffer + buflen);
 
   /* DMA will read from the buffer, so we need to flush the data cache to
-   * main memory. */
+   * main memory.
+   */
 
   up_flush_dcache((uintptr_t) priv->buffer, (uintptr_t) priv->bufferend);
 
@@ -3157,6 +3178,7 @@ static int sam_dmasendsetup(FAR struct sdio_dev_s *dev,
   sam_dataconfig(priv, true, buflen, SDMMC_DTOCV_MAXTIMEOUT);
 
   /* Turn on SDMA mode */
+
   uint32_t regval;
   regval = sam_getreg(priv, SAMA5_SDMMC_PROCTL_OFFSET);
   regval &= ~SDMMC_PROCTL_DMAS_MASK;
@@ -3230,16 +3252,17 @@ static void sam_callback(void *arg)
 
       priv->cbevents = 0;
 
-      /* Callbacks cannot be performed in the context of an interrupt handler.
-       * If we are in an interrupt handler, then queue the callback to be
-       * performed later on the work thread.
+      /* Callbacks cannot be performed in the context of an interrupt
+       * handler. If we are in an interrupt handler, then queue the callback
+       * to be performed later on the work thread.
        */
 
       if (up_interrupt_context())
         {
           /* Yes.. queue it */
 
-          mcinfo("Queuing callback to %p(%p)\n", priv->callback, priv->cbarg);
+          mcinfo("Queuing callback to %p(%p)\n", priv->callback,
+                  priv->cbarg);
           work_queue(HPWORK, &priv->cbwork, (worker_t)priv->callback,
                      priv->cbarg, 0);
         }
@@ -3267,15 +3290,17 @@ static void sam_callback(void *arg)
  *   None
  *
  ****************************************************************************/
-void sam_set_uhs_timing(FAR struct sam_dev_s *priv, enum bus_mode selected_mode)
+
+void sam_set_uhs_timing(FAR struct sam_dev_s *priv,
+                        enum bus_mode selected_mode)
 {
-	uint16_t reg;
+    uint16_t reg;
 
-	reg = sam_getreg16(priv, SAMA5_SDMMC_H2CR_OFFSET);
-	reg &= ~SDMMC_H2CR_UHS_MASK;
+    reg = sam_getreg16(priv, SAMA5_SDMMC_H2CR_OFFSET);
+    reg &= ~SDMMC_H2CR_UHS_MASK;
 
-	switch (selected_mode)
-	  {
+    switch (selected_mode)
+      {
         case UHS_SDR50:
         case MMC_HS_52:
             reg |= SDMMC_H2CR_UHS_SDR50;
@@ -3290,9 +3315,9 @@ void sam_set_uhs_timing(FAR struct sam_dev_s *priv, enum bus_mode selected_mode)
             break;
         default:
             reg |= SDMMC_H2CR_UHS_SDR12;
-	  }
+      }
 
-	sam_putreg16(priv, reg, SAMA5_SDMMC_H2CR_OFFSET);
+      sam_putreg16(priv, reg, SAMA5_SDMMC_H2CR_OFFSET);
 }
 
 /****************************************************************************
@@ -3309,143 +3334,146 @@ void sam_set_uhs_timing(FAR struct sam_dev_s *priv, enum bus_mode selected_mode)
  *   Error code
  *
  ****************************************************************************/
+
 static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock)
 {
-	unsigned int div;
-    unsigned int clk = 0;
-	unsigned int timeout;
+  unsigned int div;
+  unsigned int clk = 0;
+  unsigned int timeout;
+  uint32_t caps0;
+  uint32_t caps1;
+  uint32_t clk_mul = 0;
+  uint32_t max_clk = 0;
 
-	/* Wait max 20 ms */
-	timeout = 200;
-	while (sam_getreg(priv, SAMA5_SDMMC_PRSSTAT_OFFSET) &
-			   (SDMMC_PRSSTAT_CIHB | SDMMC_PRSSTAT_CDIHB))
-	  {
-		if (timeout == 0)
-		  {
-			mcinfo("%s: Timeout to wait cmd & data inhibit\n", __func__);
-			return -EBUSY;
-		  }
+  /* Wait max 20 ms */
 
-		  timeout--;
-		  usleep(100);
-	  }
+  timeout = 200;
+  while (sam_getreg(priv, SAMA5_SDMMC_PRSSTAT_OFFSET) &
+         (SDMMC_PRSSTAT_CIHB | SDMMC_PRSSTAT_CDIHB))
+    {
+      if (timeout == 0)
+        {
+          mcinfo("%s: Timeout to wait cmd & data inhibit\n", __func__);
+          return -EBUSY;
+        }
 
-    sam_putreg16(priv, 0, SAMA5_SDMMC_SYSCTL_OFFSET);
+        timeout--;
+        usleep(100);
+    }
 
-    if (clock == 0)
-      {
-		return 0;
-      }
+  sam_putreg16(priv, 0, SAMA5_SDMMC_SYSCTL_OFFSET);
+  if (clock == 0)
+    {
+      return 0;
+    }
 
-	/* Is this clock multiplier supported? */
+  /* Is this clock multiplier supported? */
 
-	uint16_t version = sam_getreg16(priv, SAMA5_SDMMC_HOST_VERSION_OFFSET);
-	uint32_t caps0, caps1;
-	uint32_t clk_mul = 0;
-	uint32_t max_clk = 0;
+  uint16_t version = sam_getreg16(priv, SAMA5_SDMMC_HOST_VERSION_OFFSET);
 
-	caps0 = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT0_OFFSET);
+  caps0 = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT0_OFFSET);
 
-	if (version >= SDMMC_SPEC_3)
-	  {
-		caps1 = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT1_OFFSET);
-		clk_mul = (caps1 & SDMMC_CLOCK_MUL_MASK) >>
-				SDMMC_CLOCK_MUL_SHIFT;
-	  }
+  if (version >= SDMMC_SPEC_3)
+    {
+      caps1 = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT1_OFFSET);
+      clk_mul = (caps1 & SDMMC_CLOCK_MUL_MASK) >> SDMMC_CLOCK_MUL_SHIFT;
+    }
 
-    if (version >= SDMMC_SPEC_3)
-      {
-        max_clk = (caps0 & SDMMC_CLOCK_V3_BASE_MASK) >>
-            SDMMC_CLOCK_BASE_SHIFT;
+  if (version >= SDMMC_SPEC_3)
+    {
+      max_clk = (caps0 & SDMMC_CLOCK_V3_BASE_MASK) >> SDMMC_CLOCK_BASE_SHIFT;
+    }
+  else
+    {
+      max_clk = (caps0 & SDMMC_CLOCK_BASE_MASK) >> SDMMC_CLOCK_BASE_SHIFT;
+    }
 
-      }
-    else
-      {
-        max_clk = (caps0 & SDMMC_CLOCK_BASE_MASK) >>
-            SDMMC_CLOCK_BASE_SHIFT;
-      }
-    max_clk *= 1000000;
-    if (clk_mul)
-      {
-        max_clk *= clk_mul;
-      }
+  max_clk *= 1000000;
+  if (clk_mul)
+    {
+      max_clk *= clk_mul;
+    }
 
-	if (version >= SDMMC_SPEC_3)
-	  {
-		/*
-		 * Check if the SDMMC supports Programmable Clock
-		 * Mode.
-		 */
-		if (clk_mul)
-		  {
-			for (div = 1; div <= 1024; div++)
-			  {
-				if ((max_clk / div) <= clock)
-				    {
-					  break;
-				    }
-			  }
+      if (version >= SDMMC_SPEC_3)
+        {
+          /* Check if the SDMMC supports Programmable Clock Mode. */
 
-			  /*
-			   * Set Programmable Clock Mode
-			   */
-			  clk = SDMMC_SYSCTL_CLKGSEL;
+          if (clk_mul)
+            {
+              for (div = 1; div <= 1024; div++)
+                {
+                  if ((max_clk / div) <= clock)
+                    {
+                      break;
+                    }
+                }
+
+              /* Set Programmable Clock Mode */
+
+              clk = SDMMC_SYSCTL_CLKGSEL;
               div--;
-		  }
-		else
-		  {
-			/* Version 3 divisors must be a multiple of 2. */
-			if (max_clk <= clock)
-              {
-				div = 1;
-              }
-			else
-              {
-				for (div = 2; div < SDMMC_MAX_DIV_SPEC_3; div += 2)
-				  {
-					if ((max_clk / div) <= clock)
-						break;
-				  }
-			  }
-			  div >>= 1;
-		  }
-	}
-	else
-	  {
-		/* Version 2 divisors must be a power of 2. */
-		for (div = 1; div < SDMMC_MAX_DIV_SPEC_2; div *= 2)
-		{
-			if ((max_clk / div) <= clock)
-		      {
-				break;
-              }
-		}
-		div >>= 1;
-	  }
+            }
+          else
+            {
+              /* Version 3 divisors must be a multiple of 2. */
 
-    clk |= (div & SDMMC_DIV_MASK) << SDMMC_DIVIDER_SHIFT;
-    clk |= ((div & SDMMC_DIV_HI_MASK) >> SDMMC_DIV_MASK_LEN)
+              if (max_clk <= clock)
+                {
+                  div = 1;
+                }
+              else
+                {
+                  for (div = 2; div < SDMMC_MAX_DIV_SPEC_3; div += 2)
+                    {
+                      if ((max_clk / div) <= clock)
+                      break;
+                    }
+                }
+
+              div >>= 1;
+            }
+        }
+
+      else
+        {
+          /* Version 2 divisors must be a power of 2. */
+
+          for (div = 1; div < SDMMC_MAX_DIV_SPEC_2; div *= 2)
+            {
+              if ((max_clk / div) <= clock)
+                {
+                  break;
+                }
+            }
+
+            div >>= 1;
+        }
+
+      clk |= (div & SDMMC_DIV_MASK) << SDMMC_DIVIDER_SHIFT;
+      clk |= ((div & SDMMC_DIV_HI_MASK) >> SDMMC_DIV_MASK_LEN)
                << SDMMC_DIVIDER_HI_SHIFT;
-	clk |= SDMMC_SYSCTL_INTCLKEN;
-	sam_putreg16(priv, clk, SAMA5_SDMMC_SYSCTL_OFFSET);
+      clk |= SDMMC_SYSCTL_INTCLKEN;
+      sam_putreg16(priv, clk, SAMA5_SDMMC_SYSCTL_OFFSET);
 
-	/* Wait max 20 ms */
-	timeout = 200;
-	while (!((clk = sam_getreg16(priv, SAMA5_SDMMC_SYSCTL_OFFSET))
-		& SDMMC_SYSCTL_INTCLKS))
-	  {
-		if (timeout == 0)
-		  {
-			mcinfo("%s: Internal clock never stabilised.\n", __func__);
-			return -EBUSY;
-		  }
-		timeout--;
-		usleep(100);
-	  }
+      /* Wait max 20 ms */
 
-	clk |= SDMMC_SYSCTL_SDCLKEN;
-    sam_putreg16(priv, clk, SAMA5_SDMMC_SYSCTL_OFFSET);
-    return 0;
+      timeout = 200;
+      while (!((clk = sam_getreg16(priv, SAMA5_SDMMC_SYSCTL_OFFSET))
+           & SDMMC_SYSCTL_INTCLKS))
+        {
+          if (timeout == 0)
+            {
+              mcinfo("%s: Internal clock never stabilised.\n", __func__);
+              return -EBUSY;
+            }
+
+          timeout--;
+          usleep(100);
+        }
+
+      clk |= SDMMC_SYSCTL_SDCLKEN;
+      sam_putreg16(priv, clk, SAMA5_SDMMC_SYSCTL_OFFSET);
+      return 0;
 }
 
 /****************************************************************************
@@ -3459,61 +3487,72 @@ static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock)
  *   Error code
  *
  ****************************************************************************/
+
 static void sam_power(FAR struct sam_dev_s *priv)
 {
-    uint8_t power = 0;
-	uint8_t card_power = 0;
+  uint8_t power = 0;
+  uint8_t card_power = 0;
 
-	uint32_t voltages = 0;
-	uint32_t capabilities = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT0_OFFSET);
-	if (capabilities & SDMMC_HTCAPBLT_VS33)
-  	  {
-		voltages |= MMCSD_VDD_32_33 | MMCSD_VDD_33_34;
-	  }
-	if (capabilities & SDMMC_HTCAPBLT_VS30)
-	  {
-		voltages |= MMCSD_VDD_29_30 | MMCSD_VDD_30_31;
-	  }
-	if (capabilities & SDMMC_HTCAPBLT_VS18)
-	  {
-		voltages |= MMCSD_VDD_19_20;
-	  }
-	power = fls(voltages) - 1;
+  uint32_t voltages = 0;
+  uint32_t capabilities = sam_getreg(priv,
+                                     SAMA5_SDMMC_HTCAPBLT0_OFFSET);
 
-	uint32_t caps0 = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT0_OFFSET);
-    if ((voltages & MMCSD_VDD_19_20) && (caps0 & SDMMC_HTCAPBLT_DDR50) )
-      {
-        /* if DDR50 mode is available, set voltage to 1.8V
-         * and configure the SDMMC to use DDR50 mode. */
-
-        mcinfo("1.8V and DDR50 available.\n");
-        card_power = SDMMC_POWER_180;
-      }
-    else {
-        switch (1 << power)
-          {
-            case MMCSD_VDD_19_20:
-                card_power = SDMMC_POWER_180;
-                break;
-            case MMCSD_VDD_29_30:
-            case MMCSD_VDD_30_31:
-                card_power = SDMMC_POWER_300;
-                break;
-            case MMCSD_VDD_32_33:
-            case MMCSD_VDD_33_34:
-                card_power = SDMMC_POWER_330;
-                break;
-          }
+  if (capabilities & SDMMC_HTCAPBLT_VS33)
+    {
+      voltages |= MMCSD_VDD_32_33 | MMCSD_VDD_33_34;
     }
-	if (card_power == 0)
-	  {
-	    sam_putreg8(priv, 0, SAMA5_SDMMC_PWRCTL_OFFSET);
-		return;
-	  }
 
-	card_power |= SDMMC_POWER_ON;
-	sam_putreg8(priv, card_power, SAMA5_SDMMC_PWRCTL_OFFSET);
-	// TODO: other bus modes
+  if (capabilities & SDMMC_HTCAPBLT_VS30)
+    {
+      voltages |= MMCSD_VDD_29_30 | MMCSD_VDD_30_31;
+    }
+
+  if (capabilities & SDMMC_HTCAPBLT_VS18)
+    {
+      voltages |= MMCSD_VDD_19_20;
+    }
+
+  power = fls(voltages) - 1;
+
+  uint32_t caps0 = sam_getreg(priv, SAMA5_SDMMC_HTCAPBLT0_OFFSET);
+  if ((voltages & MMCSD_VDD_19_20) && (caps0 & SDMMC_HTCAPBLT_DDR50))
+    {
+      /* if DDR50 mode is available, set voltage to 1.8V
+       * and configure the SDMMC to use DDR50 mode.
+       */
+
+       mcinfo("1.8V and DDR50 available.\n");
+       card_power = SDMMC_POWER_180;
+    }
+  else
+    {
+      switch (1 << power)
+        {
+           case MMCSD_VDD_19_20:
+             card_power = SDMMC_POWER_180;
+             break;
+           case MMCSD_VDD_29_30:
+           case MMCSD_VDD_30_31:
+             card_power = SDMMC_POWER_300;
+             break;
+           case MMCSD_VDD_32_33:
+           case MMCSD_VDD_33_34:
+             card_power = SDMMC_POWER_330;
+           break;
+        }
+    }
+
+  if (card_power == 0)
+    {
+      sam_putreg8(priv, 0, SAMA5_SDMMC_PWRCTL_OFFSET);
+          return;
+        }
+
+      card_power |= SDMMC_POWER_ON;
+      sam_putreg8(priv, card_power, SAMA5_SDMMC_PWRCTL_OFFSET);
+
+    /* TODO: other bus modes */
+
     if (caps0 & SDMMC_HTCAPBLT_DDR50)
       {
         sam_set_uhs_timing(priv, UHS_DDR50);
@@ -3531,13 +3570,18 @@ static void sam_power(FAR struct sam_dev_s *priv)
  *   None
  *
  ****************************************************************************/
-static int sam_set_interrupts(FAR struct sam_dev_s *priv) {
-	/* Only enable interrupts used by the SDMMC */
-	sam_putreg(priv, SDMMC_INT_DATA_MASK | SDMMC_INT_CMD_MASK,
-	        SAMA5_SDMMC_IRQSTATEN_OFFSET);
-	/* Mask all SDMMC interrupt sources */
-	sam_putreg(priv, 0x0, SAMA5_SDMMC_IRQSIGEN_OFFSET);
-	return 0;
+
+static int sam_set_interrupts(FAR struct sam_dev_s *priv)
+{
+  /* Only enable interrupts used by the SDMMC */
+
+  sam_putreg(priv, SDMMC_INT_DATA_MASK | SDMMC_INT_CMD_MASK,
+             SAMA5_SDMMC_IRQSTATEN_OFFSET);
+
+  /* Mask all SDMMC interrupt sources */
+
+  sam_putreg(priv, 0x0, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  return 0;
 }
 
 /****************************************************************************
@@ -3596,6 +3640,7 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
 
 #  if defined(CONFIG_SAMA5_SDMMC0)
       /* Clocking and CMD pins (all data widths) */
+
       sam_configpio(PIO_SDMMC0_DAT0);
       sam_configpio(PIO_SDMMC0_CK);
       sam_configpio(PIO_SDMMC0_CMD);
@@ -3630,7 +3675,9 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
 #  endif
 
     case SAM_SDMMC1_VBASE:
+
       /* Clocking and CMD pins (all data widths) */
+
       priv->base  = SAM_SDMMC1_VBASE;
 #  if defined(CONFIG_SAMA5_SDMMC1)
       sam_configpio(PIO_SDMMC1_DAT0);
@@ -3690,21 +3737,22 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
 
 void sdio_wrprotect(FAR struct sdio_dev_s *dev, bool wrprotect)
 {
-    struct sam_dev_s *priv = (struct sam_dev_s *)dev;
-    irqstate_t flags;
+  struct sam_dev_s *priv = (struct sam_dev_s *)dev;
+  irqstate_t flags;
 
-    /* Update card status */
+  /* Update card status */
 
-    flags = enter_critical_section();
-    if (wrprotect)
+  flags = enter_critical_section();
+  if (wrprotect)
     {
         priv->cdstatus |= SDIO_STATUS_WRPROTECTED;
     }
-    else
+  else
     {
         priv->cdstatus &= ~SDIO_STATUS_WRPROTECTED;
     }
-    leave_critical_section(flags);
+
+  leave_critical_section(flags);
 }
 
 /****************************************************************************
@@ -3726,36 +3774,34 @@ void sdio_wrprotect(FAR struct sdio_dev_s *dev, bool wrprotect)
 void sam_sdmmc_set_sdio_card_isr(FAR struct sdio_dev_s *dev,
                                  int (*func)(void *), void *arg)
 {
-    irqstate_t flags;
-    uint16_t regval;
-    struct sam_dev_s *priv = (struct sam_dev_s *)dev;
+  irqstate_t flags;
+  uint16_t regval;
+  struct sam_dev_s *priv = (struct sam_dev_s *)dev;
 
-    mcinfo("Entry\n");
+  priv->do_sdio_card = func;
+  priv->do_sdio_arg = arg;
 
-    priv->do_sdio_card = func;
-    priv->do_sdio_arg = arg;
-
-    if (priv->do_sdio_card != NULL)
+  if (priv->do_sdio_card != NULL)
     {
-        priv->cintints = SDMMC_INT_CINT;
+      priv->cintints = SDMMC_INT_CINT;
     }
-    else
+  else
     {
-        priv->cintints = 0;
+      priv->cintints = 0;
     }
 
 #if defined(CONFIG_MMCSD_HAVE_CARDDETECT)
-    if (priv->sw_cd_gpio == 0)
+  if (priv->sw_cd_gpio == 0)
     {
-      priv->cintints |= SDMMC_INT_CINS | SDMMC_INT_CRM;
+       priv->cintints |= SDMMC_INT_CINS | SDMMC_INT_CRM;
     }
 #endif
 
-    flags  = enter_critical_section();
-    regval = sam_getreg16(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
-    regval = (regval & ~SDMMC_INT_CINT) | priv->cintints;
-    sam_putreg16(regval, priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
-    leave_critical_section(flags);
+  flags  = enter_critical_section();
+  regval = sam_getreg16(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  regval = (regval & ~SDMMC_INT_CINT) | priv->cintints;
+  sam_putreg16(regval, priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  leave_critical_section(flags);
 }
 
 /****************************************************************************
@@ -3782,36 +3828,36 @@ void sam_sdmmc_set_sdio_card_isr(FAR struct sdio_dev_s *dev,
 
 void sdio_mediachange(FAR struct sdio_dev_s *dev, bool cardinslot)
 {
-    struct sam_dev_s *priv = (struct sam_dev_s *)dev;
-    sdio_statset_t cdstatus;
-    irqstate_t flags;
+  struct sam_dev_s *priv = (struct sam_dev_s *)dev;
+  sdio_statset_t cdstatus;
+  irqstate_t flags;
 
-    /* Update card status.  Interrupts are disabled here because if we are
-     * not called from an interrupt handler, then the following steps must
-     * still be atomic.
-     */
+  /* Update card status.  Interrupts are disabled here because if we are
+   * not called from an interrupt handler, then the following steps must
+   * still be atomic.
+   */
 
-    flags = enter_critical_section();
-    cdstatus = priv->cdstatus;
-    if (cardinslot)
+  flags = enter_critical_section();
+  cdstatus = priv->cdstatus;
+  if (cardinslot)
     {
         priv->cdstatus |= SDIO_STATUS_PRESENT;
     }
-    else
+  else
     {
         priv->cdstatus &= ~SDIO_STATUS_PRESENT;
     }
 
-    mcinfo("cdstatus OLD: %02x NEW: %02x\n", cdstatus, priv->cdstatus);
+  mcinfo("cdstatus OLD: %02x NEW: %02x\n", cdstatus, priv->cdstatus);
 
-    /* Perform any requested callback if the status has changed */
+  /* Perform any requested callback if the status has changed */
 
-    if (cdstatus != priv->cdstatus)
+  if (cdstatus != priv->cdstatus)
     {
         sam_callback(priv);
     }
 
-    leave_critical_section(flags);
+  leave_critical_section(flags);
 }
 
 #endif /* CONFIG_SAMA5_SDMMC */
