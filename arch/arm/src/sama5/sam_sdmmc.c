@@ -3716,6 +3716,12 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
   sam_power(priv);
   sam_set_interrupts(priv);
 
+  /* TODO: remove */
+
+  /* This is needed to make reading files work. But why does this work? */
+
+  struct sdio_dev_s *unused = (struct sdio_dev_s*)calloc(1, 466);
+
   return &g_sdmmcdev[slotno].dev;
 }
 
