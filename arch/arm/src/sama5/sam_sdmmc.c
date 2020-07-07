@@ -3471,6 +3471,20 @@ static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock)
           usleep(100);
         }
 
+      /* High Speed Mode? */
+
+      uint32_t regval;
+      regval = sam_getreg(priv, SAMA5_SDMMC_PROCTL_OFFSET);
+	  if (clock > 26000000)
+	    {
+           regval |= SDMMC_PROCTL_HSEN;
+	    }
+	  else
+	    {
+	       regval &= ~SDMMC_PROCTL_HSEN;
+	    }
+      sam_putreg(priv, regval, SAMA5_SDMMC_PROCTL_OFFSET);
+
       clk |= SDMMC_SYSCTL_SDCLKEN;
       sam_putreg16(priv, clk, SAMA5_SDMMC_SYSCTL_OFFSET);
       return 0;
