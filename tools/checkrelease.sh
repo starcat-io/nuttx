@@ -19,53 +19,44 @@
 #
 #############################################################################
 
-VERBOSE=0
 RETURN_CODE=0
+
 BASE_URL="https://dist.apache.org/repos/dist/dev/incubator/nuttx"
-DIST_DIR="dist.apache.org"
-TMP="/tmp"
-TEMPDIR="$TMP/nuttx-checkrelease"
-ORIGINAL_DIR="$(pwd)"
-trap "{ rm -rf $TEMPDIR; }" EXIT
+TEMPDIR="/tmp/nuttx-checkrelease"
 
 function validate_url() {
-  if [[ `wget -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
+  if [[ `wget -S --spider $1 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
 }
 
 function download_release() {
   rm -rf "$TEMPDIR"
+  mkdir "$TEMPDIR"
+  cd "$TEMPDIR"
+
   if [[ -n "$URL" ]]; then
-    mkdir "$TEMPDIR"
     if [[ $(validate_url "$URL") ]]; then
       echo "Downloading release files from $URL"
-      cd "$TEMPDIR"
       wget -q -r -nd -np "$URL"
     else
-      echo "The URL given doesn't return HTTP 200 OK return code— exiting. ($URL)"
+      echo "The $URL given doesn't return HTTP 200 OK return code— exiting."
       exit 1
     fi
   else
-    if [[ -n "$DIRECTORY" ]]; then
-      cp -r "$DIRECTORY" "$TEMPDIR"
-      cd "$TEMPDIR"
-    else
-      echo "One of --dir or --url is required!"
-      exit 1
-    fi
+    cp -r "$DIRECTORY" .
   fi
 }
 
 function check_sha512() {
     RELEASE_FILE=$1
     echo "Checking $RELEASE_FILE sha512..."
-    output="$(sha512sum -c $RELEASE_FILE.sha512 2>&1)"
+    output="$(sha512sum -c $RELEASE_FILE.sha512)" 2>&1
     return_value=$?
     if [ $return_value -eq 0 ]; then
       echo " OK: $RELEASE_FILE sha512 hash matches."
     else
       RETURN_CODE=1
-      echo " - $RELEASE_FILE sha512 hash does not match:"
       echo "$output"
+      echo " - $RELEASE_FILE sha512 hash does not match."
     fi
     echo
 }
@@ -79,33 +70,35 @@ function check_gpg() {
       echo " OK: $RELEASE_FILE gpg signature matches."
     else
       RETURN_CODE=1
-      echo " - Error checking $RELEASE_FILE gpg signature:"
-      echo
+      echo " - Error checking $RELEASE_FILE gpg signature."
     fi
     echo
 }
 
 function check_required_files() {
     RELEASE_DIR=$1
+    MISSING_FILE=0
     echo "Checking $RELEASE_FILE for required files:"
     if [ ! -f "$RELEASE_DIR/LICENSE" ]; then
       echo " - LICENSE file not present."
-      RETURN_CODE=1
+      MISSING_FILE=1
     fi
     if [ ! -f "$RELEASE_DIR/NOTICE" ]; then
       echo " - NOTICE file not present."
-      RETURN_CODE=1
+      MISSING_FILE=1
     fi
     if [ ! -f "$RELEASE_DIR/README.txt" ]; then
       echo " - README.txt file not present."
-      RETURN_CODE=1
+      MISSING_FILE=1
     fi
     if [ ! -f "$RELEASE_DIR/DISCLAIMER-WIP" ]; then
       echo " - DISCLAIMER-WIP file not present."
-      RETURN_CODE=1
+      MISSING_FILE=1
     fi
-    if [ 0 -eq $RETURN_CODE ]; then
+    if [ 0 -eq $MISSING_FILE ]; then
       echo " OK: all required files exist in $RELEASE_DIR."
+    else
+      RETURN_CODE=$MISSING_FILE
     fi
     echo
 }
@@ -117,7 +110,6 @@ function check_nuttx() {
     check_gpg "$RELEASE_FILE"
     tar xf "$RELEASE_FILE"
     check_required_files "$RELEASE_DIR"
-    mv "$RELEASE_FILE" "$TMP"
 }
 
 function check_nuttx_apps() {
@@ -127,7 +119,22 @@ function check_nuttx_apps() {
     check_gpg "$RELEASE_FILE"
     tar xf "$RELEASE_FILE"
     check_required_files "$RELEASE_DIR"
-    mv "$RELEASE_FILE" "$TMP"
+}
+
+function check_sim_nsh_build() {
+    RELEASE_DIR="nuttx"
+    echo "Trying to build $RELEASE_DIR sim:nsh..."
+    cd "$RELEASE_DIR"
+    output=$(make distclean; ./tools/configure.sh sim:nsh; make) 2>&1
+    return_value=$?
+    if [ $return_value -eq 0 ]; then
+      echo " OK: we were able to build sim:nsh."
+    else
+      RETURN_CODE=1
+      echo "$output"
+      echo " - Error building sim:nsh."
+    fi
+    echo
 }
 
 function check_sim_nsh_build() {
@@ -154,7 +161,7 @@ function check_sim_nsh_build() {
     echo
 }
 function usage() {
-    echo "Usage: $0 [--verbose] [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
+    echo "Usage: $0 [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
     echo "   Given release full URL, release name, or a local directory, downloads or copies"
     echo "   all files in that directory (which for a release should include nuttx and nuttx-apps, sha512, "
     echo "   asc, and tar.gz files), checks the release SHA512 and GPG signatures, checks the unpacked "
@@ -162,11 +169,6 @@ function usage() {
     echo
     echo "   If tempdir is specified, it will be removed and recreated; if it is not specified, /tmp/nuttx-checkrelease"
     echo "   is used."
-    echo
-    echo "   If --url or --release are given, nuttx and nuttx-apps tar.gz files are left in /tmp for the user to "
-    echo "   build for their platform."
-    echo
-    echo "   -V and --verbose are equivalent."
     echo
     echo "Examples:"
     echo
@@ -176,43 +178,37 @@ function usage() {
     echo
 }
 
-UNKNOWN=()
 URL=""
 DIRECTORY=""
 
 while [[ $# -gt 0 ]]
 do
-  key="$1"
-
-  case $key in
-      -U|--url)
-      shift
-      URL="$1/"
-      ;;
-      -R|--release)
-      shift
-      RELEASE="$1"
-      URL="$BASE_URL/$RELEASE/"
-      ;;
-      -D|--dir)
-      shift
-      DIRECTORY="$(readlink -f $1)"
-      ;;
-      -T|--tempdir)
-      shift
-      TEMPDIR="$(readlink -f $1)"
-      ;;
-      -h|--help)
+  case $1 in
+    -U|--url)
+    shift
+    URL="$1/"
+    ;;
+    -R|--release)
+    shift
+    RELEASE="$1"
+    URL="$BASE_URL/$RELEASE/"
+    ;;
+    -D|--dir)
+    shift
+    DIRECTORY="$(readlink -f $1)"
+    ;;
+    -T|--tempdir)
+    shift
+    TEMPDIR="$(readlink -f $1)"
+    ;;
+    -h|--help)
+    usage
+    exit 0
+    ;;
+    *)    # unknown option
       usage
-      exit 0
-      ;;
-      -V|--verbose)
-      VERBOSE=1
-      ;;
-      *)    # unknown option
-        usage
-        exit 1
-      ;;
+      exit 1
+    ;;
   esac
   shift
 done
@@ -223,14 +219,8 @@ if [[ (-z "$URL") && (-z "$DIRECTORY") ]]; then
 fi
 
 download_release
-if [[ -n "$URL" ]]; then
-  # download and check
-  check_nuttx
-  check_nuttx_apps
-else
-  # check directories without downloading
-  check_required_files "nuttx"
-  check_required_files "apps"
-fi
+check_nuttx
+check_nuttx_apps
 check_sim_nsh_build
+
 exit $RETURN_CODE
