@@ -1975,7 +1975,7 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
                    BOARD_SDMMC_IDMODE_DIVISOR |
                    SDMMC_SYSCTL_INTCLKEN);
         wait_microseconds = 200;
-        sam_set_clock(priv, 400000);
+        sam_set_clock(priv, SAMA5_SDMMC_BUS_SPEED_IDMODE);
       }
       break;
 
@@ -1986,7 +1986,7 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
         mcinfo("MMCTRANSFER\n");
         regval |= (BOARD_SDMMC_MMCMODE_PRESCALER |
                    BOARD_SDMMC_MMCMODE_DIVISOR);
-        sam_set_clock(priv, 50000000);
+        sam_set_clock(priv, SAMA5_SDMMC_BUS_SPEED);
       }
       break;
 
@@ -1998,7 +1998,7 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
         mcinfo("1BITTRANSFER\n");
         regval |= (BOARD_SDMMC_SD1MODE_PRESCALER |
                    BOARD_SDMMC_SD1MODE_DIVISOR);
-        sam_set_clock(priv, 50000000);
+        sam_set_clock(priv, SAMA5_SDMMC_BUS_SPEED);
       }
       break;
 #endif
@@ -2010,7 +2010,7 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
         mcinfo("4BITTRANSFER\n");
         regval |= (BOARD_SDMMC_SD4MODE_PRESCALER |
                   BOARD_SDMMC_SD4MODE_DIVISOR);
-        sam_set_clock(priv, 50000000);
+        sam_set_clock(priv, SAMA5_SDMMC_BUS_SPEED);
       }
       break;
     }
@@ -3475,7 +3475,7 @@ static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock)
 
       uint32_t regval;
       regval = sam_getreg(priv, SAMA5_SDMMC_PROCTL_OFFSET);
-	  if (clock > 26000000)
+	  if (clock > SAMA5_SDMMC_BUS_HIGH_SPEED_THRESHOLD)
 	    {
            regval |= SDMMC_PROCTL_HSEN;
 	    }

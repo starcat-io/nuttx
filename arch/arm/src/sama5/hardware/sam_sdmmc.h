@@ -585,6 +585,30 @@ enum bus_mode
 #define MMCSD_VDD_32_33             ((uint32_t)1 << 20)    /* VDD voltage 3.2-3.3 */
 #define MMCSD_VDD_33_34             ((uint32_t)1 << 21)    /* VDD voltage 3.3-3.4 */
 
+/* SDMMC bus speed for IDMODE transfers */
+
+#define SAMA5_SDMMC_BUS_SPEED_IDMODE 400000
+
+/* SDMMC bus speed threshold for high-speed mode transfers-
+ * above this we need to set SDMMC_PROCTL_HSEN bit
+ */
+
+#define SAMA5_SDMMC_BUS_HIGH_SPEED_THRESHOLD 26000000
+
+/* SDMMC maximum bus speed - only used if SD Card supports this speed
+ * DDR (double data rate) signaling on rising and falling edges of the clock
+ * will also be used if card supports it.
+ *
+ * DDR50 in widebus mode = 400 megabits/s
+ */
+
+#ifdef CONFIG_SAMA5_SDMMC_50MHZ
+# define SAMA5_SDMMC_BUS_SPEED 50000000
+#else
+# define SAMA5_SDMMC_BUS_SPEED 25000000
+#endif
+
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
