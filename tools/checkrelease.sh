@@ -74,7 +74,11 @@ function check_sha512() {
 function check_gpg() {
     RELEASE_FILE=$1
     echo "Checking $RELEASE_FILE GPG signature:"
-    output="$(gpg --quiet --verify $RELEASE_FILE.asc $RELEASE_FILE 2>&1)"
+    QUIET=""
+    if [[ $GPG_OUTPUT -eq 0 ]]; then
+      QUIET="--quiet"
+    fi
+    gpg $QUIET --verify $RELEASE_FILE.asc $RELEASE_FILE
     return_value=$?
     if [ $return_value -eq 0 ]; then
       echo " OK: $RELEASE_FILE gpg signature matches."
@@ -161,7 +165,7 @@ function check_sim_nsh_build() {
     echo
 }
 function usage() {
-    echo "Usage: $0 [--verbose] [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
+    echo "Usage: $0 [--verbose] [--gpg-output] [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
     echo "   Given release full URL, release name, or a local directory, downloads or copies"
     echo "   all files in that directory (which for a release should include nuttx and nuttx-apps, sha512, "
     echo "   asc, and tar.gz files), checks the release SHA512 and GPG signatures, checks the unpacked "
@@ -172,6 +176,9 @@ function usage() {
     echo
     echo "   If --url or --release are given, nuttx and nuttx-apps tar.gz files are left in /tmp for the user to "
     echo "   build for their platform."
+    echo
+    echo "   -V and --verbose are equivalent."
+    echo "   -G and --gpg-output are equivalent."
     echo 
     echo "Examples:"
     echo
@@ -216,10 +223,13 @@ case $key in
     usage
     exit 0
     ;;
+    -G|--gpg-output)
+    GPG_OUTPUT=1
+    shift # past argument
+    ;;
     -V|--verbose)
     VERBOSE=1
     shift # past argument
-    shift # past value
     ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
