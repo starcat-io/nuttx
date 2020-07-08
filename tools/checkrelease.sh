@@ -28,13 +28,23 @@ TEMPDIR="$TMP/nuttx-checkrelease"
 ORIGINAL_DIR="$(pwd)"
 trap "{ cd $ORIGINAL_DIR; rm -rf $TEMPDIR; }" EXIT
 
+function validate_url(){
+  if [[ `wget -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
+}
+
 function download_release() {
   rm -rf "$TEMPDIR"
   if [[ -n "$URL" ]]; then
     mkdir "$TEMPDIR"
-    wget -r --no-parent -P "$TEMPDIR" --cut-dirs 8 "$URL"
-    cd "$TEMPDIR"
-    mv $DIST_DIR/apache-nuttx-* .
+    if [[ $(validate_url "$URL") ]]; then
+      echo "Downloading release files from $URL"
+      wget --quiet -r --no-parent -P "$TEMPDIR" --cut-dirs 8 "$URL"
+      cd "$TEMPDIR"
+      mv $DIST_DIR/apache-nuttx-* .
+    else
+      echo "The URL given doesn't return HTTP 200 OK return code— exiting. ($URL)"
+      exit 1
+    fi
   else
     if [[ -n "$DIRECTORY" ]]; then
       cp -r "$DIRECTORY" "$TEMPDIR"
