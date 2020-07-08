@@ -25,8 +25,10 @@
 #include <nuttx/config.h>
 
 #include <sys/mount.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include <debug.h>
+#include <string.h>
 
 #include <nuttx/irq.h>
 #include <nuttx/kthread.h>
@@ -138,6 +140,7 @@ static void sam_i2ctool(void)
  ****************************************************************************/
 
 #ifdef CONFIG_SAMA5_SDMMC
+
 static int nsh_sdmmc_initialize(void)
 {
   struct sdio_dev_s *sdmmc0;

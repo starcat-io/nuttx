@@ -53,7 +53,7 @@
 /* Register Offsets *********************************************************/
 
 #define SAMA5_SDMMC_DSADDR_OFFSET        0x0000 /* DMA System Address Register */
-#define SAMA5_SDMMC_BLKATTR_OFFSET       0x0004 /* Block Attributes Register */
+#define SAMA5_SDMMC_BLKATTR_OFFSET       0x0004 /* Block Size Register */
 #define SAMA5_SDMMC_BSR_OFFSET           0x0004 /* Block Size Register */
 #define SAMA5_SDMMC_BCR_OFFSET           0x0006 /* Block Count Register */
 #define SAMA5_SDMMC_CMDARG_OFFSET        0x0008 /* Command Argument Register */
@@ -180,14 +180,13 @@
 
 /* Block Attributes Register */
 
-#define SDMMC_BLKATTR_SIZE_SHIFT         (0)           /* Bits 0-9: Transfer Block Size */
-                                                       /* Bits 10-12: Reserved */
-#define SDMMC_BLKATTR_SIZE_MASK          (0x03ff << SDMMC_BLKATTR_SIZE_SHIFT)
-#  define SDMMC_BLKATTR_SIZE(n)          ((n) << SDMMC_BLKATTR_SIZE_SHIFT)
-                                                       /* Bits 13-15: Reserved */
-#define SDMMC_BLKATTR_CNT_SHIFT          (16)          /* Bits 16-31: Blocks Count For Current Transfer */
-#define SDMMC_BLKATTR_CNT_MASK           (0xffff << SDMMC_BLKATTR_CNT_SHIFT)
-#  define SDMMC_BLKATTR_CNT(n)           ((n) << SDMMC_BLKATTR_CNT_SHIFT)
+#define SDMMC_BSR_BLKSIZE_SHIFT         (0)           /* Bits 0-9: Transfer Block Size */
+                                                      /* Bits 10-11: Reserved */
+#define SDMMC_BSR_BOUNDARY_SHIFT        (12)          /* Bits 12-14: Boundary */
+                                                      /* Bit 15: Reserved */
+
+
+/* Block Count Register (16-bit block count) */
 
 /* Command Argument Register (32-bit cmd/arg data) */
 
@@ -608,6 +607,7 @@ enum bus_mode
 # define SAMA5_SDMMC_BUS_SPEED 25000000
 #endif
 
+#define SDMMC_DEFAULT_BOUNDARY_SIZE	(512 * 1024)
 
 /****************************************************************************
  * Public Types

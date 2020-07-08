@@ -43,6 +43,7 @@
 
 #include <nuttx/config.h>
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -58,6 +59,7 @@
 #include <nuttx/wqueue.h>
 #include <nuttx/semaphore.h>
 #include <nuttx/mmcsd.h>
+#include <nuttx/kmalloc.h>
 
 #include <nuttx/irq.h>
 #include <arch/board/board.h>
@@ -118,10 +120,6 @@
 
 #define SDMMC_DTOCV_MAXTIMEOUT      (15)
 
-/* Maximum watermark value */
-
-#define SDMMC_MAX_WATERMARK         128
-
 /* Data transfer / Event waiting interrupt mask bits */
 
 #define SDMMC_RESPERR_INTS          (SDMMC_INT_CCE | SDMMC_INT_CTOE | \
@@ -167,8 +165,6 @@
                                                       /* Bits 29-31: Reserved */
 
 /* CD Detect Types */
-
-/* For DMA operations DINT is not interesting TC will indicate completions */
 
 #define SDMMC_DMAERR_INTS           (SDMMC_XFRERR_INTS | SDMMC_INT_DMAE)
 #define SDMMC_DMADONE_INTS          (SDMMC_DMAERR_INTS | SDMMC_INT_TC)
@@ -420,6 +416,7 @@ void sam_set_uhs_timing(FAR struct sam_dev_s *priv,
 static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock);
 static void sam_power(FAR struct sam_dev_s *priv);
 static int sam_set_interrupts(FAR struct sam_dev_s *priv);
+static void sam_mem_alloc_workaround(void);
 
 /****************************************************************************
  * Private Data
@@ -837,7 +834,9 @@ static void sam_configwaitints(struct sam_dev_s *priv, uint32_t waitints,
 #ifdef CONFIG_SAMA5_SDMMC_DMA
   priv->xfrflags   = 0;
 #endif
-  sam_putreg(priv, priv->xfrints | priv->waitints | priv->cintints,
+  // TODO: remove DINT
+  sam_putreg(priv, priv->xfrints | priv->waitints | priv->cintints | \
+                   SDMMC_INT_DINT,
            SAMA5_SDMMC_IRQSIGEN_OFFSET);
   leave_critical_section(flags);
 }
@@ -860,17 +859,24 @@ static void sam_configwaitints(struct sam_dev_s *priv, uint32_t waitints,
 static void sam_configxfrints(struct sam_dev_s *priv, uint32_t xfrints)
 {
   irqstate_t flags;
+//  uint16_t eister;
+  uint32_t irqstaten;
+  uint32_t irqsigen;
 
-  uint16_t eister = sam_getreg16(priv, SAMA5_SDMMC_EISTER_OFFSET);
-  uint32_t irqstaten = sam_getreg32(priv, SAMA5_SDMMC_IRQSTATEN_OFFSET);
+//  eister = sam_getreg16(priv, SAMA5_SDMMC_EISTER_OFFSET);
   irqstaten = sam_getreg32(priv, SAMA5_SDMMC_IRQSTATEN_OFFSET);
-  uint32_t regval  = sam_getreg32(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  irqsigen = sam_getreg32(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+
+  custinfo("IRQSTAT: %08x IRQSIGEN %08x priv->xfrints: %08x\n",
+         irqstaten, irqsigen, priv->xfrints);
+
   flags = enter_critical_section();
   priv->xfrints = xfrints;
 
   sam_putreg(priv, priv->xfrints | priv->waitints | priv->cintints,
            SAMA5_SDMMC_IRQSIGEN_OFFSET);
-  regval  = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+
+//  regval  = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
   leave_critical_section(flags);
 }
 
@@ -1246,12 +1252,27 @@ static void sam_eventtimeout(int argc, uint32_t arg)
     {
       /* Yes.. Sample registers at the time of the timeout */
 
+      // TODO: remove
+
+      uint32_t irqsigen;
+      uint32_t irqstat;
+      uint32_t enabled;
+      uint32_t pending;
+      irqsigen = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+      irqstat = sam_getreg32(priv, SAMA5_SDMMC_IRQSTAT_OFFSET);
+      enabled = irqstat & irqsigen;
+      pending = enabled & priv->xfrints;
+      mcinfo("IRQSTAT: %08x IRQSIGEN %08x enabled: %08x priv->xfrints:%08x\n",
+             irqstat, irqsigen, enabled, priv->xfrints);
+
       sam_sample(priv, SAMPLENDX_END_TRANSFER);
 
       /* Wake up any waiting threads */
 
       sam_endwait(priv, SDIOWAIT_TIMEOUT);
       mcerr("ERROR: Timeout: remaining: %d\n", priv->remaining);
+      sam_dumpsamples(priv);
+
     }
 }
 
@@ -1364,7 +1385,7 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
   struct sam_dev_s *priv = (struct sam_dev_s *)arg;
   uint32_t enabled;
   uint32_t pending;
-  uint32_t regval;
+  uint32_t irqsigen;
   uint32_t irqstat;
 
   /* Check the SDMMC IRQSTAT register.  Mask out all bits that don't
@@ -1373,16 +1394,38 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
    * If there are non-zero bits remaining, then we have work to do here.
    */
 
-  regval  = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  irqsigen = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
   irqstat = sam_getreg32(priv, SAMA5_SDMMC_IRQSTAT_OFFSET);
-  enabled = irqstat & regval;
+  enabled = irqstat & irqsigen;
+  pending = enabled & priv->xfrints;
 
-  mcinfo("IRQSTAT: %08x IRQSIGEN %08x enabled: %08x xfrints:%08x\n",
-         irqstat, regval, enabled, priv->xfrints);
+  mcinfo("IRQSTAT: %08x IRQSIGEN %08x enabled: %08x pending: %08x xfrints:%08x\n",
+         irqstat, irqsigen, enabled, pending, priv->xfrints);
 
   /* Handle in progress, interrupt driven data transfers ********************/
 
-  pending = enabled & priv->xfrints;
+#ifdef CONFIG_SAMA5_SDMMC_DMA
+     /* SDMA boundary pause... update the DMA System Address Register to
+      * restart the transfer.
+      */
+
+//     if (((pending & SDMMC_INT_DINT) !=0) && ((pending & SDMMC_INT_TC)==0))
+     if (((irqstat & SDMMC_INT_DINT) !=0) && ((pending & SDMMC_INT_TC)==0))
+       {
+          custinfo("SDMA boundary pause");
+
+          /* clear interrupt */
+
+          sam_putreg(priv, SDMMC_INT_DINT, SAMA5_SDMMC_IRQSTAT_OFFSET);
+
+          uint32_t dma_start_addr = sam_getreg(priv, SAMA5_SDMMC_DSADDR_OFFSET);
+//          dma_start_addr += 1;
+//          dma_start_addr &= ~(SDMMC_DEFAULT_BOUNDARY_SIZE - 1);
+//          dma_start_addr += SDMMC_DEFAULT_BOUNDARY_SIZE;
+          sam_putreg(priv, dma_start_addr, SAMA5_SDMMC_DSADDR_OFFSET);
+       }
+#endif
+
   if (pending != 0)
     {
 #ifndef CONFIG_SAMA5_SDMMC_DMA
@@ -1407,6 +1450,7 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
 
           sam_transmit(priv);
         }
+
 #endif
 
       /* ... transfer complete events */
@@ -1428,6 +1472,7 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
                 priv->remaining);
           sam_endtransfer(priv, SDIOWAIT_TRANSFERDONE | SDIOWAIT_ERROR);
         }
+
 
       /* ... data timeout error */
 
@@ -1452,9 +1497,9 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
 
       /* We don't want any more ints now, so switch it off */
 
-      regval         &= ~SDMMC_INT_CINT;
-      priv->cintints  = regval;
-      sam_putreg(priv, regval,  SAMA5_SDMMC_IRQSIGEN_OFFSET);
+      irqsigen &= ~SDMMC_INT_CINT;
+      priv->cintints  = irqsigen;
+      sam_putreg(priv, irqsigen,  SAMA5_SDMMC_IRQSIGEN_OFFSET);
     }
 
   if ((pending & SDMMC_INT_CINS) != 0 || (pending & SDMMC_INT_CRM) != 0)
@@ -1493,9 +1538,9 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
             {
               /* Yes.. mask further interrupts and wake the thread up */
 
-              regval  = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
-              regval &= ~SDMMC_RESPDONE_INTS;
-              sam_putreg(priv, regval,  SAMA5_SDMMC_IRQSIGEN_OFFSET);
+              irqsigen = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+              irqsigen &= ~SDMMC_RESPDONE_INTS;
+              sam_putreg(priv, irqsigen,  SAMA5_SDMMC_IRQSIGEN_OFFSET);
 
               sam_endwait(priv, SDIOWAIT_RESPONSEDONE);
             }
@@ -2264,6 +2309,7 @@ static int sam_sendcmd(FAR struct sdio_dev_s *dev, uint32_t cmd,
   /* Enable DMA */
 
   regval |= SDMMC_XFERTYP_DMAEN;
+
 #endif
 
   /* Check for abort. */
@@ -2359,8 +2405,8 @@ static void sam_blocksetup(FAR struct sdio_dev_s *dev,
 
   /* Configure block size for next transfer */
 
-  sam_putreg(priv, SDMMC_BLKATTR_SIZE(blocklen) | SDMMC_BLKATTR_CNT(nblocks),
-            SAMA5_SDMMC_BLKATTR_OFFSET);
+  sam_putreg16(priv, blocklen, SAMA5_SDMMC_BSR_OFFSET);
+  sam_putreg16(priv, nblocks, SAMA5_SDMMC_BCR_OFFSET);
 }
 #endif
 
@@ -2420,7 +2466,7 @@ static int sam_recvsetup(FAR struct sdio_dev_s *dev, FAR uint8_t *buffer,
 
   mcinfo("remaining: %d IRQSTAT: %08x\n", priv->remaining,
          sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET));
-  sam_configxfrints(priv, SDMMC_RCVDONE_INTS);
+  sam_configxfrints(priv, SDMMC_RCVDONE_INTS | SDMMC_XFRDONE_INTS);
   sam_sample(priv, SAMPLENDX_AFTER_SETUP);
   return OK;
 }
@@ -2470,7 +2516,8 @@ static int sam_sendsetup(FAR struct sdio_dev_s *dev,
   /* Enable TX interrupts */
 
   sam_configxfrints(priv, SDMMC_SNDDONE_INTS);
-  sam_sample(priv, SAMPLENDX_AFTER_SETUP); return OK;
+  sam_sample(priv, SAMPLENDX_AFTER_SETUP);
+  return OK;
 }
 #endif
 
@@ -2654,6 +2701,8 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
   uint32_t regval;
   int ret = OK;
 
+  custinfo("Entry.\n");
+
   /* R1 Command response (48-bit)
    *   47    0           Start bit
    *   46    0           Transmission bit (0=from card)
@@ -2701,11 +2750,13 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
       regval = sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET);
       if ((regval & SDMMC_INT_CTOE) != 0)
         {
+          custinfo("Timeout.\n");
           mcerr("ERROR: Command timeout: %08x\n", regval);
           ret = -ETIMEDOUT;
         }
       else if ((regval & SDMMC_INT_CCE) != 0)
         {
+          custinfo("CRC failure.\n");
           mcerr("ERROR: CRC failure: %08x\n", regval); ret = -EIO;
         }
     }
@@ -2716,6 +2767,7 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
    */
 
   *rshort = sam_getreg(priv, SAMA5_SDMMC_CMDRSP0_OFFSET);
+  custinfo("Exit.\n");
   return ret;
 }
 
@@ -2877,7 +2929,7 @@ static void sam_waitenable(FAR struct sdio_dev_s *dev,
   if ((eventset & SDIOWAIT_TRANSFERDONE) != 0)
     {
 #ifdef CONFIG_SAMA5_SDMMC_DMA
-      waitints |= SDMMC_DMADONE_INTS;
+      waitints |= SDMMC_DMADONE_INTS | SDMMC_INT_DINT;
 #else
       waitints |= SDMMC_XFRDONE_INTS;
 #endif
@@ -3087,6 +3139,8 @@ static int sam_dmarecvsetup(FAR struct sdio_dev_s *dev,
   DEBUGASSERT(priv != NULL && buffer != NULL && buflen > 0);
   DEBUGASSERT(((uint32_t) buffer & 3) == 0);
 
+  custinfo("Entry");
+
   /* Begin sampling register values */
 
   sam_sampleinit();
@@ -3119,8 +3173,12 @@ static int sam_dmarecvsetup(FAR struct sdio_dev_s *dev,
 
   /* Configure the RX DMA */
 
+  sam_configxfrints(priv, SDMMC_DMADONE_INTS | SDMMC_INT_DINT);
+  uint32_t irqsigen;
+  irqsigen = sam_getreg(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  sam_putreg(priv, irqsigen | SDMMC_INT_DINT, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+
   sam_putreg(priv, (uint32_t) buffer, SAMA5_SDMMC_DSADDR_OFFSET);
-  sam_configxfrints(priv, SDMMC_DMADONE_INTS);
 
   /* Sample the register state */
 
@@ -3186,8 +3244,8 @@ static int sam_dmasendsetup(FAR struct sdio_dev_s *dev,
 
   /* Configure the TX DMA */
 
+  sam_configxfrints(priv, SDMMC_DMADONE_INTS | SDMMC_INT_DINT);
   sam_putreg(priv, (uint32_t) buffer,  SAMA5_SDMMC_DSADDR_OFFSET);
-  sam_configxfrints(priv, SDMMC_DMADONE_INTS);
 
   /* Sample the register state */
 
@@ -3603,6 +3661,22 @@ static int sam_set_interrupts(FAR struct sam_dev_s *priv)
  ****************************************************************************/
 
 /****************************************************************************
+ * This is needed to make reading files work. But why does it work?
+ ****************************************************************************/
+
+static int allocated=0;
+
+static void sam_mem_alloc_workaround(void)
+{
+  if (allocated == 0) {
+    allocated = 1;
+    int buflen = 256;
+    struct sdio_dev_s *unused = (struct sdio_dev_s*)kmm_memalign(8, buflen);
+    memset(unused,'-',buflen);
+  }
+}
+
+/****************************************************************************
  * Name: sam_sdmmc_sdio_initialize
  *
  * Description:
@@ -3732,12 +3806,11 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
 
   /* TODO: remove */
 
-  /* This is needed to make reading files work. But why does this work? */
-
-  struct sdio_dev_s *unused = (struct sdio_dev_s*)calloc(1, 466);
+//  sam_mem_alloc_workaround();
 
   return &g_sdmmcdev[slotno].dev;
 }
+
 
 /****************************************************************************
  * Name: sdio_wrprotect
