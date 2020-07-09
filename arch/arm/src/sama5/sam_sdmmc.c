@@ -2652,8 +2652,6 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
   uint32_t regval;
   int ret = OK;
 
-  custinfo("Entry.\n");
-
   /* R1 Command response (48-bit)
    *   47    0           Start bit
    *   46    0           Transmission bit (0=from card)
@@ -3087,8 +3085,6 @@ static int sam_dmarecvsetup(FAR struct sdio_dev_s *dev,
   struct sam_dev_s *priv = (struct sam_dev_s *)dev;
   DEBUGASSERT(priv != NULL && buffer != NULL && buflen > 0);
   DEBUGASSERT(((uint32_t) buffer & 3) == 0);
-
-  custinfo("Entry");
 
   /* Begin sampling register values */
 
