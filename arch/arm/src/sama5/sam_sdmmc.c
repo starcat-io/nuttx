@@ -2,11 +2,11 @@
  * arch/arm/src/sama5/sam_sdmmc.c
  *
  *   Copyright (C) 2018-2019 Gregory Nutt. All rights reserved.
- *   Copyright (C) 2020 Adam Feuer
- *   Author: Gregory Nutt <gnutt@nuttx.org>
- *           Dave Marples <dave@marples.net>
- *           Ivan Ucherdzhiev <ivanucherdjiev@gmail.com>
- *           Adam Feuer <adam@starcat.io>
+ *   Copyright (C) 2020 Adam Feuer All rights reserved.
+ *   Authors: Gregory Nutt <gnutt@nuttx.org>
+ *            Dave Marples <dave@marples.net>
+ *            Ivan Ucherdzhiev <ivanucherdjiev@gmail.com>
+ *            Adam Feuer <adam@starcat.io>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -805,7 +805,6 @@ static void sam_configwaitints(struct sam_dev_s *priv, uint32_t waitints,
 #ifdef CONFIG_SAMA5_SDMMC_DMA
   priv->xfrflags   = 0;
 #endif
-  // TODO: remove DINT
   sam_putreg(priv, priv->xfrints | priv->waitints | priv->cintints | \
                    SDMMC_INT_DINT,
            SAMA5_SDMMC_IRQSIGEN_OFFSET);
@@ -3569,17 +3568,23 @@ static void sam_power(FAR struct sam_dev_s *priv)
     {
       sam_putreg8(priv, 0, SAMA5_SDMMC_PWRCTL_OFFSET);
           return;
-        }
+    }
 
-      card_power |= SDMMC_POWER_ON;
-      sam_putreg8(priv, card_power, SAMA5_SDMMC_PWRCTL_OFFSET);
+  card_power |= SDMMC_POWER_ON;
+  sam_putreg8(priv, card_power, SAMA5_SDMMC_PWRCTL_OFFSET);
 
-    /* TODO: other bus modes */
-
-    if (caps0 & SDMMC_HTCAPBLT_DDR50)
-      {
-        sam_set_uhs_timing(priv, UHS_DDR50);
-      }
+  if (caps0 & SDMMC_HTCAPBLT_DDR50)
+    {
+      sam_set_uhs_timing(priv, UHS_DDR50); /* Double data rate, 50Mhz */
+    }
+  else if (caps0 & SDMMC_HTCAPBLT_SDR50)
+    {
+      sam_set_uhs_timing(priv, UHS_SDR50);  /* Single data rate, 50Mhz */
+    }
+  else if (caps0 & SDMMC_HTCAPBLT_SDR104)
+    {
+      sam_set_uhs_timing(priv, UHS_SDR104); /* Single data rate, 100Mhz */
+    }
 }
 
 /****************************************************************************
