@@ -2714,7 +2714,7 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
    */
 
   *rshort = sam_getreg(priv, SAMA5_SDMMC_CMDRSP0_OFFSET);
-  custinfo("Exit.\n");
+  usleep(10);
   return ret;
 }
 
