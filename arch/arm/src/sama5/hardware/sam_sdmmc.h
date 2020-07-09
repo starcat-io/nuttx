@@ -355,7 +355,7 @@
 #define SDMMC_INT_CC                     (1 << 0)     /* Bit 0:  Command Complete */
 #define SDMMC_INT_TC                     (1 << 1)     /* Bit 1:  Transfer Complete */
 #define SDMMC_INT_BGE                    (1 << 2)     /* Bit 2:  Block Gap Event */
-#define SDMMC_INT_DINT                   (1 << 3)     /* Bit 3:  DMA Interrupt */
+#define SDMMC_INT_DINT                   (1 << 3)     /* Bit 3:  DMA Interrupt - indicates SDMA Boundary Pause */
 #define SDMMC_INT_BWR                    (1 << 4)     /* Bit 4:  Buffer Write Ready */
 #define SDMMC_INT_BRR                    (1 << 5)     /* Bit 5:  Buffer Read Ready */
 #define SDMMC_INT_CINS                   (1 << 6)     /* Bit 6:  Card Insertion */
@@ -373,13 +373,10 @@
 #define SDMMC_INT_DTOE                   (1 << 20)    /* Bit 20: Data Timeout Error */
 #define SDMMC_INT_DCE                    (1 << 21)    /* Bit 21: Data CRC Error */
 #define SDMMC_INT_DEBE                   (1 << 22)    /* Bit 22: Data End Bit Error */
-                                                      /* Bit 23: Reserved */
+#define SDMMC_INT_CURLIM                 (1 << 23)    /* Bit 23: Current Limit Error */
 #define SDMMC_INT_AC12E                  (1 << 24)    /* Bit 24: Auto CMD12 Error */
-                                                      /* Bit 25: Reserved */
-#define SDMMC_INT_TNE                    (1 << 25)    /* Bit 26: Tuning error */
-                                                      /* Bit 27: Reserved */
-#define SDMMC_INT_DMAE                   (1 << 28)    /* Bit 28: DMA Error */
-                                                      /* Bits 29-31: Reserved */
+#define SDMMC_INT_ADMAE                  (1 << 25)    /* Bit 25: ADMA error */
+                                                      /* Bits 26-31: Reserved */
 #define SDMMC_INT_ALL                    0x117f01ff
 
 /* Auto CMD12 Error Status Register */
