@@ -2701,13 +2701,11 @@ static int sam_recvshortcrc(FAR struct sdio_dev_s *dev, uint32_t cmd,
       regval = sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET);
       if ((regval & SDMMC_INT_CTOE) != 0)
         {
-          custinfo("Timeout.\n");
           mcerr("ERROR: Command timeout: %08x\n", regval);
           ret = -ETIMEDOUT;
         }
       else if ((regval & SDMMC_INT_CCE) != 0)
         {
-          custinfo("CRC failure.\n");
           mcerr("ERROR: CRC failure: %08x\n", regval); ret = -EIO;
         }
     }
