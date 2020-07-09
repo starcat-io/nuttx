@@ -3,8 +3,8 @@
  *
  *   Copyright (C) 2018 Gregory Nutt. All rights reserved.
  *   Copyright (C) 2020 Adam Feuer. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org> & Contributors,
- *           Adam Feuer <adam@starcat.io>
+ *   Authors: Gregory Nutt <gnutt@nuttx.org> & Contributors,
+ *            Adam Feuer <adam@starcat.io>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -192,34 +192,34 @@
 
 /* Transfer Type Register */
 
-#define SDMMC_XFERTYP_DMAEN              (1 << 0)  /* Bit 0:  DMA Enable */
-#define SDMMC_XFERTYP_BCEN               (1 << 1)  /* Bit 1:  Block Count Enable */
-#define SDMMC_XFERTYP_AC12EN             (1 << 2)  /* Bit 2:  Auto CMD12 Enable */
+#define SDMMC_XFERTYP_DMAEN              (1 << 0)     /* Bit 0:  DMA Enable */
+#define SDMMC_XFERTYP_BCEN               (1 << 1)     /* Bit 1:  Block Count Enable */
+#define SDMMC_XFERTYP_AC12EN             (1 << 2)     /* Bit 2:  Auto CMD12 Enable */
 /* Bit 3: Reserved */
 
-#define SDMMC_XFERTYP_DTDSEL             (1 << 4)  /* Bit 4:  Data Transfer Direction Select */
-#define SDMMC_XFERTYP_MSBSEL             (1 << 5)  /* Bit 5:  Multi/Single Block Select */
-/* Bits 6-15: Reserved */
+#define SDMMC_XFERTYP_DTDSEL             (1 << 4)     /* Bit 4:  Data Transfer Direction Select */
+#define SDMMC_XFERTYP_MSBSEL             (1 << 5)     /* Bit 5:  Multi/Single Block Select */
+                                                      /* Bits 6-15: Reserved */
 
-#define SDMMC_XFERTYP_RSPTYP_SHIFT       (16)          /* Bits 16-17: Response Type Select */
+#define SDMMC_XFERTYP_RSPTYP_SHIFT       (16)      /* Bits 16-17: Response Type Select */
 #define SDMMC_XFERTYP_RSPTYP_MASK        (3 << SDMMC_XFERTYP_RSPTYP_SHIFT)
 #  define SDMMC_XFERTYP_RSPTYP_NONE      (0 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* No response */
 #  define SDMMC_XFERTYP_RSPTYP_LEN136    (1 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* Response length 136 */
 #  define SDMMC_XFERTYP_RSPTYP_LEN48     (2 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* Response length 48 */
 #  define SDMMC_XFERTYP_RSPTYP_LEN48BSY  (3 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* Response length 48, check busy */
-                                                       /* Bit 18: Reserved */
-#define SDMMC_XFERTYP_CCCEN              (1 << 19)     /* Bit 19: Command CRC Check Enable */
-#define SDMMC_XFERTYP_CICEN              (1 << 20)     /* Bit 20: Command Index Check Enable */
-#define SDMMC_XFERTYP_DPSEL              (1 << 21)     /* Bit 21: Data Present Select */
-#define SDMMC_XFERTYP_CMDTYP_SHIFT       (22)          /* Bits 22-23: Command Type */
+                                                      /* Bit 18: Reserved */
+#define SDMMC_XFERTYP_CCCEN              (1 << 19)    /* Bit 19: Command CRC Check Enable */
+#define SDMMC_XFERTYP_CICEN              (1 << 20)    /* Bit 20: Command Index Check Enable */
+#define SDMMC_XFERTYP_DPSEL              (1 << 21)    /* Bit 21: Data Present Select */
+#define SDMMC_XFERTYP_CMDTYP_SHIFT       (22)         /* Bits 22-23: Command Type */
 #define SDMMC_XFERTYP_CMDTYP_MASK        (3 << SDMMC_XFERTYP_CMDTYP_SHIFT)
 #  define SDMMC_XFERTYP_CMDTYP_NORMAL    (0 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Normal other commands */
 #  define SDMMC_XFERTYP_CMDTYP_SUSPEND   (1 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Suspend CMD52 for writing bus suspend in CCCR */
 #  define SDMMC_XFERTYP_CMDTYP_RESUME    (2 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Resume CMD52 for writing function select in CCCR */
 #  define SDMMC_XFERTYP_CMDTYP_ABORT     (3 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Abort CMD12, CMD52 for writing I/O abort in CCCR */
-#define SDMMC_XFERTYP_CMDINX_SHIFT       (24)          /* Bits 24-29: Command Index */
+#define SDMMC_XFERTYP_CMDINX_SHIFT       (24)         /* Bits 24-29: Command Index */
 #define SDMMC_XFERTYP_CMDINX_MASK        (0x3f << SDMMC_XFERTYP_CMDINX_SHIFT)
-                                                       /* Bits 30-31: Reserved */
+                                                      /* Bits 30-31: Reserved */
 
 /* Command Response 0-3 (32-bit response data) */
 
@@ -591,7 +591,7 @@ enum bus_mode
 
 #define SAMA5_SDMMC_BUS_HIGH_SPEED_THRESHOLD 26000000
 
-/* SDMMC maximum bus speed - only used if SD Card supports this speed
+/* SDMMC maximum bus speed - only used if SD Card supports this speed;
  * DDR (double data rate) signaling on rising and falling edges of the clock
  * will also be used if card supports it.
  *
@@ -603,6 +603,10 @@ enum bus_mode
 #else
 # define SAMA5_SDMMC_BUS_SPEED 25000000
 #endif
+
+/* SDMA default buffer size - needed to reset the start address after an SDMA
+ * Buffer Boundary pause event.
+ */
 
 #define SDMMC_DEFAULT_BOUNDARY_SIZE	(512 * 1024)
 
