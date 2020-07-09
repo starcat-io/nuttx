@@ -3878,6 +3878,3 @@ void sdio_mediachange(FAR struct sdio_dev_s *dev, bool cardinslot)
 }
 
 #endif /* CONFIG_SAMA5_SDMMC */
-
-// TODO
-// - move all variable declarations to the top of methods
