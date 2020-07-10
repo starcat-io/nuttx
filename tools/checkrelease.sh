@@ -26,9 +26,9 @@ DIST_DIR="dist.apache.org"
 TMP="/tmp"
 TEMPDIR="$TMP/nuttx-checkrelease"
 ORIGINAL_DIR="$(pwd)"
-trap "{ cd $ORIGINAL_DIR; rm -rf $TEMPDIR; }" EXIT
+trap "{ rm -rf $TEMPDIR; }" EXIT
 
-function validate_url(){
+function validate_url() {
   if [[ `wget -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
 }
 
@@ -38,7 +38,7 @@ function download_release() {
     mkdir "$TEMPDIR"
     if [[ $(validate_url "$URL") ]]; then
       echo "Downloading release files from $URL"
-      wget --quiet -r --no-parent -P "$TEMPDIR" --cut-dirs 8 "$URL"
+      wget --quiet -r --no-parent -P "$TEMPDIR" --cut-dirs 100 "$URL"
       cd "$TEMPDIR"
       mv $DIST_DIR/apache-nuttx-* .
     else
@@ -59,7 +59,7 @@ function download_release() {
 function check_sha512() {
     RELEASE_FILE=$1
     echo "Checking $RELEASE_FILE sha512..."
-    output="$(sha512sum -c $RELEASE_FILE.sha512)"
+    output="$(sha512sum -c $RELEASE_FILE.sha512 2>&1)"
     return_value=$?
     if [ $return_value -eq 0 ]; then
       echo " OK: $RELEASE_FILE sha512 hash matches."
@@ -74,11 +74,7 @@ function check_sha512() {
 function check_gpg() {
     RELEASE_FILE=$1
     echo "Checking $RELEASE_FILE GPG signature:"
-    QUIET=""
-    if [[ $GPG_OUTPUT -eq 0 ]]; then
-      QUIET="--quiet"
-    fi
-    gpg $QUIET --verify $RELEASE_FILE.asc $RELEASE_FILE
+    gpg --verify $RELEASE_FILE.asc $RELEASE_FILE
     return_value=$?
     if [ $return_value -eq 0 ]; then
       echo " OK: $RELEASE_FILE gpg signature matches."
@@ -94,27 +90,24 @@ function check_gpg() {
 function check_required_files() {
     RELEASE_DIR=$1
     echo "Checking $RELEASE_FILE for required files:"
-    ERROR=0
     if [ ! -f "$RELEASE_DIR/LICENSE" ]; then
       echo " - LICENSE file not present."
-      ERROR=1
+      RETURN_CODE=1
     fi
     if [ ! -f "$RELEASE_DIR/NOTICE" ]; then
       echo " - NOTICE file not present."
-      ERROR=1
+      RETURN_CODE=1
     fi
     if [ ! -f "$RELEASE_DIR/README.txt" ]; then
       echo " - README.txt file not present."
-      ERROR=1
+      RETURN_CODE=1
     fi
     if [ ! -f "$RELEASE_DIR/DISCLAIMER-WIP" ]; then
       echo " - DISCLAIMER-WIP file not present."
-      ERROR=1
-    fi
-    if [ 0 -eq $ERROR ]; then
-      echo " OK: all required files exist in $RELEASE_DIR."
-    else
       RETURN_CODE=1
+    fi
+    if [ 0 -eq $RETURN_CODE ]; then
+      echo " OK: all required files exist in $RELEASE_DIR."
     fi
     echo
 }
@@ -124,7 +117,6 @@ function check_nuttx() {
     RELEASE_DIR="nuttx"
     check_sha512 "$RELEASE_FILE"
     check_gpg "$RELEASE_FILE"
-    rm -rf "$RELEASE_DIR"
     tar xf "$RELEASE_FILE"
     check_required_files "$RELEASE_DIR"
     mv "$RELEASE_FILE" "$TMP"
@@ -135,7 +127,6 @@ function check_nuttx_apps() {
     RELEASE_DIR="apps"
     check_sha512 "$RELEASE_FILE"
     check_gpg "$RELEASE_FILE"
-    rm -rf "$RELEASE_DIR"
     tar xf "$RELEASE_FILE"
     check_required_files "$RELEASE_DIR"
     mv "$RELEASE_FILE" "$TMP"
@@ -165,7 +156,7 @@ function check_sim_nsh_build() {
     echo
 }
 function usage() {
-    echo "Usage: $0 [--verbose] [--gpg-output] [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
+    echo "Usage: $0 [--verbose] [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
     echo "   Given release full URL, release name, or a local directory, downloads or copies"
     echo "   all files in that directory (which for a release should include nuttx and nuttx-apps, sha512, "
     echo "   asc, and tar.gz files), checks the release SHA512 and GPG signatures, checks the unpacked "
@@ -178,8 +169,7 @@ function usage() {
     echo "   build for their platform."
     echo
     echo "   -V and --verbose are equivalent."
-    echo "   -G and --gpg-output are equivalent."
-    echo 
+    echo
     echo "Examples:"
     echo
     echo "  $0 --release 9.1.0-RC1"
@@ -188,56 +178,47 @@ function usage() {
     echo
 }
 
-POSITIONAL=()
+UNKNOWN=()
 while [[ $# -gt 0 ]]
 do
-key="$1"
+  key="$1"
 
-URL=""
-DIRECTORY=""
+  URL=""
+  DIRECTORY=""
 
-case $key in
-    -U|--url)
-    URL="$2"
-    shift # past argument
-    shift # past value
-    ;;
-    -R|--release)
-    RELEASE="$2"
-    URL="$BASE_URL/$RELEASE/"
-    shift # past argument
-    shift # past value
-    ;;
-    -D|--dir)
-    DIRECTORY="$(readlink -f $2)"
-    shift # past argument
-    shift # past value
-    ;;
-    -T|--tempdir)
-    TEMPDIR="$(readlink -f $2)"
-    shift # past argument
-    shift # past value
-    ;;
-    -h|--help)
-    shift # past argument
-    usage
-    exit 0
-    ;;
-    -G|--gpg-output)
-    GPG_OUTPUT=1
-    shift # past argument
-    ;;
-    -V|--verbose)
-    VERBOSE=1
-    shift # past argument
-    ;;
-    *)    # unknown option
-    POSITIONAL+=("$1") # save it in an array for later
-    shift # past argument
-    ;;
-esac
+  case $key in
+      -U|--url)
+      URL="$2"
+      shift
+      ;;
+      -R|--release)
+      RELEASE="$2"
+      URL="$BASE_URL/$RELEASE/"
+      shift
+      ;;
+      -D|--dir)
+      DIRECTORY="$(readlink -f $2)"
+      shift
+      ;;
+      -T|--tempdir)
+      TEMPDIR="$(readlink -f $2)"
+      shift
+      ;;
+      -h|--help)
+      usage
+      exit 0
+      ;;
+      -V|--verbose)
+      VERBOSE=1
+      ;;
+      *)    # unknown option
+      POSITIONAL+=("$1") # save it in an array for later
+      shift # past argument
+      ;;
+  esac
+  shift
 done
-set -- "${POSITIONAL[@]}" # restore positional parameters
+set -- "${UNKNOWN[@]}" # restore positional parameters
 
 if [[ (-z "$URL") && (-z "$DIRECTORY") ]]; then
   usage
@@ -246,9 +227,11 @@ fi
 
 download_release
 if [[ -n "$URL" ]]; then
+  # download and check
   check_nuttx
   check_nuttx_apps
 else
+  # check directories without downloading
   check_required_files "nuttx"
   check_required_files "apps"
 fi
