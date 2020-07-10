@@ -181,7 +181,7 @@ struct sam_dev_s
   sem_t waitsem;                 /* Implements event waiting */
   sdio_eventset_t waitevents;    /* Set of events to be waited for */
   uint32_t waitints;             /* Interrupt enables for event waiting */
-  volatile sdio_eventset_t wkupevent; /* The event that caused the wakeup */
+  volatile sdio_eventset_t wkupevent;  /* The event that caused the wakeup */
   WDOG_ID waitwdog;              /* Watchdog that handles event timeouts */
 
   /* Callback support */
@@ -547,8 +547,8 @@ static bool sam_checkreg(struct sam_dev_s *priv, bool wr, uint32_t value,
                          uint32_t address)
 {
   if (wr      == priv->wrlast &&     /* Same kind of access? */
-      value   == priv->vallast &&  /* Same value? */
-      address == priv->addrlast)  /* Same address? */
+      value   == priv->vallast &&    /* Same value? */
+      address == priv->addrlast)     /* Same address? */
     {
       /* Yes, then just keep a count of the number of times we did this. */
 
@@ -1222,7 +1222,6 @@ static void sam_eventtimeout(int argc, uint32_t arg)
       sam_endwait(priv, SDIOWAIT_TIMEOUT);
       mcerr("ERROR: Timeout: remaining: %d\n", priv->remaining);
       sam_dumpsamples(priv);
-
     }
 }
 
@@ -1357,7 +1356,6 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
 
   /* Handle in progress, interrupt driven data transfers ********************/
 
-
   if (pending != 0)
     {
 #ifndef CONFIG_SAMA5_SDMMC_DMA
@@ -1385,12 +1383,13 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
 
 #endif
 #ifdef CONFIG_SAMA5_SDMMC_DMA
-     /* SDMA Buffer Boundary pause... update the DMA System Address Register to
-      * restart the transfer. See SAMA5D27 datasheet p1771.
-      */
+      /* SDMA Buffer Boundary pause... update the DMA System Address Register
+       * to restart the transfer. See SAMA5D27 datasheet p1771.
+       */
 
-     if (((pending & SDMMC_INT_DINT) !=0) && ((pending & SDMMC_INT_TC)==0))
-       {
+      if (((pending & SDMMC_INT_DINT) != 0) &&
+          ((pending & SDMMC_INT_TC) == 0))
+        {
           /* clear interrupt */
 
           sam_putreg(priv, SDMMC_INT_DINT, SAMA5_SDMMC_IRQSTAT_OFFSET);
@@ -1401,7 +1400,7 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
           dma_start_addr &= ~(SDMMC_DEFAULT_BOUNDARY_SIZE - 1);
           dma_start_addr += SDMMC_DEFAULT_BOUNDARY_SIZE;
           sam_putreg(priv, dma_start_addr, SAMA5_SDMMC_DSADDR_OFFSET);
-       }
+        }
 #endif
 
       /* ... transfer complete events */
@@ -1423,7 +1422,6 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
                 priv->remaining);
           sam_endtransfer(priv, SDIOWAIT_TRANSFERDONE | SDIOWAIT_ERROR);
         }
-
 
       /* ... data timeout error */
 
@@ -2320,7 +2318,8 @@ static int sam_sendcmd(FAR struct sdio_dev_s *dev, uint32_t cmd,
 
   /* Clear interrupt status and write the SDMMC CMD */
 
-  sam_configxfrints(priv, SDMMC_RCVDONE_INTS | SDMMC_XFRDONE_INTS | SDMMC_INT_DINT);
+  sam_configxfrints(priv, SDMMC_RCVDONE_INTS | SDMMC_XFRDONE_INTS | \
+                          SDMMC_INT_DINT);
 
   sam_putreg(priv, SDMMC_RESPDONE_INTS, SAMA5_SDMMC_IRQSTAT_OFFSET);
   sam_putreg(priv, regval, SAMA5_SDMMC_XFERTYP_OFFSET);
@@ -3350,6 +3349,7 @@ static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock)
   uint32_t max_clk = 0;
   uint32_t caps0;
   uint32_t caps1;
+  uint32_t proctl;
 
   /* Wait max 20 ms */
 
@@ -3479,17 +3479,17 @@ static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock)
 
       /* High Speed Mode? */
 
-      uint32_t regval;
-      regval = sam_getreg(priv, SAMA5_SDMMC_PROCTL_OFFSET);
-	  if (clock > SAMA5_SDMMC_BUS_HIGH_SPEED_THRESHOLD)
-	    {
-           regval |= SDMMC_PROCTL_HSEN;
-	    }
-	  else
-	    {
-	       regval &= ~SDMMC_PROCTL_HSEN;
-	    }
-      sam_putreg(priv, regval, SAMA5_SDMMC_PROCTL_OFFSET);
+      proctl = sam_getreg(priv, SAMA5_SDMMC_PROCTL_OFFSET);
+      if (clock > SAMA5_SDMMC_BUS_HIGH_SPEED_THRESHOLD)
+        {
+           proctl |= SDMMC_PROCTL_HSEN;
+        }
+      else
+        {
+          proctl &= ~SDMMC_PROCTL_HSEN;
+        }
+
+      sam_putreg(priv, proctl, SAMA5_SDMMC_PROCTL_OFFSET);
 
       clk |= SDMMC_SYSCTL_SDCLKEN;
       sam_putreg16(priv, clk, SAMA5_SDMMC_SYSCTL_OFFSET);
@@ -3744,7 +3744,6 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
 
   return &g_sdmmcdev[slotno].dev;
 }
-
 
 /****************************************************************************
  * Name: sdio_wrprotect

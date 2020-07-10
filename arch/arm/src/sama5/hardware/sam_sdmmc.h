@@ -180,11 +180,10 @@
 
 /* Block Attributes Register */
 
-#define SDMMC_BSR_BLKSIZE_SHIFT         (0)           /* Bits 0-9: Transfer Block Size */
-                                                      /* Bits 10-11: Reserved */
-#define SDMMC_BSR_BOUNDARY_SHIFT        (12)          /* Bits 12-14: Boundary */
-                                                      /* Bit 15: Reserved */
-
+#define SDMMC_BSR_BLKSIZE_SHIFT         (0)            /* Bits 0-9: Transfer Block Size */
+                                                       /* Bits 10-11: Reserved */
+#define SDMMC_BSR_BOUNDARY_SHIFT        (12)           /* Bits 12-14: Boundary */
+                                                       /* Bit 15: Reserved */
 
 /* Block Count Register (16-bit block count) */
 
@@ -192,34 +191,34 @@
 
 /* Transfer Type Register */
 
-#define SDMMC_XFERTYP_DMAEN              (1 << 0)     /* Bit 0:  DMA Enable */
-#define SDMMC_XFERTYP_BCEN               (1 << 1)     /* Bit 1:  Block Count Enable */
-#define SDMMC_XFERTYP_AC12EN             (1 << 2)     /* Bit 2:  Auto CMD12 Enable */
-/* Bit 3: Reserved */
+#define SDMMC_XFERTYP_DMAEN              (1 << 0)      /* Bit 0:  DMA Enable */
+#define SDMMC_XFERTYP_BCEN               (1 << 1)      /* Bit 1:  Block Count Enable */
+#define SDMMC_XFERTYP_AC12EN             (1 << 2)      /* Bit 2:  Auto CMD12 Enable */
+                                                       /* Bit 3: Reserved */
 
-#define SDMMC_XFERTYP_DTDSEL             (1 << 4)     /* Bit 4:  Data Transfer Direction Select */
-#define SDMMC_XFERTYP_MSBSEL             (1 << 5)     /* Bit 5:  Multi/Single Block Select */
-                                                      /* Bits 6-15: Reserved */
+#define SDMMC_XFERTYP_DTDSEL             (1 << 4)      /* Bit 4:  Data Transfer Direction Select */
+#define SDMMC_XFERTYP_MSBSEL             (1 << 5)      /* Bit 5:  Multi/Single Block Select */
+                                                       /* Bits 6-15: Reserved */
 
-#define SDMMC_XFERTYP_RSPTYP_SHIFT       (16)      /* Bits 16-17: Response Type Select */
+#define SDMMC_XFERTYP_RSPTYP_SHIFT       (16)          /* Bits 16-17: Response Type Select */
 #define SDMMC_XFERTYP_RSPTYP_MASK        (3 << SDMMC_XFERTYP_RSPTYP_SHIFT)
 #  define SDMMC_XFERTYP_RSPTYP_NONE      (0 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* No response */
 #  define SDMMC_XFERTYP_RSPTYP_LEN136    (1 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* Response length 136 */
 #  define SDMMC_XFERTYP_RSPTYP_LEN48     (2 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* Response length 48 */
 #  define SDMMC_XFERTYP_RSPTYP_LEN48BSY  (3 << SDMMC_XFERTYP_RSPTYP_SHIFT) /* Response length 48, check busy */
-                                                      /* Bit 18: Reserved */
-#define SDMMC_XFERTYP_CCCEN              (1 << 19)    /* Bit 19: Command CRC Check Enable */
-#define SDMMC_XFERTYP_CICEN              (1 << 20)    /* Bit 20: Command Index Check Enable */
-#define SDMMC_XFERTYP_DPSEL              (1 << 21)    /* Bit 21: Data Present Select */
-#define SDMMC_XFERTYP_CMDTYP_SHIFT       (22)         /* Bits 22-23: Command Type */
+                                                       /* Bit 18: Reserved */
+#define SDMMC_XFERTYP_CCCEN              (1 << 19)     /* Bit 19: Command CRC Check Enable */
+#define SDMMC_XFERTYP_CICEN              (1 << 20)     /* Bit 20: Command Index Check Enable */
+#define SDMMC_XFERTYP_DPSEL              (1 << 21)     /* Bit 21: Data Present Select */
+#define SDMMC_XFERTYP_CMDTYP_SHIFT       (22)          /* Bits 22-23: Command Type */
 #define SDMMC_XFERTYP_CMDTYP_MASK        (3 << SDMMC_XFERTYP_CMDTYP_SHIFT)
 #  define SDMMC_XFERTYP_CMDTYP_NORMAL    (0 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Normal other commands */
 #  define SDMMC_XFERTYP_CMDTYP_SUSPEND   (1 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Suspend CMD52 for writing bus suspend in CCCR */
 #  define SDMMC_XFERTYP_CMDTYP_RESUME    (2 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Resume CMD52 for writing function select in CCCR */
 #  define SDMMC_XFERTYP_CMDTYP_ABORT     (3 << SDMMC_XFERTYP_CMDTYP_SHIFT) /* Abort CMD12, CMD52 for writing I/O abort in CCCR */
-#define SDMMC_XFERTYP_CMDINX_SHIFT       (24)         /* Bits 24-29: Command Index */
+#define SDMMC_XFERTYP_CMDINX_SHIFT       (24)          /* Bits 24-29: Command Index */
 #define SDMMC_XFERTYP_CMDINX_MASK        (0x3f << SDMMC_XFERTYP_CMDINX_SHIFT)
-                                                      /* Bits 30-31: Reserved */
+                                                       /* Bits 30-31: Reserved */
 
 /* Command Response 0-3 (32-bit response data) */
 
@@ -301,12 +300,12 @@
 
 /* System Control Register */
 
-#define SDMMC_SYSCTL_INTCLKEN            (1 << 0) /* Bit 0: Internal Clock Enable */
-#define SDMMC_SYSCTL_INTCLKS             (1 << 1) /* Bit 1: Internal Clock Stable */
-#define SDMMC_SYSCTL_SDCLKEN             (1 << 2) /* Bit 2: SD Clock Enable */
-#define SDMMC_SYSCTL_CLKGSEL             (1 << 5) /* Bit 5: Clock Generator Select */
-#define SDMMC_SYSCTL_USDCLKFSEL          (3 << 6) /* Bit 0: Upper bits of SDCLK Frequency Select */
-#define SDMMC_SYSCTL_CLKFSEL             (0xf0)   /* Bit 0: SDCLK Frequency Select */
+#define SDMMC_SYSCTL_INTCLKEN            (1 << 0)     /* Bit 0: Internal Clock Enable */
+#define SDMMC_SYSCTL_INTCLKS             (1 << 1)     /* Bit 1: Internal Clock Stable */
+#define SDMMC_SYSCTL_SDCLKEN             (1 << 2)     /* Bit 2: SD Clock Enable */
+#define SDMMC_SYSCTL_CLKGSEL             (1 << 5)     /* Bit 5: Clock Generator Select */
+#define SDMMC_SYSCTL_USDCLKFSEL          (3 << 6)     /* Bit 0: Upper bits of SDCLK Frequency Select */
+#define SDMMC_SYSCTL_CLKFSEL             (0xf0)       /* Bit 0: SDCLK Frequency Select */
 #define SDMMC_CLOCK_MUL_MASK	         (0x00ff0000)
 #define SDMMC_CLOCK_MUL_SHIFT	         (16)
 
