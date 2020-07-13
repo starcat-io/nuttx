@@ -179,30 +179,30 @@ function usage() {
 }
 
 UNKNOWN=()
+URL=""
+DIRECTORY=""
+
 while [[ $# -gt 0 ]]
 do
   key="$1"
 
-  URL=""
-  DIRECTORY=""
-
   case $key in
       -U|--url)
-      URL="$2"
       shift
+      URL="$1"
       ;;
       -R|--release)
-      RELEASE="$2"
-      URL="$BASE_URL/$RELEASE/"
       shift
+      RELEASE="$1"
+      URL="$BASE_URL/$RELEASE/"
       ;;
       -D|--dir)
-      DIRECTORY="$(readlink -f $2)"
       shift
+      DIRECTORY="$(readlink -f $1)"
       ;;
       -T|--tempdir)
-      TEMPDIR="$(readlink -f $2)"
       shift
+      TEMPDIR="$(readlink -f $1)"
       ;;
       -h|--help)
       usage
@@ -212,13 +212,17 @@ do
       VERBOSE=1
       ;;
       *)    # unknown option
-      POSITIONAL+=("$1") # save it in an array for later
-      shift # past argument
+      UNKNOWN+=("$1") # save it in an array for later
       ;;
   esac
   shift
 done
-set -- "${UNKNOWN[@]}" # restore positional parameters
+set -- "${UNKNOWN[@]}" # restore unknown positional parameters
+
+if [[ (-n "$UNKNOWN") ]]; then
+  usage
+  exit 1
+fi
 
 if [[ (-z "$URL") && (-z "$DIRECTORY") ]]; then
   usage
