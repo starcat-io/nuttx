@@ -81,7 +81,6 @@ function check_gpg() {
     else
       RETURN_CODE=1
       echo " - Error checking $RELEASE_FILE gpg signature:"
-      echo "$output"
       echo
     fi
     echo
@@ -212,17 +211,12 @@ do
       VERBOSE=1
       ;;
       *)    # unknown option
-      UNKNOWN+=("$1") # save it in an array for later
+        usage
+        exit 1
       ;;
   esac
   shift
 done
-set -- "${UNKNOWN[@]}" # restore unknown positional parameters
-
-if [[ (-n "$UNKNOWN") ]]; then
-  usage
-  exit 1
-fi
 
 if [[ (-z "$URL") && (-z "$DIRECTORY") ]]; then
   usage
