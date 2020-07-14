@@ -42,7 +42,7 @@ function download_release() {
       exit 1
     fi
   else
-    cp -r "$DIRECTORY" .
+    cp -r "$DIRECTORY"/* .
   fi
 }
 
