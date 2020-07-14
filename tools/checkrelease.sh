@@ -38,9 +38,8 @@ function download_release() {
     mkdir "$TEMPDIR"
     if [[ $(validate_url "$URL") ]]; then
       echo "Downloading release files from $URL"
-      wget --quiet -r --no-parent -P "$TEMPDIR" --cut-dirs 100 "$URL"
       cd "$TEMPDIR"
-      mv $DIST_DIR/apache-nuttx-* .
+      wget -q -r -nd -np "$URL"
     else
       echo "The URL given doesn't return HTTP 200 OK return code— exiting. ($URL)"
       exit 1
@@ -188,7 +187,7 @@ do
   case $key in
       -U|--url)
       shift
-      URL="$1"
+      URL="$1/"
       ;;
       -R|--release)
       shift
