@@ -137,29 +137,6 @@ function check_sim_nsh_build() {
     echo
 }
 
-function check_sim_nsh_build() {
-    RELEASE_DIR="nuttx"
-    echo "Trying to build $RELEASE_DIR sim:nsh..."
-    cd "$RELEASE_DIR"
-    if [[ $VERBOSE -eq 0 ]]; then
-      output=$(make distclean ; ./tools/configure.sh sim:nsh ; make) 2>&1
-    else
-      make distclean
-      ./tools/configure.sh sim:nsh
-      make
-    fi
-    return_value=$?
-    if [ $return_value -eq 0 ]; then
-      echo " OK: we were able to build sim:nsh"
-    else
-      RETURN_CODE=1
-      echo " - Error building sim:nsh:"
-      echo
-      echo $output
-    fi
-
-    echo
-}
 function usage() {
     echo "Usage: $0 [--url <URL-of-release-dir>] [--release <name-of-release] [--dir <path-to-directory>] [--tempdir <path-to-directory>]"
     echo "   Given release full URL, release name, or a local directory, downloads or copies"
