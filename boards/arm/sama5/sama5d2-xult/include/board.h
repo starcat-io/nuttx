@@ -335,7 +335,6 @@
 #define BOARD_SDMMC_SD4MODE_PRESCALER   SDMMC_SYSCTL_SDCLKFS_DIV8
 #define BOARD_SDMMC_SD4MODE_DIVISOR     SDMMC_SYSCTL_DVS_DIV(1)
 
-
 /****************************************************************************
  * Assembly Language Macros
  ****************************************************************************/

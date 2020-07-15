@@ -1320,7 +1320,8 @@ static int sam_interrupt(int irq, void *context, FAR void *arg)
   enabled = irqstat & irqsigen;
   pending = enabled & priv->xfrints;
 
-  mcinfo("IRQSTAT: %08x IRQSIGEN %08x enabled: %08x pending: %08x xfrints:%08x\n",
+  mcinfo("IRQSTAT: %08x IRQSIGEN %08x enabled: %08x pending: %08x "
+         "xfrints:%08x\n",
          irqstat, irqsigen, enabled, pending, priv->xfrints);
 
   /* Handle in progress, interrupt driven data transfers ********************/
