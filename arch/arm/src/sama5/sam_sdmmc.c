@@ -368,7 +368,6 @@ void sam_set_uhs_timing(FAR struct sam_dev_s *priv,
 static int sam_set_clock(FAR struct sam_dev_s *priv, uint32_t clock);
 static void sam_power(FAR struct sam_dev_s *priv);
 static int sam_set_interrupts(FAR struct sam_dev_s *priv);
-static void sam_mem_alloc_workaround(void);
 
 /****************************************************************************
  * Private Data
@@ -680,7 +679,7 @@ static inline void sam_putreg8(struct sam_dev_s *priv, uint32_t value,
  ****************************************************************************/
 
 static inline void sam_putreg16(struct sam_dev_s *priv, uint32_t value,
-                              unsigned int offset)
+                                unsigned int offset)
 {
   uint32_t address = priv->base + offset;
 
@@ -703,7 +702,7 @@ static inline void sam_putreg16(struct sam_dev_s *priv, uint32_t value,
  ****************************************************************************/
 
 static inline void sam_putreg32(struct sam_dev_s *priv, uint32_t value,
-                              unsigned int offset)
+                                unsigned int offset)
 {
   uint32_t address = priv->base + offset;
 
@@ -810,14 +809,8 @@ static void sam_configwaitints(struct sam_dev_s *priv, uint32_t waitints,
 static void sam_configxfrints(struct sam_dev_s *priv, uint32_t xfrints)
 {
   irqstate_t flags;
-  uint32_t irqstaten;
-  uint32_t irqsigen;
-
-  irqstaten = sam_getreg32(priv, SAMA5_SDMMC_IRQSTATEN_OFFSET);
-  irqsigen = sam_getreg32(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
 
   flags = enter_critical_section();
-
   priv->xfrints = xfrints;
   sam_putreg(priv, priv->xfrints | priv->waitints | priv->cintints,
            SAMA5_SDMMC_IRQSIGEN_OFFSET);
@@ -1099,7 +1092,6 @@ static void sam_transmit(struct sam_dev_s *priv)
 #ifndef CONFIG_SAMA5_SDMMC_DMA
 static void sam_receive(struct sam_dev_s *priv)
 {
-  unsigned int watermark;
   union
   {
     uint32_t w;
@@ -1154,10 +1146,6 @@ static void sam_receive(struct sam_dev_s *priv)
           priv->remaining = 0;
         }
     }
-
-  /* Set the Read Watermark Level either the number of remaining words to be
-   * read (limited to half of the maximum watermark value)
-   */
 
   mcinfo("Exit: remaining: %d IRQSTAT: %08x\n", priv->remaining,
          sam_getreg(priv, SAMA5_SDMMC_IRQSTAT_OFFSET));
@@ -1931,7 +1919,7 @@ static void sam_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
         sam_putreg(priv, regval,  SAMA5_SDMMC_SYSCTL_OFFSET);
         mcinfo("DISABLED, SYSCTRL: %08x\n",
                sam_getreg(priv, SAMA5_SDMMC_SYSCTL_OFFSET));
-        int ret = sam_set_clock(priv, 0);
+        sam_set_clock(priv, 0);
       }
       break;
 
@@ -3718,8 +3706,8 @@ FAR struct sdio_dev_s *sam_sdmmc_sdio_initialize(int slotno)
       return NULL;
     }
 
-  sam_reset(priv);
-  sam_clock(priv, CLOCK_SDIO_DISABLED);
+  sam_reset(&g_sdmmcdev[slotno].dev);
+  sam_clock(&g_sdmmcdev[slotno].dev, CLOCK_SDIO_DISABLED);
   sam_power(priv);
   sam_set_interrupts(priv);
 
@@ -3807,7 +3795,7 @@ void sam_sdmmc_set_sdio_card_isr(FAR struct sdio_dev_s *dev,
   flags  = enter_critical_section();
   regval = sam_getreg16(priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
   regval = (regval & ~SDMMC_INT_CINT) | priv->cintints;
-  sam_putreg16(regval, priv, SAMA5_SDMMC_IRQSIGEN_OFFSET);
+  sam_putreg16(priv, regval, SAMA5_SDMMC_IRQSIGEN_OFFSET);
   leave_critical_section(flags);
 }
 

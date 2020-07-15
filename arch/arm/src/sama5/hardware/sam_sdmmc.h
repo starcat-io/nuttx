@@ -538,6 +538,7 @@
 
 enum bus_mode
   {
+     SD_DISABLED,
      MMC_LEGACY,
      SD_LEGACY,
      MMC_HS,
