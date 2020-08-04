@@ -57,8 +57,8 @@
 
 #include <arch/board/board.h>
 
-#include "up_internal.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "chip.h"
 #include "hardware/efm32_usart.h"
@@ -1638,8 +1638,8 @@ static int spi_portinitialize(struct efm32_spidev_s *priv)
    * priority inheritance enabled.
    */
 
-  nxsem_setprotocol(&priv->rxdmasem, SEM_PRIO_NONE);
-  nxsem_setprotocol(&priv->txdmasem, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->rxdmasem, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->txdmasem, SEM_PRIO_NONE);
 #endif
 
   /* Enable SPI */

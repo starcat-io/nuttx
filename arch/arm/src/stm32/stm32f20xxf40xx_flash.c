@@ -57,7 +57,7 @@
 #include "stm32_rcc.h"
 #include "stm32_waste.h"
 
-#include "up_arch.h"
+#include "arm_arch.h"
 
 /* Only for the STM32F[2|4]0xx family. */
 
@@ -87,9 +87,9 @@ static sem_t g_sem = SEM_INITIALIZER(1);
  * Private Functions
  ****************************************************************************/
 
-static void sem_lock(void)
+static int sem_lock(void)
 {
-  nxsem_wait_uninterruptible(&g_sem);
+  return nxsem_wait_uninterruptible(&g_sem);
 }
 
 static inline void sem_unlock(void)
@@ -101,7 +101,7 @@ static void flash_unlock(void)
 {
   while (getreg32(STM32_FLASH_SR) & FLASH_SR_BSY)
     {
-      up_waste();
+      stm32_waste();
     }
 
   if (getreg32(STM32_FLASH_CR) & FLASH_CR_LOCK)
@@ -140,18 +140,36 @@ static void data_cache_enable(void)
  * Public Functions
  ****************************************************************************/
 
-void stm32_flash_unlock(void)
+int stm32_flash_unlock(void)
 {
-  sem_lock();
+  int ret;
+
+  ret = sem_lock();
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   flash_unlock();
   sem_unlock();
+
+  return ret;
 }
 
-void stm32_flash_lock(void)
+int stm32_flash_lock(void)
 {
-  sem_lock();
+  int ret;
+
+  ret = sem_lock();
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   flash_lock();
   sem_unlock();
+
+  return ret;
 }
 
 /****************************************************************************
@@ -223,7 +241,7 @@ int stm32_flash_writeprotect(size_t page, bool enabled)
 
   while (getreg32(STM32_FLASH_SR) & FLASH_SR_BSY)
     {
-      up_waste();
+      stm32_waste();
     }
 
   /* Relock options */
@@ -347,7 +365,10 @@ ssize_t up_progmem_eraseblock(size_t block)
   modifyreg32(STM32_FLASH_CR, FLASH_CR_SNB_MASK, FLASH_CR_SNB(block));
   modifyreg32(STM32_FLASH_CR, 0, FLASH_CR_STRT);
 
-  while (getreg32(STM32_FLASH_SR) & FLASH_SR_BSY) up_waste();
+  while (getreg32(STM32_FLASH_SR) & FLASH_SR_BSY)
+    {
+      stm32_waste();
+    }
 
   modifyreg32(STM32_FLASH_CR, FLASH_CR_SER, 0);
   sem_unlock();
@@ -383,7 +404,7 @@ ssize_t up_progmem_write(size_t addr, const void *buf, size_t count)
       addr -= STM32_FLASH_BASE;
     }
 
-  if ((addr+count) > STM32_FLASH_SIZE)
+  if ((addr + count) > STM32_FLASH_SIZE)
     {
       return -EFAULT;
     }
@@ -410,7 +431,10 @@ ssize_t up_progmem_write(size_t addr, const void *buf, size_t count)
 
       putreg16(*hword, addr);
 
-      while (getreg32(STM32_FLASH_SR) & FLASH_SR_BSY) up_waste();
+      while (getreg32(STM32_FLASH_SR) & FLASH_SR_BSY)
+        {
+          stm32_waste();
+        }
 
       /* Verify */
 

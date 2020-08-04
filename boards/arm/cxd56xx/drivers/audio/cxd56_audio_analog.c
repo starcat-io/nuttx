@@ -48,25 +48,16 @@
 #include <arch/board/board.h>
 #include <arch/chip/audio.h>
 
-#include <arch/board/cxd56_clock.h>
-
 #include "cxd56_audio_config.h"
 #include "cxd56_audio_analog.h"
 #include "cxd56_audio_aca.h"
+#include "cxd56_clock.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
 #define AUD_MCLK_EXT     (0u<<16) /* External XTAL */
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-inline void cxd56_audio_clock_enable(uint32_t clk, uint32_t div);
-inline void cxd56_audio_clock_disable(void);
-inline bool cxd56_audio_clock_is_enabled(void);
 
 /****************************************************************************
  * Private Data
@@ -171,7 +162,8 @@ CXD56_AUDIO_ECODE cxd56_audio_analog_poweroff(void)
   return ret;
 }
 
-CXD56_AUDIO_ECODE cxd56_audio_analog_poweron_input(FAR cxd56_audio_mic_gain_t *gain)
+CXD56_AUDIO_ECODE
+cxd56_audio_analog_poweron_input(FAR cxd56_audio_mic_gain_t *gain)
 {
   CXD56_AUDIO_ECODE ret = CXD56_AUDIO_ECODE_OK;
 
@@ -284,7 +276,8 @@ CXD56_AUDIO_ECODE cxd56_audio_analog_disable_output(void)
   return ret;
 }
 
-CXD56_AUDIO_ECODE cxd56_audio_analog_set_micgain(FAR cxd56_audio_mic_gain_t *gain)
+CXD56_AUDIO_ECODE
+cxd56_audio_analog_set_micgain(FAR cxd56_audio_mic_gain_t *gain)
 {
   CXD56_AUDIO_ECODE ret = CXD56_AUDIO_ECODE_OK;
 

@@ -51,7 +51,7 @@
 #include <debug.h>
 #include <errno.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 #include "cxd56_clock.h"
 
@@ -133,7 +133,9 @@ static int ge2d_close(FAR struct file *filep)
  * Name: ge2d_read
  ****************************************************************************/
 
-static ssize_t ge2d_read(FAR struct file *filep, FAR char *buffer, size_t len)
+static ssize_t ge2d_read(FAR struct file *filep,
+                         FAR char *buffer,
+                         size_t len)
 {
   return 0;
 }
@@ -170,8 +172,12 @@ static ssize_t ge2d_write(FAR struct file *filep,
 
   /* Enable error and completion interrupts. */
 
-  bits = GE2D_INTR_WR_ERR | GE2D_INTR_RD_ERR | GE2D_INTR_NDE | GE2D_INTR_DSD |
-    GE2D_INTR_NDF;
+  bits = GE2D_INTR_WR_ERR |
+         GE2D_INTR_RD_ERR |
+         GE2D_INTR_NDE |
+         GE2D_INTR_DSD |
+         GE2D_INTR_NDF;
+
   putreg32(bits, GE2D_INTR_ENABLE);
 
   /* Wait for interrupts for processing done. */
@@ -242,7 +248,7 @@ int cxd56_ge2dinitialize(FAR const char *devname)
 
   nxsem_init(&g_lock, 0, 1);
   nxsem_init(&g_wait, 0, 0);
-  nxsem_setprotocol(&g_wait, SEM_PRIO_NONE);
+  nxsem_set_protocol(&g_wait, SEM_PRIO_NONE);
 
   ret = register_driver(devname, &g_ge2dfops, 0666, NULL);
   if (ret != 0)

@@ -28,7 +28,6 @@
 
 #include <nuttx/arch.h>
 #include <nuttx/board.h>
-#include <nuttx/sched_note.h>
 #include <nuttx/mm/iob.h>
 #include <nuttx/drivers/drivers.h>
 #include <nuttx/fs/loop.h>
@@ -36,6 +35,7 @@
 #include <nuttx/net/tun.h>
 #include <nuttx/net/telnet.h>
 #include <nuttx/syslog/syslog.h>
+#include <nuttx/syslog/note_driver.h>
 #include <nuttx/syslog/syslog_console.h>
 #include <nuttx/serial/pty.h>
 #include <nuttx/crypto/crypto.h>
@@ -43,6 +43,7 @@
 
 #include <arch/board/board.h>
 
+#include "sched/sched.h"
 #include "up_arch.h"
 #include "up_internal.h"
 
@@ -100,6 +101,12 @@ static void up_calibratedelay(void)
 
 void up_initialize(void)
 {
+  struct tcb_s *rtcb = this_task();
+
+  rtcb->adj_stack_size = CONFIG_IDLETHREAD_STACKSIZE;
+  rtcb->stack_alloc_ptr =
+    (void *)(g_idle_topstack - CONFIG_IDLETHREAD_STACKSIZE);
+
   /* Initialize global variables */
 
   g_current_regs = NULL;
@@ -119,8 +126,8 @@ void up_initialize(void)
 #endif
 
 #ifdef CONFIG_ARCH_DMA
-  /* Initialize the DMA subsystem if the weak function up_dma_initialize has been
-   * brought into the build
+  /* Initialize the DMA subsystem if the weak function up_dma_initialize
+   * has been brought into the build
    */
 
 #ifdef CONFIG_HAVE_WEAKFUNCTIONS
@@ -153,8 +160,7 @@ void up_initialize(void)
   loop_register();      /* Standard /dev/loop */
 #endif
 
-#if defined(CONFIG_SCHED_INSTRUMENTATION_BUFFER) && \
-    defined(CONFIG_DRIVER_NOTE)
+#if defined(CONFIG_DRIVER_NOTE)
   note_register();      /* Non-standard /dev/note */
 #endif
 

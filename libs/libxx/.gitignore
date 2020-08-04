@@ -1,12 +1,3 @@
-/Make.dep
-/.depend
 /uClibc++
 /libcxx
-/*.asm
-/*.obj
-/*.rel
-/*.lst
-/*.sym
-/*.adb
-/*.lib
-/*.src
+uClibc++.tar.gz

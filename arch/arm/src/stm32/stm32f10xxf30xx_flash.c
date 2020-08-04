@@ -57,7 +57,7 @@
 #include "stm32_rcc.h"
 #include "stm32_waste.h"
 
-#include "up_arch.h"
+#include "arm_arch.h"
 
 /* Only for the STM32F[1|3]0xx family. */
 
@@ -94,9 +94,9 @@ static sem_t g_sem = SEM_INITIALIZER(1);
  * Private Functions
  ************************************************************************************/
 
-static void sem_lock(void)
+static int sem_lock(void)
 {
-  nxsem_wait_uninterruptible(&g_sem);
+  return nxsem_wait_uninterruptible(&g_sem);
 }
 
 static inline void sem_unlock(void)
@@ -108,7 +108,7 @@ static void flash_unlock(uintptr_t base)
 {
   while ((getreg32(base + STM32_FLASH_SR_OFFSET) & FLASH_SR_BSY) != 0)
     {
-      up_waste();
+      stm32_waste();
     }
 
   if ((getreg32(base + STM32_FLASH_CR_OFFSET) & FLASH_CR_LOCK) != 0)
@@ -129,24 +129,42 @@ static void flash_lock(uintptr_t base)
  * Public Functions
  ************************************************************************************/
 
-void stm32_flash_unlock(void)
+int stm32_flash_unlock(void)
 {
-  sem_lock();
+  int ret;
+
+  ret = sem_lock();
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   flash_unlock(STM32_FLASHIF_BASE);
 #if defined(STM32_FLASH_DUAL_BANK)
   flash_unlock(STM32_FLASHIF1_BASE);
 #endif
   sem_unlock();
+
+  return ret;
 }
 
-void stm32_flash_lock(void)
+int stm32_flash_lock(void)
 {
-  sem_lock();
+  int ret;
+
+  ret = sem_lock();
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   flash_lock(STM32_FLASHIF_BASE);
 #if defined(STM32_FLASH_DUAL_BANK)
   flash_lock(STM32_FLASHIF1_BASE);
 #endif
   sem_unlock();
+
+  return ret;
 }
 
 size_t up_progmem_pagesize(size_t page)
@@ -227,6 +245,7 @@ ssize_t up_progmem_eraseblock(size_t block)
 {
   uintptr_t base;
   size_t page_address;
+  int ret;
 
   if (block >= STM32_FLASH_NPAGES)
     {
@@ -246,7 +265,11 @@ ssize_t up_progmem_eraseblock(size_t block)
       base = STM32_FLASHIF_BASE;
     }
 
-  sem_lock();
+  ret = sem_lock();
+  if (ret < 0)
+    {
+      return (ssize_t)ret;
+    }
 
   if ((getreg32(STM32_RCC_CR) & RCC_CR_HSION) == 0)
     {
@@ -269,7 +292,7 @@ ssize_t up_progmem_eraseblock(size_t block)
 
   while ((getreg32(base + STM32_FLASH_SR_OFFSET) & FLASH_SR_BSY) != 0)
     {
-      up_waste();
+      stm32_waste();
     }
 
   modifyreg32(base + STM32_FLASH_CR_OFFSET, FLASH_CR_PER, 0);
@@ -292,6 +315,7 @@ ssize_t up_progmem_write(size_t addr, const void *buf, size_t count)
   uintptr_t base;
   uint16_t *hword = (uint16_t *)buf;
   size_t written = count;
+  int ret;
 
 #if defined(STM32_FLASH_DUAL_BANK)
   /* Handle paged FLASH */
@@ -320,12 +344,16 @@ ssize_t up_progmem_write(size_t addr, const void *buf, size_t count)
       addr -= STM32_FLASH_BASE;
     }
 
-  if ((addr+count) > STM32_FLASH_SIZE)
+  if ((addr + count) > STM32_FLASH_SIZE)
     {
       return -EFAULT;
     }
 
-  sem_lock();
+  ret = sem_lock();
+  if (ret < 0)
+    {
+      return (ssize_t)ret;
+    }
 
   if ((getreg32(STM32_RCC_CR) & RCC_CR_HSION) == 0)
     {
@@ -347,7 +375,7 @@ ssize_t up_progmem_write(size_t addr, const void *buf, size_t count)
 
       while ((getreg32(base + STM32_FLASH_SR_OFFSET) & FLASH_SR_BSY) != 0)
         {
-          up_waste();
+          stm32_waste();
         }
 
       /* Verify */

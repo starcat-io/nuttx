@@ -63,8 +63,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "hardware/imxrt_usbotg.h"
 #include "hardware/imxrt_usbphy.h"
@@ -2180,6 +2180,8 @@ static int imxrt_epconfigure(FAR struct usbdev_ep_s *ep,
             cfg |= USBDEV_ENDPTCTRL_RXT_ISOC; break;
           case USB_EP_ATTR_XFER_BULK:
             cfg |= USBDEV_ENDPTCTRL_RXT_BULK; break;
+          case USB_EP_ATTR_XFER_INT:
+            cfg |= USBDEV_ENDPTCTRL_RXT_INTR; break;
         }
 
       imxrt_chgbits (0x0000ffff, cfg,
@@ -2790,7 +2792,7 @@ static int imxrt_pullup(struct usbdev_s *dev, bool enable)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: up_usbinitialize
+ * Name: arm_usbinitialize
  *
  * Description:
  *   Initialize USB hardware.
@@ -2803,7 +2805,7 @@ static int imxrt_pullup(struct usbdev_s *dev, bool enable)
  *
  ****************************************************************************/
 
-void up_usbinitialize(void)
+void arm_usbinitialize(void)
 {
   struct imxrt_usbdev_s *priv = &g_usbdev;
   int i;
@@ -2918,10 +2920,10 @@ void up_usbinitialize(void)
 }
 
 /****************************************************************************
- * Name: up_usbuninitialize
+ * Name: arm_usbuninitialize
  ****************************************************************************/
 
-void up_usbuninitialize(void)
+void arm_usbuninitialize(void)
 {
   struct imxrt_usbdev_s *priv = &g_usbdev;
   irqstate_t flags;

@@ -47,8 +47,8 @@
 
 #include <errno.h>
 
-#include "up_internal.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "chip.h"
 #include "cxd56_config.h"
@@ -307,6 +307,7 @@ static int cxd56_uart_clockchange(uint8_t id)
           {
             return -1; /* don't restart if processing data in rxfifo */
           }
+
         cxd56_uart_stop(ch);
         cxd56_uart_start(ch);
         break;
@@ -314,6 +315,7 @@ static int cxd56_uart_clockchange(uint8_t id)
       default:
         break;
     }
+
 #endif
   return 0;
 }
@@ -323,14 +325,14 @@ static int cxd56_uart_clockchange(uint8_t id)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: up_lowputc
+ * Name: arm_lowputc
  *
  * Description:
  *   Output one byte on the serial console
  *
  ****************************************************************************/
 
-void up_lowputc(char ch)
+void arm_lowputc(char ch)
 {
 #if defined HAVE_UART && defined HAVE_CONSOLE
   /* Wait for the transmitter to be available */
@@ -387,14 +389,14 @@ void cxd56_lowsetup(void)
   /* Configure the console (only) */
 
 #if defined(HAVE_CONSOLE) && !defined(CONFIG_SUPPRESS_UART_CONFIG)
-  {
-    uint32_t val;
-    val = getreg32(CONSOLE_BASE + CXD56_UART_CR);
-    if (val & UART_CR_EN)
-      {
-        return;
-      }
-  }
+    {
+      uint32_t val;
+      val = getreg32(CONSOLE_BASE + CXD56_UART_CR);
+      if (val & UART_CR_EN)
+        {
+          return;
+        }
+    }
 
   putreg32(CONSOLE_LCR_VALUE, CONSOLE_BASE + CXD56_UART_LCR_H);
   cxd56_setbaud(CONSOLE_BASE, CONSOLE_BASEFREQ, CONSOLE_BAUD);

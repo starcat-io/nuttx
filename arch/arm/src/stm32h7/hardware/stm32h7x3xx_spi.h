@@ -261,11 +261,11 @@
 #  define SPI_CFG1_UDRDET_BEG     (0 << SPI_CFG1_UDRDET_SHIFT)
 #  define SPI_CFG1_UDRDET_END     (1 << SPI_CFG1_UDRDET_SHIFT)
 #  define SPI_CFG1_UDRDET_SS      (2 << SPI_CFG1_UDRDET_SHIFT)
-                                       /* 11: Reserved */
-                                       /* Bit 13: Reserved */
+                                            /* 11: Reserved */
+                                            /* Bit 13: Reserved */
 #define SPI_CFG1_RXDMAEN          (1 << 14) /* Bit 14: RX-DMA stream enable */
 #define SPI_CFG1_TXDMAEN          (1 << 15) /* Bit 15: TX-DMA stream enable */
-#define SPI_CFG1_CRCSIZE_SHIFT    (16) /* Bits 16-20: length of CRC frame to be transacted and compared */
+#define SPI_CFG1_CRCSIZE_SHIFT    (16)      /* Bits 16-20: length of CRC frame to be transacted and compared */
 #define SPI_CFG1_CRCSIZE_VAL(n)   ((n-1) << SPI_CFG1_CRCSIZE_SHIFT)
 #define SPI_CFG1_CRCSIZE_MASK     (0x1f << SPI_CFG1_CRCSIZE_SHIFT)
                                        /* 00000-00010: Reserved */
@@ -298,10 +298,10 @@
 #  define SPI_CFG1_CRCSIZE_30BIT  (29 << SPI_CFG1_CRCSIZE_SHIFT)
 #  define SPI_CFG1_CRCSIZE_31BIT  (30 << SPI_CFG1_CRCSIZE_SHIFT)
 #  define SPI_CFG1_CRCSIZE_32BIT  (31 << SPI_CFG1_CRCSIZE_SHIFT)
-                                       /* Bit 21: Reserved */
+                                            /* Bit 21: Reserved */
 #define SPI_CFG1_CRCEN            (1 << 22) /* Bit 22: hardware CRC computation enable */
-                                       /* Bits 23-27: Reserved */
-#define SPI_CFG1_MBR_SHIFT        (28) /* Bits 28-30: master baud rate */
+                                            /* Bits 23-27: Reserved */
+#define SPI_CFG1_MBR_SHIFT        (28)      /* Bits 28-30: master baud rate */
 #define SPI_CFG1_MBR_MASK         (0x7 << SPI_CFG1_MBR_SHIFT)
 #  define SPI_CFG1_MBR_FPCLKd2    (0 << SPI_CFG1_MBR_SHIFT)
 #  define SPI_CFG1_MBR_FPCLKd4    (1 << SPI_CFG1_MBR_SHIFT)
@@ -351,10 +351,10 @@
 #  define SPI_CFG2_MIDI_13CLK     (13 << SPI_CFG2_MIDI_SHIFT)
 #  define SPI_CFG2_MIDI_14CLK     (14 << SPI_CFG2_MIDI_SHIFT)
 #  define SPI_CFG2_MIDI_15CLK     (15 << SPI_CFG2_MIDI_SHIFT)
-                                       /* Bits 8-14: Reserved */
+                                            /* Bits 8-14: Reserved */
 #define SPI_CFG2_IOSWP            (1 << 15) /* Bit 15: swap functionality of MISO and MOSI pins */
-                                       /* Bit 16: Reserved */
-#define SPI_CFG2_COMM_SHIFT       (17) /* Bits 17-18: SPI communication mode */
+                                            /* Bit 16: Reserved */
+#define SPI_CFG2_COMM_SHIFT       (17)      /* Bits 17-18: SPI communication mode */
 #define SPI_CFG2_COMM_MASK        (0x3 << SPI_CFG2_COMM_SHIFT)
 #  define SPI_CFG2_COMM_FULL      (0 << SPI_CFG2_COMM_SHIFT)
 #  define SPI_CFG2_COMM_STX       (1 << SPI_CFG2_COMM_SHIFT)
@@ -364,13 +364,13 @@
 #define SPI_CFG2_SP_MASK          (0x7 << SPI_CFG2_SP_SHIFT)
 #  define SPI_CFG2_SP_MOTOROLA    (0 << SPI_CFG2_SP_SHIFT)
 #  define SPI_CFG2_SP_TI          (1 << SPI_CFG2_SP_SHIFT)
-                                       /* 010-111: Reserved */
+                                            /* 010-111: Reserved */
 #define SPI_CFG2_MASTER           (1 << 22) /* Bit 22: SPI master */
 #define SPI_CFG2_LSBFRST          (1 << 23) /* Bit 23: data frame format */
 #define SPI_CFG2_CPHA             (1 << 24) /* Bit 24: clock phase */
 #define SPI_CFG2_CPOL             (1 << 25) /* Bit 25: clock polarity */
 #define SPI_CFG2_SSM              (1 << 26) /* Bit 26: software management of SS signal input */
-                                       /* Bit 27: Reserved */
+                                            /* Bit 27: Reserved */
 #define SPI_CFG2_SSIOP            (1 << 28) /* Bit 28: SS input/output polarity */
 #define SPI_CFG2_SSOE             (1 << 29) /* Bit 29: SS output enable */
 #define SPI_CFG2_SSOM             (1 << 30) /* Bit 30: SS output management in master mode */
@@ -396,6 +396,22 @@
 #define SPI_SR_RXWNE             (1 << 15) /* Bit 15: RxFIFO word not empty */
 #define SPI_SR_CTSIZE_SHIFT      (16)      /* Bits 16-31: number of data frames remaining in current TSIZE session */
 #define SPI_SR_CTSIZE_MASK       (1 << SPI_SR_CTSIZE_SHIFT)
+
+/* SPI/I2S interrupt/status flags interrupt enable register */
+
+#define SPI_IER_RXPIE            (1 << 0)  /* Bit 0: RXP Interrupt enable */
+#define SPI_IER_TXPIE            (1 << 1)  /* Bit 1: TXP interrupt enable */
+#define SPI_IER_DXPIE            (1 << 2)  /* Bit 2: DXP interrupt enable */
+#define SPI_IER_EOTIE            (1 << 3)  /* Bit 3: EOT, SUSP and TXC interrupt enable */
+#define SPI_IER_TXTFIE           (1 << 4)  /* Bit 4: TXTFIE interrupt enable */
+#define SPI_IER_UDRIE            (1 << 5)  /* Bit 5: UDR interrupt enable */
+#define SPI_IER_OVRIE            (1 << 6)  /* Bit 6: OVR interrupt enable */
+#define SPI_IER_CRCEIE           (1 << 7)  /* Bit 7: CRC error interrupt enable */
+#define SPI_IER_TIFREIE          (1 << 8)  /* Bit 8: TIFRE interrupt enable */
+#define SPI_IER_MODFIE           (1 << 9)  /* Bit 9: mode fault interrupt enable */
+#define SPI_IER_TSERFIE          (1 << 10) /* Bit 10: additional number of transactions
+                                            * reload interrupt enable
+                                            */
 
 /* SPI/I2S interrupt/status flags clear register */
 
@@ -447,8 +463,7 @@
 #define SPI_UDRDR_UDRDR_MASK       (0xffff << SPI_UDRDR_UDRDR_SHIFT)
                                        /* Bits 16-31: read zero */
 
-/* TODO: SPI/I2S configuration register*/
-
+/* TODO: SPI/I2S configuration register */
 
 #endif /* CONFIG_STM32H7_STM32H7X3XX */
 #endif /* __ARCH_ARM_SRC_STM32H7_HARDWARE_STM32H7X3XX_SPI_H */

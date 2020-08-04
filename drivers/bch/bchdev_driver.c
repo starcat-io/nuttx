@@ -140,7 +140,12 @@ static int bch_open(FAR struct file *filep)
 
   /* Increment the reference count */
 
-  bchlib_semtake(bch);
+  ret = bchlib_semtake(bch);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   if (bch->refs == MAX_OPENCNT)
     {
       ret = -EMFILE;
@@ -170,9 +175,16 @@ static int bch_close(FAR struct file *filep)
   DEBUGASSERT(inode && inode->i_private);
   bch = (FAR struct bchlib_s *)inode->i_private;
 
+  /* Get exclusive access */
+
+  ret = bchlib_semtake(bch);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   /* Flush any dirty pages remaining in the cache */
 
-  bchlib_semtake(bch);
   bchlib_flushsector(bch);
 
   /* Decrement the reference count (I don't use bchlib_decref() because I
@@ -231,7 +243,11 @@ static off_t bch_seek(FAR struct file *filep, off_t offset, int whence)
   DEBUGASSERT(inode && inode->i_private);
 
   bch = (FAR struct bchlib_s *)inode->i_private;
-  bchlib_semtake(bch);
+  ret = bchlib_semtake(bch);
+  if (ret < 0)
+    {
+      return (off_t)ret;
+    }
 
   /* Determine the new, requested file position */
 
@@ -259,15 +275,16 @@ static off_t bch_seek(FAR struct file *filep, off_t offset, int whence)
 
   /* Opengroup.org:
    *
-   *  "The lseek() function shall allow the file offset to be set beyond the end
-   *   of the existing data in the file. If data is later written at this point,
-   *   subsequent reads of data in the gap shall return bytes with the value 0
-   *   until data is actually written into the gap."
+   *  "The lseek() function shall allow the file offset to be set beyond the
+   *   end of the existing data in the file. If data is later written at this
+   *   point, subsequent reads of data in the gap shall return bytes with the
+   *   value 0 until data is actually written into the gap."
    *
-   * We can conform to the first part, but not the second.  But return EINVAL if
+   * We can conform to the first part, but not the second.  But return EINVAL
+   * if:
    *
-   *  "...the resulting file offset would be negative for a regular file, block
-   *   special file, or directory."
+   *  "...the resulting file offset would be negative for a regular file,
+   *  block special file, or directory."
    */
 
   if (newpos >= 0)
@@ -297,7 +314,12 @@ static ssize_t bch_read(FAR struct file *filep, FAR char *buffer, size_t len)
   DEBUGASSERT(inode && inode->i_private);
   bch = (FAR struct bchlib_s *)inode->i_private;
 
-  bchlib_semtake(bch);
+  ret = bchlib_semtake(bch);
+  if (ret < 0)
+    {
+      return (ssize_t)ret;
+    }
+
   ret = bchlib_read(bch, buffer, filep->f_pos, len);
   if (ret > 0)
     {
@@ -312,7 +334,8 @@ static ssize_t bch_read(FAR struct file *filep, FAR char *buffer, size_t len)
  * Name: bch_write
  ****************************************************************************/
 
-static ssize_t bch_write(FAR struct file *filep, FAR const char *buffer, size_t len)
+static ssize_t bch_write(FAR struct file *filep, FAR const char *buffer,
+                         size_t len)
 {
   FAR struct inode *inode = filep->f_inode;
   FAR struct bchlib_s *bch;
@@ -323,7 +346,12 @@ static ssize_t bch_write(FAR struct file *filep, FAR const char *buffer, size_t 
 
   if (!bch->readonly)
     {
-      bchlib_semtake(bch);
+      ret = bchlib_semtake(bch);
+      if (ret < 0)
+        {
+          return (ssize_t)ret;
+        }
+
       ret = bchlib_write(bch, buffer, filep->f_pos, len);
       if (ret > 0)
         {
@@ -364,7 +392,12 @@ static int bch_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
           FAR struct bchlib_s **bchr =
             (FAR struct bchlib_s **)((uintptr_t)arg);
 
-          bchlib_semtake(bch);
+          ret = bchlib_semtake(bch);
+          if (ret < 0)
+            {
+              return ret;
+            }
+
           if (!bchr || bch->refs == MAX_OPENCNT)
             {
               ret   = -EINVAL;
@@ -452,7 +485,11 @@ static int bch_unlink(FAR struct inode *inode)
 
   /* Get exclusive access to the BCH device */
 
-  bchlib_semtake(bch);
+  ret = bchlib_semtake(bch);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Indicate that the driver has been unlinked */
 

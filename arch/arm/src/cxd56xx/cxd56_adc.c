@@ -54,7 +54,7 @@
 #include <arch/chip/adc.h>
 
 #include "chip.h"
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "hardware/cxd56_adc.h"
 #include "hardware/cxd56_scuseq.h"
 #include "cxd56_clock.h"
@@ -123,6 +123,40 @@
 
 #define ADC_BYTESPERSAMPLE   2
 #define ADC_ELEMENTSIZE      0
+
+/* Input Gain setting */
+
+#define INPUT_GAIN(a, g1, g2) (((a) << 24) | ((g2) << 16) | ((g1) << 12))
+#define INPUT_GAIN_MASK         INPUT_GAIN(3, 15, 15)
+#define INPUT_GAIN_MINUS_6DB    INPUT_GAIN(2, 0, 0)
+#define INPUT_GAIN_THROUGH      INPUT_GAIN(0, 0, 0)
+#define INPUT_GAIN_PLUS_6DB     INPUT_GAIN(0, 4, 0)
+#define INPUT_GAIN_PLUS_12DB    INPUT_GAIN(0, 12, 0)
+#define INPUT_GAIN_PLUS_14DB    INPUT_GAIN(0, 4, 8)
+
+#if defined(CONFIG_CXD56_HPADC0_INPUT_GAIN_M6DB)
+#define HPADC0_INPUT_GAIN       INPUT_GAIN_MINUS_6DB
+#elif defined(CONFIG_CXD56_HPADC0_INPUT_GAIN_6DB)
+#define HPADC0_INPUT_GAIN       INPUT_GAIN_PLUS_6DB
+#elif defined(CONFIG_CXD56_HPADC0_INPUT_GAIN_12DB)
+#define HPADC0_INPUT_GAIN       INPUT_GAIN_PLUS_12DB
+#elif defined(CONFIG_CXD56_HPADC0_INPUT_GAIN_14DB)
+#define HPADC0_INPUT_GAIN       INPUT_GAIN_PLUS_14DB
+#else
+#define HPADC0_INPUT_GAIN       INPUT_GAIN_THROUGH
+#endif
+
+#if defined(CONFIG_CXD56_HPADC1_INPUT_GAIN_M6DB)
+#define HPADC1_INPUT_GAIN       INPUT_GAIN_MINUS_6DB
+#elif defined(CONFIG_CXD56_HPADC1_INPUT_GAIN_6DB)
+#define HPADC1_INPUT_GAIN       INPUT_GAIN_PLUS_6DB
+#elif defined(CONFIG_CXD56_HPADC1_INPUT_GAIN_12DB)
+#define HPADC1_INPUT_GAIN       INPUT_GAIN_PLUS_12DB
+#elif defined(CONFIG_CXD56_HPADC1_INPUT_GAIN_14DB)
+#define HPADC1_INPUT_GAIN       INPUT_GAIN_PLUS_14DB
+#else
+#define HPADC1_INPUT_GAIN       INPUT_GAIN_THROUGH
+#endif
 
 typedef enum adc_ch
 {
@@ -277,7 +311,8 @@ static struct cxd56adc_dev_s g_hpadc1priv =
 };
 #endif
 
-static bool adc_active[CH_MAX] = {
+static bool adc_active[CH_MAX] =
+{
     false, false, false, false, false, false
 };
 
@@ -362,39 +397,44 @@ static int adc_start(adc_ch_t ch, uint8_t freq, FAR struct seq_s *seq,
       aerr("SETFIFO failed. %d\n", ret);
       return ret;
     }
+
   ret = seq_ioctl(seq, 0, SCUIOC_SETFIFOMODE, fifomode);
   if (ret < 0)
     {
       aerr("SETFIFOMODE failed. %d\n", ret);
       return ret;
     }
-    if (wm)
-      {
-        ret = seq_ioctl(seq, 0, SCUIOC_SETWATERMARK, (unsigned long)wm);
-        if (ret < 0)
-          {
-            aerr("SETWATERMARK failed. %d\n", ret);
-            return ret;
-          }
-      }
-    if (filter)
-      {
-        ret = seq_ioctl(seq, 0, SCUIOC_SETFILTER, (unsigned long)filter);
-        if (ret < 0)
-          {
-            aerr("SETFILTER failed. %d\n", ret);
-            return ret;
-          }
-      }
-    if (notify)
-      {
-        ret = seq_ioctl(seq, 0, SCUIOC_SETNOTIFY, (unsigned long)notify);
-        if (ret < 0)
-          {
-            aerr("SETNOTIFY failed. %d\n", ret);
-            return ret;
-          }
-      }
+
+  if (wm)
+    {
+      ret = seq_ioctl(seq, 0, SCUIOC_SETWATERMARK, (unsigned long)wm);
+      if (ret < 0)
+        {
+          aerr("SETWATERMARK failed. %d\n", ret);
+          return ret;
+        }
+    }
+
+  if (filter)
+    {
+      ret = seq_ioctl(seq, 0, SCUIOC_SETFILTER, (unsigned long)filter);
+      if (ret < 0)
+        {
+          aerr("SETFILTER failed. %d\n", ret);
+          return ret;
+        }
+    }
+
+  if (notify)
+    {
+      ret = seq_ioctl(seq, 0, SCUIOC_SETNOTIFY, (unsigned long)notify);
+      if (ret < 0)
+        {
+          aerr("SETNOTIFY failed. %d\n", ret);
+          return ret;
+        }
+    }
+
   if (ch <= CH3)
     {
       /* LPADC.A1 LPADC_CH : todo: GPS ch */
@@ -469,6 +509,7 @@ static int adc_start(adc_ch_t ch, uint8_t freq, FAR struct seq_s *seq,
         {
           val = 0x00000030;
         }
+
 #endif
       putreg32(val, SCUADCIF_HPADC_AC0);
 #endif
@@ -516,6 +557,15 @@ static int adc_start(adc_ch_t ch, uint8_t freq, FAR struct seq_s *seq,
                            (uint32_t *)SCUADCIF_HPADC1_A2;
       putreg32(1, addr);
 
+      /* HPADC.A3 */
+
+      addr = (ch == CH4) ? (uint32_t *)SCUADCIF_HPADC0_A3 :
+                           (uint32_t *)SCUADCIF_HPADC1_A3;
+
+      val = getreg32(addr) & ~INPUT_GAIN_MASK;
+      val |= (ch == CH4) ? HPADC0_INPUT_GAIN : HPADC1_INPUT_GAIN;
+      putreg32(val, addr);
+
       /* HPADC.D0 */
 
       addr = (ch == CH4) ? (uint32_t *)SCUADCIF_HPADC0_D0 :
@@ -554,6 +604,7 @@ static int adc_start(adc_ch_t ch, uint8_t freq, FAR struct seq_s *seq,
                                (uint32_t *)SCUADCIF_HPADC1_D2;
           putreg32(1, addr);
         }
+
       adc_active[ch] = true;
     }
   else
@@ -603,6 +654,7 @@ static int adc_stop(adc_ch_t ch, FAR struct seq_s *seq)
               break;
             }
         }
+
       if (is_clockdisable)
         {
           cxd56_lpadc_clock_disable();
@@ -646,6 +698,7 @@ static bool adc_validcheck(int cmd)
     {
       return true;
     }
+
   return false;
 }
 
@@ -689,6 +742,7 @@ static int cxd56_adc_open(FAR struct file *filep)
     {
       return ret;
     }
+
   ainfo("open ch%d freq%d scufifo%d\n", priv->ch, priv->freq, priv->fsize);
 
   return OK;
@@ -721,11 +775,13 @@ static int cxd56_adc_close(FAR struct file *filep)
       kmm_free(priv->wm);
       priv->wm = NULL;
     }
+
   if (priv->filter)
     {
       kmm_free(priv->filter);
       priv->filter = NULL;
     }
+
   if (priv->notify)
     {
       kmm_free(priv->notify);
@@ -856,7 +912,7 @@ static int cxd56_adc_ioctl(FAR struct file *filep, int cmd,
           else
             {
               aerr("Unrecognized cmd: %d\n", cmd);
-              ret = -EINVAL;
+              ret = -ENOTTY;
             }
         }
         break;
@@ -876,8 +932,8 @@ static int cxd56_adc_ioctl(FAR struct file *filep, int cmd,
  *   get sampling interval of ADC.
  *
  * Input Parameters:
- *   bustype - SCU_BUS_LPADC0, SCU_BUS_LPADC1, SCU_BUS_LPADC2, SCU_BUS_LPADC3,
- *             SCU_BUS_HPADC0, SCU_BUS_HPADC1
+ *   bustype - SCU_BUS_LPADC0, SCU_BUS_LPADC1, SCU_BUS_LPADC2,
+ *             SCU_BUS_LPADC3, SCU_BUS_HPADC0, SCU_BUS_HPADC1
  *   *interval - Sampling interval
  *   *adjust   - Adjustment value used for timestamp calculation
  *
@@ -972,6 +1028,7 @@ void cxd56_adc_getinterval(int adctype, uint32_t *interval, uint16_t *adjust)
         {
           freq /= 6;
         }
+
 #endif
       if (freq > 0)
         {
@@ -1015,6 +1072,7 @@ int cxd56_adcinitialize(void)
       aerr("Failed to register driver(lpadc0): %d\n", ret);
       return ret;
     }
+
 #endif
 #if defined (CONFIG_CXD56_LPADC1) || defined (CONFIG_CXD56_LPADC0_1) || defined (CONFIG_CXD56_LPADC_ALL)
   ret = register_driver("/dev/lpadc1", &g_adcops, 0666, &g_lpadc1priv);
@@ -1023,6 +1081,7 @@ int cxd56_adcinitialize(void)
       aerr("Failed to register driver(lpadc1): %d\n", ret);
       return ret;
     }
+
 #endif
 #if defined (CONFIG_CXD56_LPADC2) || defined (CONFIG_CXD56_LPADC_ALL)
   ret = register_driver("/dev/lpadc2", &g_adcops, 0666, &g_lpadc2priv);
@@ -1031,6 +1090,7 @@ int cxd56_adcinitialize(void)
       aerr("Failed to register driver(lpadc2): %d\n", ret);
       return ret;
     }
+
 #endif
 #if defined (CONFIG_CXD56_LPADC3) || defined (CONFIG_CXD56_LPADC_ALL)
   ret = register_driver("/dev/lpadc3", &g_adcops, 0666, &g_lpadc3priv);
@@ -1039,6 +1099,7 @@ int cxd56_adcinitialize(void)
       aerr("Failed to register driver(lpadc3): %d\n", ret);
       return ret;
     }
+
 #endif
 #ifdef CONFIG_CXD56_HPADC0
   ret = register_driver("/dev/hpadc0", &g_adcops, 0666, &g_hpadc0priv);
@@ -1047,6 +1108,7 @@ int cxd56_adcinitialize(void)
       aerr("Failed to register driver(hpadc0): %d\n", ret);
       return ret;
     }
+
 #endif
 #ifdef CONFIG_CXD56_HPADC1
   ret = register_driver("/dev/hpadc1", &g_adcops, 0666, &g_hpadc1priv);
@@ -1055,6 +1117,7 @@ int cxd56_adcinitialize(void)
       aerr("Failed to register driver(hpadc1): %d\n", ret);
       return ret;
     }
+
 #endif
 
   return ret;

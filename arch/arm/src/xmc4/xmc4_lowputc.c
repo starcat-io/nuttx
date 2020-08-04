@@ -45,8 +45,8 @@
 #include <arch/irq.h>
 #include <arch/board/board.h>
 
-#include "up_internal.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 #include <debug.h>
 
 #include "xmc4_config.h"
@@ -143,14 +143,14 @@ static const struct uart_config_s g_console_config =
  ****************************************************************************/
 
 /****************************************************************************
- * Name: up_lowputc
+ * Name: arm_lowputc
  *
  * Description:
  *   Output one byte on the serial console
  *
  ****************************************************************************/
 
-void up_lowputc(char ch)
+void arm_lowputc(char ch)
 {
 #ifdef HAVE_UART_CONSOLE
   uintptr_t base;
@@ -378,9 +378,10 @@ int xmc4_uart_configure(enum usic_channel_e channel,
    *     a data word
    */
 
-  regval &= ~(USIC_TBCTR_DPTR_MASK | USIC_TBCTR_LIMIT_MASK | USIC_TBCTR_STBTEN |
-              USIC_TBCTR_SIZE_MASK | USIC_TBCTR_LOF);
-  regval |=  (USIC_TBCTR_DPTR(16) | USIC_TBCTR_LIMIT(1) | USIC_TBCTR_SIZE_16);
+  regval &= ~(USIC_TBCTR_DPTR_MASK | USIC_TBCTR_LIMIT_MASK |
+              USIC_TBCTR_STBTEN | USIC_TBCTR_SIZE_MASK | USIC_TBCTR_LOF);
+  regval |=  (USIC_TBCTR_DPTR(16) | USIC_TBCTR_LIMIT(1) |
+              USIC_TBCTR_SIZE_16);
   putreg32(regval, base + XMC4_USIC_TBCTR_OFFSET);
 
   /* Disable the receive FIFO */
@@ -399,8 +400,10 @@ int xmc4_uart_configure(enum usic_channel_e channel,
    *     of a new data word
    */
 
-  regval &= ~(USIC_RBCTR_DPTR_MASK | USIC_RBCTR_LIMIT_MASK | USIC_RBCTR_SIZE_MASK);
-  regval |= (USIC_RBCTR_DPTR(0) | USIC_RBCTR_LIMIT(15) | USIC_RBCTR_SIZE_16 | USIC_RBCTR_LOF);
+  regval &= ~(USIC_RBCTR_DPTR_MASK | USIC_RBCTR_LIMIT_MASK |
+              USIC_RBCTR_SIZE_MASK);
+  regval |= (USIC_RBCTR_DPTR(0) | USIC_RBCTR_LIMIT(15) | USIC_RBCTR_SIZE_16 |
+             USIC_RBCTR_LOF);
   putreg32(regval, base + XMC4_USIC_RBCTR_OFFSET);
 
   /* Start UART */

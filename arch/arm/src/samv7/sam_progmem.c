@@ -46,8 +46,8 @@
 #include <nuttx/semaphore.h>
 #include <arch/samv7/chip.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 #include "barriers.h"
 
 #include "hardware/sam_memorymap.h"
@@ -187,9 +187,9 @@ static sem_t g_page_sem;
  *
  ****************************************************************************/
 
-static void page_buffer_lock(void)
+static int page_buffer_lock(void)
 {
-  nxsem_wait_uninterruptible(&g_page_sem);
+  return nxsem_wait_uninterruptible(&g_page_sem);
 }
 
 #define page_buffer_unlock() nxsem_post(&g_page_sem)
@@ -328,7 +328,8 @@ ssize_t up_progmem_getpage(size_t address)
  *   cluster - cluster index
  *
  * Returned Value:
- *   Base address of given cluster, maximum size if cluster index is not valid.
+ *   Base address of given cluster, maximum size if cluster index is not
+ *   valid.
  *
  ****************************************************************************/
 
@@ -539,7 +540,11 @@ ssize_t up_progmem_write(size_t address, const void *buffer, size_t buflen)
 
   /* Get exclusive access to the global page buffer */
 
-  page_buffer_lock();
+  ret = page_buffer_lock();
+  if (ret < 0)
+    {
+      return (ssize_t)ret;
+    }
 
   /* Make sure that the FLASH is unlocked */
 

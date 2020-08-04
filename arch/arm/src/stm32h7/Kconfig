@@ -12,13 +12,113 @@ choice
 	default ARCH_CHIP_STM32H743ZI
 	depends on ARCH_CHIP_STM32H7
 
+config ARCH_CHIP_STM32H743AG
+	bool "STM32H743AG"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_G
+	select STM32H7_IO_CONFIG_A
+	---help---
+		STM32 H7 Cortex M7, 1024 Kb FLASH, 1024K Kb SRAM,
+		UFBGA169
+
+config ARCH_CHIP_STM32H743AI
+	bool "STM32H743AI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_A
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		UFBGA169
+
+config ARCH_CHIP_STM32H743BG
+	bool "STM32H743BG"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_G
+	select STM32H7_IO_CONFIG_B
+	---help---
+		STM32 H7 Cortex M7, 1024 Kb FLASH, 1024K Kb SRAM,
+		LQFP208
+
+config ARCH_CHIP_STM32H743BI
+	bool "STM32H743BI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_B
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		LQFP208
+
+config ARCH_CHIP_STM32H743IG
+	bool "STM32H743IG"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_G
+	select STM32H7_IO_CONFIG_I
+	---help---
+		STM32 H7 Cortex M7, 1024 Kb FLASH, 1024K Kb SRAM,
+		LQFP176 or UFBGA176
+
+config ARCH_CHIP_STM32H743II
+	bool "STM32H743II"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_I
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		LQFP176 or UFBGA176
+
+config ARCH_CHIP_STM32H743VG
+	bool "STM32H743VG"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_G
+	select STM32H7_IO_CONFIG_V
+	---help---
+		STM32 H7 Cortex M7, 1024 Kb FLASH, 1024K Kb SRAM,
+		LQFP100 or TFBGA100
+
+config ARCH_CHIP_STM32H743VI
+	bool "STM32H743VI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_V
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		LQFP100 or TFBGA100
+
+config ARCH_CHIP_STM32H743XG
+	bool "STM32H743XG"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_G
+	select STM32H7_IO_CONFIG_X
+	---help---
+		STM32 H7 Cortex M7, 1024 Kb FLASH, 1024K Kb SRAM,
+		TFBGA240
+
+config ARCH_CHIP_STM32H743XI
+	bool "STM32H743XI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_X
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		TFBGA240
+
+config ARCH_CHIP_STM32H743ZG
+	bool "STM32H743ZG"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_G
+	select STM32H7_IO_CONFIG_Z
+	---help---
+		STM32 H7 Cortex M7, 1024 Kb FLASH, 1024K Kb SRAM,
+		LQFP144
+
 config ARCH_CHIP_STM32H743ZI
 	bool "STM32H743ZI"
 	select STM32H7_STM32H7X3XX
 	select STM32H7_FLASH_CONFIG_I
-# TODO: IO_CONFIG
+	select STM32H7_IO_CONFIG_Z
 	---help---
-		STM32 H7 Cortex M7, 2048 FLASH, 1024K Kb SRAM
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		LQFP144
 
 config ARCH_CHIP_STM32H747XI
 	bool "STM32H747XI"
@@ -26,17 +126,88 @@ config ARCH_CHIP_STM32H747XI
 	select STM32H7_FLASH_CONFIG_I
 # TODO: IO_CONFIG
 	---help---
-		Dual core STM32 H7 Cortex M7+M4, 2048 FLASH, 1024K Kb SRAM
+		Dual core STM32 H7 Cortex M7+M4, 2048 Kb FLASH, 1024K Kb SRAM
+
+config ARCH_CHIP_STM32H753AI
+	bool "STM32H753AI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_A
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		with cryptographic accelerator, UFBGA169
+
+
+config ARCH_CHIP_STM32H753BI
+	bool "STM32H753BI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_B
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		with cryptographic accelerator, LQFP208
 
 config ARCH_CHIP_STM32H753II
 	bool "STM32H753II"
 	select STM32H7_STM32H7X3XX
 	select STM32H7_FLASH_CONFIG_I
-# TODO: IO_CONFIG
+	select STM32H7_IO_CONFIG_I
 	---help---
-		STM32 H7 Cortex M7, 2048 FLASH, 1024K Kb SRAM
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		with cryptographic accelerator, LQFP176/UFBGA176
+
+config ARCH_CHIP_STM32H753VI
+	bool "STM32H753VI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_V
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		with cryptographic accelerator, LQFP100/TFBGA100
+
+config ARCH_CHIP_STM32H753XI
+	bool "STM32H753XI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_X
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		with cryptographic accelerator, TFBGA240
+
+config ARCH_CHIP_STM32H753ZI
+	bool "STM32H753ZI"
+	select STM32H7_STM32H7X3XX
+	select STM32H7_FLASH_CONFIG_I
+	select STM32H7_IO_CONFIG_Z
+	---help---
+		STM32 H7 Cortex M7, 2048 Kb FLASH, 1024K Kb SRAM,
+		with cryptographic accelerator, LQFP144
 
 endchoice # STM32 H7 Chip Selection
+
+config STM32H7_IO_CONFIG_A
+	bool
+	default n
+
+config STM32H7_IO_CONFIG_B
+	bool
+	default n
+
+config STM32H7_IO_CONFIG_I
+	bool
+	default n
+
+config STM32H7_IO_CONFIG_V
+	bool
+	default n
+
+config STM32H7_IO_CONFIG_X
+	bool
+	default n
+
+config STM32H7_IO_CONFIG_Z
+	bool
+	default n
 
 config STM32H7_STM32H7X3XX
 	bool
@@ -50,11 +221,11 @@ config STM32H7_STM32H7X3XX
 	select ARMV7M_HAVE_DTCM
 	select STM32H7_HAVE_ETHERNET
 	select STM32H7_HAVE_FMC
+	select STM32H7_HAVE_GPIOF if !STM32H7_IO_CONFIG_V
+	select STM32H7_HAVE_GPIOG if !STM32H7_IO_CONFIG_V
 	select STM32H7_HAVE_SPI4
-	select STM32H7_HAVE_SPI5
+	select STM32H7_HAVE_SPI5 if !STM32H7_IO_CONFIG_V
 	select STM32H7_HAVE_SPI6
-	bool
-	default n
 
 config STM32H7_STM32H7X7XX
 	bool
@@ -68,11 +239,11 @@ config STM32H7_STM32H7X7XX
 	select ARMV7M_HAVE_DTCM
 	select STM32H7_HAVE_ETHERNET
 	select STM32H7_HAVE_FMC
+	select STM32H7_HAVE_GPIOF
+	select STM32H7_HAVE_GPIOG
 	select STM32H7_HAVE_SPI4
 	select STM32H7_HAVE_SPI5
 	select STM32H7_HAVE_SPI6
-	bool
-	default n
 
 config STM32H7_FLASH_CONFIG_B
 	bool
@@ -126,6 +297,20 @@ config STM32H7_FLASH_OVERRIDE_I
 
 endchoice # "Override Flash Size Designator"
 
+config STM32H7_FLASH_CR_PSIZE
+	int "Flash program size width"
+	depends on ARCH_CHIP_STM32H7
+	default 3
+	range 0 3
+	---help---
+		On some hardware the fastest 64 bit wide flash writes cause too
+		high power consumption which may compromize the system stability.
+		This option can be used to reduce the program size. The options are:
+		0: 8 bits
+		1: 16 bits
+		2: 32 bits
+		3: 64 bits (default)
+
 config STM32H7_AXI_SRAM_CORRUPTION_WAR
 	bool "Errata 2.2.9 Reading from AXI SRAM data read corruption Workaround"
 	default y
@@ -151,16 +336,24 @@ config STM32H7_PROGMEM
 
 menu "STM32H7 Peripheral Selection"
 
-# These "hidden" settings determine is a peripheral option is available for the
-# selection MCU
+# These "hidden" settings determine whether a peripheral option is available
+# for the selected MCU
 
 config STM32H7_HAVE_ETHERNET
 	bool
 	default n
 
 config STM32H7_HAVE_FMC
-    bool
-    default n
+	bool
+	default n
+
+config STM32H7_HAVE_GPIOF
+	bool
+	default n
+
+config STM32H7_HAVE_GPIOG
+	bool
+	default n
 
 config STM32H7_HAVE_SPI4
 	bool
@@ -289,9 +482,13 @@ config STM32H7_ETHMAC
 	select ARCH_HAVE_PHY
 
 config STM32H7_FMC
-    bool "FMC"
-    default n
-    depends on STM32H7_HAVE_FMC
+	bool "FMC"
+	default n
+	depends on STM32H7_HAVE_FMC
+	---help---
+		Enable Flexible Memory Controller.
+		To correctly configure FMC for your hardware, you will have to define
+		a number of macros in your board.h file. See stm32_fmc.c for directions.
 
 config STM32H7_OTGFS
 	bool "OTG FS"
@@ -628,6 +825,138 @@ config STM32H7_SPI_DMATHRESHOLD
 		When SPI DMA is enabled, small DMA transfers will still be performed
 		by polling logic.  But we need a threshold value to determine what
 		is small.
+
+config STM32H7_SPI1_DMA
+	bool "SPI1 DMA"
+	default n
+	depends on STM32H7_SPI1 && STM32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI1 transfer performance.
+
+config STM32H7_SPI1_DMA_BUFFER
+	int "SPI1 DMA buffer size"
+	default 0
+	depends on STM32H7_SPI1_DMA
+	---help---
+		Add a properly aligned DMA buffer for RX and TX DMA for SPI1.
+
+config STM32H7_SPI1_COMMTYPE
+	int "SPI1 Operation mode"
+	default 0
+	range 0 3
+	depends on STM32H7_SPI1
+	---help---
+		Select full-duplex (0), simplex tx (1), simplex rx (2) or half-duplex (3)
+
+config STM32H7_SPI2_DMA
+	bool "SPI2 DMA"
+	default n
+	depends on STM32H7_SPI2 && STM32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI2 transfer performance.
+
+config STM32H7_SPI2_DMA_BUFFER
+	int "SPI2 DMA buffer size"
+	default 0
+	depends on STM32H7_SPI2_DMA
+	---help---
+		Add a properly aligned DMA buffer for RX and TX DMA for SPI2.
+
+config STM32H7_SPI2_COMMTYPE
+	int "SPI2 Operation mode"
+	default 0
+	range 0 3
+	depends on STM32H7_SPI2
+	---help---
+		Select full-duplex (0), simplex tx (1), simplex rx (2) or half-duplex (3)
+
+config STM32H7_SPI3_DMA
+	bool "SPI3 DMA"
+	default n
+	depends on STM32H7_SPI3 && STM32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI3 transfer performance.
+
+config STM32H7_SPI3_DMA_BUFFER
+	int "SPI3 DMA buffer size"
+	default 0
+	depends on STM32H7_SPI3_DMA
+	---help---
+		Add a properly aligned DMA buffer for RX and TX DMA for SPI3.
+
+config STM32H7_SPI3_COMMTYPE
+	int "SPI3 Operation mode"
+	default 0
+	range 0 3
+	depends on STM32H7_SPI3
+	---help---
+		Select full-duplex (0), simplex tx (1), simplex rx (2) or half-duplex (3)
+
+config STM32H7_SPI4_DMA
+	bool "SPI4 DMA"
+	default n
+	depends on STM32H7_SPI4 && STM32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI4 transfer performance.
+
+config STM32H7_SPI4_DMA_BUFFER
+	int "SPI4 DMA buffer size"
+	default 0
+	depends on STM32H7_SPI4_DMA
+	---help---
+		Add a properly aligned DMA buffer for RX and TX DMA for SPI4.
+
+config STM32H7_SPI4_COMMTYPE
+	int "SPI4 Operation mode"
+	default 0
+	range 0 3
+	depends on STM32H7_SPI4
+	---help---
+		Select full-duplex (0), simplex tx (1), simplex rx (2) or half-duplex (3)
+
+config STM32H7_SPI5_DMA
+	bool "SPI5 DMA"
+	default n
+	depends on STM32H7_SPI5 && STM32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI5 transfer performance.
+
+config STM32H7_SPI5_DMA_BUFFER
+	int "SPI5 DMA buffer size"
+	default 0
+	depends on STM32H7_SPI5_DMA
+	---help---
+		Add a properly aligned DMA buffer for RX and TX DMA for SPI5.
+
+config STM32H7_SPI5_COMMTYPE
+	int "SPI5 Operation mode"
+	default 0
+	range 0 3
+	depends on STM32H7_SPI5
+	---help---
+		Select full-duplex (0), simplex tx (1), simplex rx (2) or half-duplex (3)
+
+config STM32H7_SPI6_DMA
+	bool "SPI6 DMA"
+	default n
+	depends on STM32H7_SPI6 && STM32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI6 transfer performance.
+
+config STM32H7_SPI6_DMA_BUFFER
+	int "SPI6 DMA buffer size"
+	default 0
+	depends on STM32H7_SPI6_DMA
+	---help---
+		Add a properly aligned DMA buffer for RX and TX DMA for SPI6.
+
+config STM32H7_SPI6_COMMTYPE
+	int "SPI6 Operation mode"
+	default 0
+	range 0 3
+	depends on STM32H7_SPI6
+	---help---
+		Select full-duplex (0), simplex tx (1), simplex rx (2) or half-duplex (3)
 
 endmenu # "SPI Configuration"
 
@@ -1098,6 +1427,7 @@ if STM32H7_BKPSRAM
 config STM32H7_BBSRAM
 	bool "BBSRAM File Support"
 	default n
+	select ARM_MPU
 
 config STM32H7_BBSRAM_FILES
 	int "Max Files to support in BBSRAM"
@@ -1186,14 +1516,6 @@ config STM32H7_RTC_LSECLOCK_RUN_DRV_CAPABILITY
 endif # STM32H7_RTC_LSECLOCK
 
 endmenu # RTC Configuration
-
-config STM32H7_EXTERNAL_RAM
-    bool "External RAM on FMC"
-    default n
-    depends on STM32H7_FMC
-    select ARCH_HAVE_HEAP2
-    ---help---
-        In addition to internal SDRAM, external RAM may be available through the FMC.
 
 menu "QuadSPI Configuration"
 	depends on STM32H7_QUADSPI
@@ -1337,7 +1659,7 @@ config STM32H7_CUSTOM_CLOCKCONFIG
 
 config STM32H7_DTCMEXCLUDE
 	bool "Exclude DTCM SRAM from the heap"
-	default y if ELF
+	default y if LIBC_ARCH_ELF
 	depends on ARMV7M_HAVE_DTCM
 	---help---
 		Exclude DTCM SRAM from the HEAP because it appears to be impossible
@@ -1364,6 +1686,24 @@ config STM32H7_DMACAPABLE
 
 
 menu "Timer Configuration"
+
+config STM32H7_ONESHOT
+	bool "TIM one-shot wrapper"
+	default n
+	---help---
+		Enable a wrapper around the low level timer/counter functions to
+		support one-shot timer.
+
+config STM32H7_ONESHOT_MAXTIMERS
+	int "Maximum number of oneshot timers"
+	default 1
+	range 1 8
+	depends on STM32H7_ONESHOT
+	---help---
+		Determines the maximum number of oneshot timers that can be
+		supported.  This setting pre-allocates some minimal support for each
+		of the timers and places an upper limit on the number of oneshot
+		timers that you can use.
 
 config STM32H7_PWM_LL_OPS
 	bool "PWM low-level operations"

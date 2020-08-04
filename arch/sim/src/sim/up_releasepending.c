@@ -71,7 +71,8 @@ void up_release_pending(void)
   /* Merge the g_pendingtasks list into the ready-to-run task list */
 
   /* sched_lock(); */
-  if (sched_mergepending())
+
+  if (nxsched_merge_pending())
     {
       /* The currently active task has changed!  We will need to switch
        * contexts.
@@ -79,7 +80,7 @@ void up_release_pending(void)
        * Update scheduler parameters.
        */
 
-      sched_suspend_scheduler(rtcb);
+      nxsched_suspend_scheduler(rtcb);
 
       /* Copy the exception context into the TCB of the task that was
        * currently active. if up_setjmp returns a non-zero value, then
@@ -96,8 +97,8 @@ void up_release_pending(void)
           sinfo("New Active Task TCB=%p\n", rtcb);
 
           /* The way that we handle signals in the simulation is kind of
-           * a kludge.  This would be unsafe in a truly multi-threaded, interrupt
-           * driven environment.
+           * a kludge.  This would be unsafe in a truly multi-threaded,
+           * interrupt driven environment.
            */
 
           if (rtcb->xcp.sigdeliver)
@@ -109,7 +110,7 @@ void up_release_pending(void)
 
           /* Update scheduler parameters */
 
-          sched_resume_scheduler(rtcb);
+          nxsched_resume_scheduler(rtcb);
 
           /* Then switch contexts */
 

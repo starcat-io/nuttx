@@ -123,9 +123,10 @@ static inline int nxmutex_destroy(FAR mutex_t *mutex)
  * Name: nxmutex_lock
  *
  * Description:
- *   This function attempts to lock the mutex referenced by 'mutex'.  The mutex
- *   is implemented with a semaphore, so if the semaphore value is (<=) zero,
- *   then the calling task will not return until it successfully acquires the lock.
+ *   This function attempts to lock the mutex referenced by 'mutex'.  The
+ *   mutex is implemented with a semaphore, so if the semaphore value is
+ *   (<=) zero, then the calling task will not return until it successfully
+ *   acquires the lock.
  *
  * Parameters:
  *   mutex - mutex descriptor.
@@ -187,7 +188,7 @@ static inline bool nxmutex_is_locked(FAR mutex_t *mutex)
   int cnt;
   int ret;
 
-  ret = nxsem_getvalue(mutex, &cnt);
+  ret = nxsem_get_value(mutex, &cnt);
 
   DEBUGASSERT(ret == OK);
 

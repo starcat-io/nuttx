@@ -33,14 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
-
-ASRCS =
-CSRCS =
-
-DEPPATH = --dep-path .
-VPATH = .
-
+include $(TOPDIR)/Make.defs
 include videomode/Make.defs
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
@@ -63,7 +56,7 @@ $(COBJS): %$(OBJEXT): %.c
 $(BIN):	$(OBJS)
 	$(call ARCHIVE, $@, $(OBJS))
 
-.depend: Makefile $(SRCS)
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
 	$(Q) touch $@
 

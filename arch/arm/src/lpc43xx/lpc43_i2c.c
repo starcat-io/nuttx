@@ -69,8 +69,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "lpc43_i2c.h"
 #include "lpc43_scu.h"
@@ -533,7 +533,7 @@ struct i2c_master_s *lpc43_i2cbus_initialize(int port)
    * priority inheritance enabled.
    */
 
-  nxsem_setprotocol(&priv->wait, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->wait, SEM_PRIO_NONE);
 
   /* Allocate a watchdog timer */
 

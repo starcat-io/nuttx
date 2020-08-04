@@ -48,12 +48,13 @@
 #include <arch/irq.h>
 #include <arch/board/board.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "hardware/a1x_timer.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
 /* Timer 0 will run at the rate of OSC24M with no division */
 
 #define TMR0_CLOCK (24000000)

@@ -60,10 +60,10 @@
 
 #include <arch/board/board.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "mips_arch.h"
+#include "mips_internal.h"
 
-#include "pic32mz-gpio.h"
+#include "pic32mz_gpio.h"
 #include "flipnclick-pic32mz.h"
 
 #ifndef CONFIG_ARCH_LEDS
@@ -76,7 +76,7 @@
  * Name: board_userled_initialize
  ****************************************************************************/
 
-void board_userled_initialize(void)
+uint32_t board_userled_initialize(void)
 {
 #ifndef CONFIG_ARCH_LEDS
   /* Configure LED GPIOs for output */
@@ -87,6 +87,7 @@ void board_userled_initialize(void)
   pic32mz_configgpio(GPIO_LED_C);
   pic32mz_configgpio(GPIO_LED_D);
 #endif
+  return BOARD_NLEDS;
 }
 
 /****************************************************************************
@@ -132,7 +133,7 @@ void board_userled(int led, bool ledon)
  * Name: board_userled_all
  ****************************************************************************/
 
-void board_userled_all(uint8_t ledset)
+void board_userled_all(uint32_t ledset)
 {
   bool ledon;
 

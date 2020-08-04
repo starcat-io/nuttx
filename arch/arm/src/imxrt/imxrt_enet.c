@@ -63,7 +63,7 @@
 #  include <nuttx/net/pkt.h>
 #endif
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 #include "imxrt_config.h"
 #include "hardware/imxrt_enet.h"
@@ -242,7 +242,9 @@
 
 #define CRITICAL_ERROR    (ENET_INT_UN | ENET_INT_RL | ENET_INT_EBERR)
 
-/* This is a helper pointer for accessing the contents of the Ethernet header */
+/* This is a helper pointer for accessing
+ * the contents of the Ethernet header
+ */
 
 #define BUF ((struct eth_hdr_s *)priv->dev.d_buf)
 
@@ -252,8 +254,8 @@
  * Private Types
  ****************************************************************************/
 
-/* The imxrt_driver_s encapsulates all state information for a single hardware
- * interface
+/* The imxrt_driver_s encapsulates all state information for
+ * a single hardware interface
  */
 
 struct imxrt_driver_s
@@ -651,8 +653,8 @@ static int imxrt_txpoll(struct net_driver_s *dev)
         }
     }
 
-  /* If zero is returned, the polling will continue until all connections have
-   * been examined.
+  /* If zero is returned, the polling will continue until
+   * all connections have been examined.
    */
 
   return 0;
@@ -1219,8 +1221,9 @@ static void imxrt_poll_work(FAR void *arg)
 {
   FAR struct imxrt_driver_s *priv = (FAR struct imxrt_driver_s *)arg;
 
-  /* Check if there is there is a transmission in progress.  We cannot perform
-   * the TX poll if he are unable to accept another packet for transmission.
+  /* Check if there is there is a transmission in progress.
+   * We cannot perform the TX poll if he are unable to accept
+   * another packet for transmission.
    */
 
   net_lock();
@@ -1788,7 +1791,8 @@ static int imxrt_ioctl(struct net_driver_s *dev, int cmd, unsigned long arg)
         {
           struct mii_ioctl_data_s *req =
             (struct mii_ioctl_data_s *)((uintptr_t)arg);
-          ret = imxrt_readmii(priv, req->phy_id, req->reg_num, &req->val_out);
+          ret = imxrt_readmii(priv, req->phy_id,
+                              req->reg_num, &req->val_out);
         }
         break;
 
@@ -2037,9 +2041,10 @@ static inline int imxrt_initphy(struct imxrt_driver_s *priv, bool renogphy)
 
   if (renogphy)
     {
-      /* Loop (potentially infinitely?) until we successfully communicate with
-       * the PHY. This is 'standard stuff' that should work for any PHY - we
-       * are not communicating with it's 'special' registers at this point.
+      /* Loop (potentially infinitely?) until we successfully communicate
+       * with the PHY. This is 'standard stuff' that should work for any PHY
+       * - we are not communicating with it's 'special' registers
+       * at this point.
        */
 
       ninfo("%s: Try phyaddr: %u\n", BOARD_PHY_NAME, phyaddr);
@@ -2143,6 +2148,13 @@ static inline int imxrt_initphy(struct imxrt_driver_s *priv, bool renogphy)
 
       imxrt_writemii(priv, phyaddr, MII_KSZ8081_PHYCTRL2,
                      (phydata | (1 << 4)));
+
+      imxrt_writemii(priv, phyaddr, MII_ADVERTISE,
+                     MII_ADVERTISE_100BASETXFULL |
+                     MII_ADVERTISE_100BASETXHALF |
+                     MII_ADVERTISE_10BASETXFULL |
+                     MII_ADVERTISE_10BASETXHALF |
+                     MII_ADVERTISE_CSMA);
 
 #elif defined (CONFIG_ETH0_PHY_LAN8720)
       /* Make sure that PHY comes up in correct mode when it's reset */
@@ -2467,7 +2479,9 @@ int imxrt_netinitialize(int intf)
   regval |= GPR_GPR1_ENET1_TX_CLK_OUT_EN;
   putreg32(regval, IMXRT_IOMUXC_GPR_GPR1);
 
-  /* Enable the ENET clock.  Clock is on during all modes, except STOP mode. */
+  /* Enable the ENET clock.  Clock is on during all modes,
+   * except STOP mode.
+   */
 
   imxrt_clockall_enet();
 
@@ -2531,8 +2545,8 @@ int imxrt_netinitialize(int intf)
 #ifdef CONFIG_NET_ETHERNET
   /* Determine a semi-unique MAC address from MCU UID
    * We use UID Low and Mid Low registers to get 64 bits, from which we keep
-   * 48 bits.  We then force unicast and locally administered bits (b0 and b1,
-   * 1st octet)
+   * 48 bits.  We then force unicast and locally administered bits
+   * (b0 and b1, 1st octet)
    */
 
   /* hardcoded offset: todo: need proper header file */
@@ -2578,7 +2592,7 @@ int imxrt_netinitialize(int intf)
 }
 
 /****************************************************************************
- * Name: up_netinitialize
+ * Name: arm_netinitialize
  *
  * Description:
  *   Initialize the first network interface.  If there are more than one
@@ -2589,7 +2603,7 @@ int imxrt_netinitialize(int intf)
  ****************************************************************************/
 
 #if CONFIG_IMXRT_ENET_NETHIFS == 1 && !defined(CONFIG_NETDEV_LATEINIT)
-void up_netinitialize(void)
+void arm_netinitialize(void)
 {
   imxrt_netinitialize(0);
 }

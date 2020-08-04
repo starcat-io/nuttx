@@ -50,8 +50,8 @@
 #include "chip.h"
 #include "nvic.h"
 #include "ram_vectors.h"
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "nrf52_irq.h"
 #ifdef CONFIG_NRF52_GPIOTE
@@ -124,21 +124,30 @@ static void nrf52_dumpnvic(const char *msg, int irq)
           getreg32(NVIC_SYSTICK_CTRL_ENABLE));
 #endif
   irqinfo("  IRQ ENABLE: %08x %08x\n",
-          getreg32(NVIC_IRQ0_31_ENABLE), getreg32(NVIC_IRQ32_63_ENABLE));
+          getreg32(NVIC_IRQ0_31_ENABLE),
+          getreg32(NVIC_IRQ32_63_ENABLE));
   irqinfo("  SYSH_PRIO:  %08x %08x %08x\n",
-          getreg32(NVIC_SYSH4_7_PRIORITY), getreg32(NVIC_SYSH8_11_PRIORITY),
+          getreg32(NVIC_SYSH4_7_PRIORITY),
+          getreg32(NVIC_SYSH8_11_PRIORITY),
           getreg32(NVIC_SYSH12_15_PRIORITY));
   irqinfo("  IRQ PRIO:   %08x %08x %08x %08x\n",
-          getreg32(NVIC_IRQ0_3_PRIORITY), getreg32(NVIC_IRQ4_7_PRIORITY),
-          getreg32(NVIC_IRQ8_11_PRIORITY), getreg32(NVIC_IRQ12_15_PRIORITY));
+          getreg32(NVIC_IRQ0_3_PRIORITY),
+          getreg32(NVIC_IRQ4_7_PRIORITY),
+          getreg32(NVIC_IRQ8_11_PRIORITY),
+          getreg32(NVIC_IRQ12_15_PRIORITY));
   irqinfo("              %08x %08x %08x %08x\n",
-          getreg32(NVIC_IRQ16_19_PRIORITY), getreg32(NVIC_IRQ20_23_PRIORITY),
-          getreg32(NVIC_IRQ24_27_PRIORITY), getreg32(NVIC_IRQ28_31_PRIORITY));
+          getreg32(NVIC_IRQ16_19_PRIORITY),
+          getreg32(NVIC_IRQ20_23_PRIORITY),
+          getreg32(NVIC_IRQ24_27_PRIORITY),
+          getreg32(NVIC_IRQ28_31_PRIORITY));
   irqinfo("              %08x %08x %08x %08x\n",
-          getreg32(NVIC_IRQ32_35_PRIORITY), getreg32(NVIC_IRQ36_39_PRIORITY),
-          getreg32(NVIC_IRQ40_43_PRIORITY), getreg32(NVIC_IRQ44_47_PRIORITY));
+          getreg32(NVIC_IRQ32_35_PRIORITY),
+          getreg32(NVIC_IRQ36_39_PRIORITY),
+          getreg32(NVIC_IRQ40_43_PRIORITY),
+          getreg32(NVIC_IRQ44_47_PRIORITY));
   irqinfo("              %08x %08x %08x\n",
-          getreg32(NVIC_IRQ48_51_PRIORITY), getreg32(NVIC_IRQ52_55_PRIORITY),
+          getreg32(NVIC_IRQ48_51_PRIORITY),
+          getreg32(NVIC_IRQ52_55_PRIORITY),
           getreg32(NVIC_IRQ56_59_PRIORITY));
 
   leave_critical_section(flags);
@@ -330,7 +339,7 @@ void up_irqinitialize(void)
    * vector table that requires special initialization.
    */
 
-  up_ramvec_initialize();
+  arm_ramvec_initialize();
 #endif
 
   /* Set all interrupts (and exceptions) to the default priority */
@@ -339,7 +348,7 @@ void up_irqinitialize(void)
   putreg32(DEFPRIORITY32, NVIC_SYSH8_11_PRIORITY);
   putreg32(DEFPRIORITY32, NVIC_SYSH12_15_PRIORITY);
 
-  /* The NVIC ICTR register (bits 0-4) holds the number of of interrupt
+  /* The NVIC ICTR register (bits 0-4) holds the number of interrupt
    * lines that the NVIC supports:
    *
    *  0 -> 32 interrupt lines,  8 priority registers
@@ -369,8 +378,8 @@ void up_irqinitialize(void)
    * under certain conditions.
    */
 
-  irq_attach(NRF52_IRQ_SVCALL, up_svcall, NULL);
-  irq_attach(NRF52_IRQ_HARDFAULT, up_hardfault, NULL);
+  irq_attach(NRF52_IRQ_SVCALL, arm_svcall, NULL);
+  irq_attach(NRF52_IRQ_HARDFAULT, arm_hardfault, NULL);
 
   /* Set the priority of the SVCall interrupt */
 
@@ -389,7 +398,7 @@ void up_irqinitialize(void)
    * Fault handler.
    */
 
-  irq_attach(NRF52_IRQ_MEMFAULT, up_memfault, NULL);
+  irq_attach(NRF52_IRQ_MEMFAULT, arm_memfault, NULL);
   up_enable_irq(NRF52_IRQ_MEMFAULT);
 #endif
 
@@ -398,7 +407,7 @@ void up_irqinitialize(void)
 #ifdef CONFIG_DEBUG_FEATURES
   irq_attach(NRF52_IRQ_NMI, nrf52_nmi, NULL);
 #ifndef CONFIG_ARM_MPU
-  irq_attach(NRF52_IRQ_MEMFAULT, up_memfault, NULL);
+  irq_attach(NRF52_IRQ_MEMFAULT, arm_memfault, NULL);
 #endif
   irq_attach(NRF52_IRQ_BUSFAULT, nrf52_busfault, NULL);
   irq_attach(NRF52_IRQ_USAGEFAULT, nrf52_usagefault, NULL);
@@ -508,14 +517,14 @@ void up_enable_irq(int irq)
 }
 
 /****************************************************************************
- * Name: up_ack_irq
+ * Name: arm_ack_irq
  *
  * Description:
  *   Acknowledge the IRQ
  *
  ****************************************************************************/
 
-void up_ack_irq(int irq)
+void arm_ack_irq(int irq)
 {
   nrf52_clrpend(irq);
 }

@@ -54,6 +54,15 @@
  ****************************************************************************/
 
 /****************************************************************************
+ * Name: nx_wait
+ ****************************************************************************/
+
+pid_t nx_wait(FAR int *stat_loc)
+{
+  return nx_waitpid((pid_t)-1, stat_loc, 0);
+}
+
+/****************************************************************************
  * Name: wait
  *
  * Description:
@@ -68,7 +77,8 @@
  *
  *   The waitpid() function will behave identically to wait(), if the pid
  *   argument is (pid_t)-1 and the options argument is 0. Otherwise, its
- *   behaviour will be modified by the values of the pid and options arguments.
+ *   behaviour will be modified by the values of the pid and options
+ *   arguments.
  *
  * Input Parameters:
  *   stat_loc - The location to return the exit status
@@ -84,7 +94,7 @@ pid_t wait(FAR int *stat_loc)
    * trivial case.
    */
 
-  return waitpid((pid_t) - 1, stat_loc, 0);
+  return waitpid((pid_t)-1, stat_loc, 0);
 }
 
 #endif /* CONFIG_SCHED_WAITPID && CONFIG_SCHED_HAVE_PARENT */

@@ -33,13 +33,9 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
 
-ASRCS =
-CSRCS =
-
-VPATH := $(SRCDIR)
-DEPPATH = --dep-path .
+VERSION ?= 2020.04.0
 
 include libmetal.defs
 include open-amp.defs
@@ -66,14 +62,13 @@ $(BIN): $(OBJS)
 
 dirlinks::
 
-.depend: Makefile $(SRCS)
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
 	$(Q) touch $@
 
 depend: .depend
 
 clean:
-	$(foreach obj,$(OBJS),$(call DELFILE, $(obj)))
 	$(call DELFILE, $(BIN))
 	$(call CLEAN)
 

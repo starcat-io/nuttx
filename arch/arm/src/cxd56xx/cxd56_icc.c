@@ -51,7 +51,7 @@
 #include <debug.h>
 #include <errno.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 #include "cxd56_cpufifo.h"
 #include "cxd56_icc.h"
@@ -158,9 +158,14 @@ static struct iccdev_s *g_cpumsg[NCPUS];
  * Private Functions
  ****************************************************************************/
 
-static void icc_semtake(sem_t *semid)
+static int icc_semtake(sem_t *semid)
 {
-  nxsem_wait_uninterruptible(semid);
+  return nxsem_wait_uninterruptible(semid);
+}
+
+static int icc_semtrytake(sem_t *semid)
+{
+  return sem_trywait(semid);
 }
 
 static void icc_semgive(sem_t *semid)
@@ -174,6 +179,7 @@ static FAR struct iccdev_s *icc_getprotocol(int protoid)
     {
       return NULL;
     }
+
   return g_protocol[protoid];
 }
 
@@ -183,6 +189,7 @@ static FAR struct iccdev_s *icc_getcpu(int cpuid)
     {
       return NULL;
     }
+
   return g_cpumsg[cpuid];
 }
 
@@ -249,13 +256,10 @@ static int icc_irqhandler(int cpuid, uint32_t word[2])
 #ifndef CONFIG_DISABLE_SIGNAL
   if (priv->pid != INVALID_PROCESS_ID)
     {
-#  ifdef CONFIG_CAN_PASS_STRUCTS
       union sigval value;
+
       value.sival_ptr = priv->sigdata;
       sigqueue(priv->pid, priv->signo, value);
-#  else
-      sigqueue(priv->pid, priv->signo, priv->sigdata);
-#  endif
     }
 #endif
 
@@ -288,6 +292,7 @@ static int icc_sighandler(int cpuid, int protoid, uint32_t pdata,
       iccinfo("Call signal handler with No %d.\n", signo);
       priv->u.sighandler(signo, sigdata, data, priv->userdata);
     }
+
   return OK;
 }
 
@@ -314,16 +319,31 @@ static int icc_recv(FAR struct iccdev_s *priv, FAR iccmsg_t *msg, int32_t ms)
   irqstate_t flags;
   int ret = OK;
 
-  if (ms)
+  if (ms == -1)
+    {
+      /* Try to take the semaphore without waiging. */
+
+      ret = icc_semtrytake(&priv->rxwait);
+      if (ret < 0)
+        {
+          ret = -get_errno();
+          return ret;
+        }
+    }
+  else if (ms == 0)
+    {
+      icc_semtake(&priv->rxwait);
+    }
+  else
     {
       int32_t timo;
       timo = ms * 1000 / CONFIG_USEC_PER_TICK;
       wd_start(priv->rxtimeout, timo, icc_rxtimeout, 1, (uint32_t)priv);
+
+      icc_semtake(&priv->rxwait);
+
+      wd_cancel(priv->rxtimeout);
     }
-
-  icc_semtake(&priv->rxwait);
-
-  wd_cancel(priv->rxtimeout);
 
   flags = enter_critical_section();
   req   = (FAR struct iccreq_s *)sq_remfirst(&priv->recvq);
@@ -356,11 +376,13 @@ static FAR struct iccdev_s *icc_devnew(void)
     {
       return NULL;
     }
+
   memset(priv, 0, sizeof(struct iccdev_s));
 
   priv->rxtimeout = wd_create();
 
   nxsem_init(&priv->rxwait, 0, 0);
+  nxsem_set_protocol(&priv->rxwait, SEM_PRIO_NONE);
 
   /* Initialize receive queue and free list */
 
@@ -405,6 +427,7 @@ int cxd56_iccregisterhandler(int protoid, cxd56_icchandler_t handler,
     {
       ret = -EINVAL;
     }
+
   leave_critical_section(flags);
 
   return ret;
@@ -428,6 +451,7 @@ int cxd56_iccregistersighandler(int cpuid, cxd56_iccsighandler_t handler,
     {
       ret = -EINVAL;
     }
+
   leave_critical_section(flags);
 
   return ret;
@@ -501,7 +525,8 @@ int cxd56_iccrecvmsg(FAR iccmsg_t *msg, int32_t ms)
   return icc_recv(priv, msg, ms);
 }
 
-int cxd56_iccsignal(int8_t cpuid, int8_t signo, int16_t sigdata, uint32_t data)
+int cxd56_iccsignal(int8_t cpuid, int8_t signo, int16_t sigdata,
+                    uint32_t data)
 {
   struct iccreq_s req;
 
@@ -555,6 +580,7 @@ int cxd56_iccinit(int protoid)
     {
       return -ENOMEM;
     }
+
   g_protocol[protoid] = priv;
 
   return OK;
@@ -579,6 +605,7 @@ int cxd56_iccinitmsg(int cpuid)
     {
       return -ENOMEM;
     }
+
   g_cpumsg[cpuid] = priv;
 
   return OK;
@@ -601,6 +628,7 @@ void cxd56_iccuninit(int protoid)
       icc_devfree(priv);
       g_protocol[protoid] = NULL;
     }
+
   leave_critical_section(flags);
 }
 
@@ -621,6 +649,7 @@ void cxd56_iccuninitmsg(int cpuid)
       icc_devfree(priv);
       g_cpumsg[cpuid] = NULL;
     }
+
   leave_critical_section(flags);
 }
 

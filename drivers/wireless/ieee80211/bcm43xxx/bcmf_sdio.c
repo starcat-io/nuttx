@@ -108,7 +108,8 @@ static int  bcmf_chipinitialize(FAR struct bcmf_sdio_dev_s *sbus);
 
 static int  bcmf_oob_irq(FAR void *arg);
 
-static int  bcmf_sdio_bus_sleep(FAR struct bcmf_sdio_dev_s *sbus, bool sleep);
+static int  bcmf_sdio_bus_sleep(FAR struct bcmf_sdio_dev_s *sbus,
+                                bool sleep);
 
 static void bcmf_sdio_waitdog_timeout(int argc, wdparm_t arg1, ...);
 static int  bcmf_sdio_thread(int argc, char **argv);
@@ -259,8 +260,8 @@ int bcmf_probe(FAR struct bcmf_sdio_dev_s *sbus)
       goto exit_error;
     }
 
-  /* Default device clock speed is up to 25 Mhz
-   * We could set EHS bit to operate at a clock rate up to 50 Mhz.
+  /* Default device clock speed is up to 25 MHz
+   * We could set EHS bit to operate at a clock rate up to 50 MHz.
    */
 
   SDIO_CLOCK(sbus->sdio_dev, CLOCK_SD_TRANSFER_4BIT);
@@ -605,8 +606,8 @@ int bcmf_transfer_bytes(FAR struct bcmf_sdio_dev_s *sbus, bool write,
       nblocks = 0;
     }
 
-  return sdio_io_rw_extended(sbus->sdio_dev, write,
-                             function, address, true, buf, blocklen, nblocks);
+  return sdio_io_rw_extended(sbus->sdio_dev, write, function, address, true,
+                             buf, blocklen, nblocks);
 }
 
 /****************************************************************************
@@ -690,7 +691,7 @@ int bcmf_bus_sdio_initialize(FAR struct bcmf_dev_s *priv,
       goto exit_free_bus;
     }
 
-  if ((ret = nxsem_setprotocol(&sbus->thread_signal, SEM_PRIO_NONE)) != OK)
+  if ((ret = nxsem_set_protocol(&sbus->thread_signal, SEM_PRIO_NONE)) != OK)
     {
       goto exit_free_bus;
     }
@@ -876,15 +877,17 @@ int bcmf_sdio_thread(int argc, char **argv)
 
           sbus->irq_pending = false;
 
-          bcmf_read_sbregw(sbus,
-                          CORE_BUS_REG(sbus->chip->core_base[SDIOD_CORE_ID],
-                          intstatus), &sbus->intstatus);
+          bcmf_read_sbregw(
+            sbus,
+            CORE_BUS_REG(sbus->chip->core_base[SDIOD_CORE_ID], intstatus),
+            &sbus->intstatus);
 
           /* Clear interrupts */
 
-          bcmf_write_sbregw(sbus,
-                            CORE_BUS_REG(sbus->chip->core_base[SDIOD_CORE_ID],
-                            intstatus), sbus->intstatus);
+          bcmf_write_sbregw(
+            sbus,
+            CORE_BUS_REG(sbus->chip->core_base[SDIOD_CORE_ID], intstatus),
+            sbus->intstatus);
         }
 
       /* On frame indication, read available frames */

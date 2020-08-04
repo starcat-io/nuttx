@@ -61,26 +61,14 @@
 
 /* Debug */
 
-#ifdef CONFIG_CPP_HAVE_VARARGS
-#  ifdef CONFIG_DEBUG_GRAM
-#    define granerr(format, ...)       _err(format, ##__VA_ARGS__)
-#    define granwarn(format, ...)      _warn(format, ##__VA_ARGS__)
-#    define graninfo(format, ...)      _info(format, ##__VA_ARGS__)
-#  else
-#    define granerr(format, ...)       merr(format, ##__VA_ARGS__)
-#    define granwarn(format, ...)      mwarn(format, ##__VA_ARGS__)
-#    define graninfo(format, ...)      minfo(format, ##__VA_ARGS__)
-#  endif
+#ifdef CONFIG_DEBUG_GRAM
+#  define granerr                    _err
+#  define granwarn                   _warn
+#  define graninfo                   _info
 #else
-#  ifdef CONFIG_DEBUG_GRAM
-#    define granerr                    _err
-#    define granwarn                   _warn
-#    define graninfo                   _info
-#  else
-#    define granerr                    merr
-#    define granwarn                   mwarn
-#    define graninfo                   minfo
-#  endif
+#  define granerr                    merr
+#  define granwarn                   mwarn
+#  define graninfo                   minfo
 #endif
 
 /****************************************************************************
@@ -116,11 +104,12 @@ struct gran_s
  *   priv - Pointer to the gran state
  *
  * Returned Value:
- *   None
+ *   gran_enter_critical() may return any error reported by
+ *   nxsem_wait_uninterruptible()
  *
  ****************************************************************************/
 
-void gran_enter_critical(FAR struct gran_s *priv);
+int  gran_enter_critical(FAR struct gran_s *priv);
 void gran_leave_critical(FAR struct gran_s *priv);
 
 /****************************************************************************

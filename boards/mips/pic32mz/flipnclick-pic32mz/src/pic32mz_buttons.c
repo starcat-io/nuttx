@@ -46,7 +46,7 @@
 #include <nuttx/board.h>
 #include <arch/board/board.h>
 
-#include "pic32mz-gpio.h"
+#include "pic32mz_gpio.h"
 #include "flipnclick-pic32mz.h"
 
 #ifdef CONFIG_ARCH_BUTTONS
@@ -79,7 +79,7 @@ static const pinset_t g_buttons[NUM_BUTTONS] =
  *
  ****************************************************************************/
 
-void board_button_initialize(void)
+uint32_t board_button_initialize(void)
 {
   int i;
 
@@ -91,6 +91,8 @@ void board_button_initialize(void)
     {
       pic32mz_configgpio(g_buttons[i]);
     }
+
+  return NUM_BUTTONS;
 }
 
 /****************************************************************************

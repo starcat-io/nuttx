@@ -54,8 +54,8 @@
 
 #include <arch/board/board.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 #include "stm32.h"
 #include "hardware/stm32_ltdc.h"
 #include "hardware/stm32_dma2d.h"
@@ -1110,7 +1110,7 @@ int stm32_dma2dinitialize(void)
        */
 
       nxsem_init(g_interrupt.sem, 0, 0);
-      nxsem_setprotocol(g_interrupt.sem, SEM_PRIO_NONE);
+      nxsem_set_protocol(g_interrupt.sem, SEM_PRIO_NONE);
 
 #ifdef CONFIG_STM32_FB_CMAP
       /* Enable dma2d transfer and clut loading interrupts only */

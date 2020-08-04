@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-/* This file should never be included directed but, rather,
+/* This file should never be included directly but, rather,
  * only indirectly through nuttx/arch.h
  */
 
@@ -45,6 +45,12 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+
+#ifdef CONFIG_ARCH_FAMILY_AVR32
+# include <arch/avr32/arch.h>
+#else
+# include <arch/avr/arch.h>
+#endif
 
 /****************************************************************************
  * Pre-processor Definitions

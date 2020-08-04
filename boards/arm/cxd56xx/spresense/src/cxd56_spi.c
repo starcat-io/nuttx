@@ -47,7 +47,7 @@
 #include <nuttx/spi/spi.h>
 #include <arch/board/board.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 #include "hardware/cxd56_spi.h"
 #include "cxd56_clock.h"
@@ -74,8 +74,8 @@
  *      functions in your board-specific logic.
  *      These functions will perform chip selection and status operations
  *      using GPIOs in the way your board is configured.
- *   3. Add a calls to cxd56_spibus_initialize() in your low level application
- *      initialization logic
+ *   3. Add a calls to cxd56_spibus_initialize() in your low level
+ *      application initialization logic
  *   4. The handle returned by cxd56_spibus_initialize() may then be used to
  *      bind the SPI driver to higher level logic (e.g., calling
  *      mmcsd_spislotinitialize(), for example, will bind the SPI driver to
@@ -138,7 +138,12 @@ void cxd56_spi4select(FAR struct spi_dev_s *dev, uint32_t devid,
 
 uint8_t cxd56_spi4status(FAR struct spi_dev_s *dev, uint32_t devid)
 {
-  return 0;
+  uint8_t ret = 0;
+
+#  if defined(CONFIG_CXD56_SPISD) && (CONFIG_CXD56_SPISD_SPI_CH == 4)
+  ret = board_spisd_status(dev, devid);
+#  endif
+  return ret;
 }
 #endif
 
@@ -152,6 +157,11 @@ void cxd56_spi5select(FAR struct spi_dev_s *dev, uint32_t devid,
 
 uint8_t cxd56_spi5status(FAR struct spi_dev_s *dev, uint32_t devid)
 {
-  return 0;
+  uint8_t ret = 0;
+
+#  if defined(CONFIG_CXD56_SPISD) && (CONFIG_CXD56_SPISD_SPI_CH == 5)
+  ret = board_spisd_status(dev, devid);
+#  endif
+  return ret;
 }
 #endif

@@ -115,7 +115,7 @@ int up_cpu_paused(int cpu)
 
   /* Update scheduler parameters */
 
-  sched_suspend_scheduler(tcb);
+  nxsched_suspend_scheduler(tcb);
 
 #ifdef CONFIG_SCHED_INSTRUMENTATION
   /* Notify that we are paused */
@@ -148,7 +148,7 @@ int up_cpu_paused(int cpu)
 
   /* Reset scheduler parameters */
 
-  sched_resume_scheduler(tcb);
+  nxsched_resume_scheduler(tcb);
 
   /* Then switch contexts.  Any necessary address environment changes
    * will be made when the interrupt returns.
@@ -261,11 +261,11 @@ int up_cpu_pause(int cpu)
   spin_unlock(&g_cpu_paused[cpu]);
 
   /* On successful return g_cpu_wait will be locked, the other CPU will be
-   * spinninf on g_cpu_wait and will not continue until g_cpu_resume() is
+   * spinning on g_cpu_wait and will not continue until g_cpu_resume() is
    * called.  g_cpu_paused will be unlocked in any case.
    */
 
- return ret;
+  return ret;
 }
 
 /****************************************************************************

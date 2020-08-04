@@ -34,12 +34,18 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
 
-ARCH_SRCDIR = $(TOPDIR)/arch/$(CONFIG_ARCH)/src
-CPPFLAGS += -I$(ARCH_SRCDIR)/chip -I$(TOPDIR)/sched $(EXTRADEFINES)
-CFLAGS += -I$(ARCH_SRCDIR)/chip -I$(TOPDIR)/sched $(EXTRADEFINES)
-CXXFLAGS += -I$(ARCH_SRCDIR)/chip -I$(TOPDIR)/sched $(EXTRADEFINES)
+ARCH_SRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
+
+INCLUDES += ${shell $(INCDIR) "$(CC)" $(ARCH_SRCDIR)}
+INCLUDES += ${shell $(INCDIR) "$(CC)" $(ARCH_SRCDIR)$(DELIM)chip}
+INCLUDES += ${shell $(INCDIR) "$(CC)" $(TOPDIR)$(DELIM)sched}
+
+CPPFLAGS += $(INCLUDES) $(EXTRAFLAGS)
+CFLAGS += $(INCLUDES) $(EXTRAFLAGS)
+CXXFLAGS += $(INCLUDES) $(EXTRAFLAGS)
+AFLAGS += $(INCLUDES) $(EXTRAFLAGS)
 
 # Determine which objects are required in the link.The
 # up_head object normally draws in all that is needed, but
@@ -48,8 +54,6 @@ CXXFLAGS += -I$(ARCH_SRCDIR)/chip -I$(TOPDIR)/sched $(EXTRADEFINES)
 
 LINKOBJS = up_head$(OBJEXT)
 REQUIREDOBJS = $(LINKOBJS)
-
-ASRCS =
 
 ifeq ($(CONFIG_HOST_X86_64),y)
 ifeq ($(CONFIG_SIM_M32),y)
@@ -74,7 +78,11 @@ CSRCS += up_allocateheap.c
 VPATH = sim
 DEPPATH = $(patsubst %,--dep-path %,$(subst :, ,$(VPATH)))
 
-HOSTSRCS = up_hosttime.c
+HOSTCFLAGS += ${shell $(INCDIR) "$(CC)" $(ARCH_SRCDIR)}
+HOSTSRCS = up_hostmemory.c up_hosttime.c
+ifneq ($(CONFIG_HOST_MACOS),y)
+  STDLIBS += -lrt
+endif
 
 ifeq ($(CONFIG_STACK_COLORATION),y)
   CSRCS += up_checkstack.c
@@ -88,6 +96,13 @@ ifeq ($(CONFIG_SMP),y)
   CSRCS += up_smpsignal.c up_cpuidlestack.c
   REQUIREDOBJS += up_smpsignal$(OBJEXT)
   HOSTCFLAGS += -DCONFIG_SMP=1 -DCONFIG_SMP_NCPUS=$(CONFIG_SMP_NCPUS)
+  HOSTCFLAGS += -DCONFIG_USEC_PER_TICK=$(CONFIG_USEC_PER_TICK)
+ifeq ($(CONFIG_SIM_WALLTIME),y)
+  HOSTCFLAGS += -DCONFIG_SIM_WALLTIME=1
+endif
+ifeq ($(CONFIG_SCHED_INSTRUMENTATION),y)
+  HOSTCFLAGS += -DCONFIG_SCHED_INSTRUMENTATION=1
+endif
   HOSTSRCS += up_simsmp.c
   STDLIBS += -lpthread
 endif
@@ -157,7 +172,7 @@ ifeq ($(CONFIG_ARCH_ROMGETC),y)
   CSRCS += up_romgetc.c
 endif
 
-ifeq ($(CONFIG_SIM_NETDEV),y)
+ifeq ($(CONFIG_SIM_NETDEV_TAP),y)
   CSRCS += up_netdriver.c
   HOSTCFLAGS += -DNETDEV_BUFSIZE=$(CONFIG_NET_ETH_PKTSIZE)
 ifneq ($(HOSTOS),Cygwin)
@@ -173,17 +188,22 @@ else # HOSTOS != Cygwin
   HOSTSRCS += up_wpcap.c
   DRVLIB = /lib/w32api/libws2_32.a /lib/w32api/libiphlpapi.a
 endif # HOSTOS != Cygwin
-endif # CONFIG_SIM_NETDEV
+else ifeq ($(CONFIG_SIM_NETDEV_VPNKIT),y)
+  CSRCS += up_netdriver.c
+  HOSTCFLAGS += -DCONFIG_SIM_NETDEV_VPNKIT_PATH=\"$(CONFIG_SIM_NETDEV_VPNKIT_PATH)\"
+  HOSTSRCS += up_vpnkit.c
+  VPATH += :sim/vpnkit
+  HOSTSRCS += protocol.c negotiate.c
+endif
 
 ifeq ($(CONFIG_RPTUN),y)
   CSRCS += up_rptun.c
-  HOSTSRCS += up_shmem.c
-  STDLIBS += -lrt
 endif
 
 ifeq ($(CONFIG_FS_HOSTFS),y)
 ifneq ($(CONFIG_FS_HOSTFS_RPMSG),y)
   HOSTSRCS += up_hostfs.c
+  HOSTCFLAGS += -DCONFIG_NAME_MAX=$(CONFIG_NAME_MAX)
 
 up_hostfs.c: hostfs.h
 
@@ -204,22 +224,16 @@ OBJS = $(AOBJS) $(COBJS) $(HOSTOBJS)
 # Override in Make.defs if linker is not 'ld'
 
 ifeq ($(HOSTOS),Darwin)
-  LDSTARTGROUP ?=
-  LDENDGROUP ?=
-  LDUNEXPORTSYMBOLS ?= -unexported_symbols_list $(HOSTOS)-names.dat
+  LDUNEXPORTSYMBOLS ?= -unexported_symbols_list nuttx-names.dat
 else
+  ARCHSCRIPT += -T nuttx.ld
   LDSTARTGROUP ?= --start-group
   LDENDGROUP ?= --end-group
-  LDUNEXPORTSYMBOLS ?=
 endif
-
-EXTRA_LIBS ?=
-EXTRA_LIBPATHS ?=
 
 # Determine which NuttX libraries will need to be linked in
 # Most are provided by LINKLIBS on the MAKE command line
 
-LINKLIBS ?=
 RELLIBS = $(patsubst %.a,%,$(patsubst lib%,-l%,$(LINKLIBS)))
 RELPATHS += -L"$(TOPDIR)/staging"
 
@@ -255,43 +269,38 @@ libarch$(LIBEXT): $(NUTTXOBJS)
 # that are not hardware-related.
 
 board/libboard$(LIBEXT):
-	$(Q) $(MAKE) -C board TOPDIR="$(TOPDIR)" libboard$(LIBEXT) EXTRADEFINES=$(EXTRADEFINES)
+	$(Q) $(MAKE) -C board TOPDIR="$(TOPDIR)" libboard$(LIBEXT) EXTRAFLAGS="$(EXTRAFLAGS)"
 
 # A partially linked object containing only NuttX code (no interface to host OS)
 # Change the names of most symbols that conflict with libc symbols.
-
-GNU:
-	$(Q) mkdir -p ./GNU
-
-GNU/Linux-names.dat: GNU nuttx-names.dat
-	$(Q) cp nuttx-names.dat $@
-
-Msys-names.dat: GNU nuttx-names.dat
-	$(Q) cp nuttx-names.dat $@
-
-Cygwin-names.dat: nuttx-names.dat
-ifeq ($())CONFIG_SIM_CYGWIN_DECORATED),y)
-	$(Q) cat $^ | sed -e "s/^/_/g" >$@
-else
-	$(Q) cp nuttx-names.dat $@
-endif
-
-Darwin-names.dat: nuttx-names.dat
-	$(Q) cat $^ | sed -e "s/^\([^[:space:]][^[:space:]]*\)[[:space:]].*/_\1/g" >$@
-
-nuttx.rel : libarch$(LIBEXT) board/libboard$(LIBEXT) $(HOSTOS)-names.dat $(LINKOBJS)
-	$(Q) echo "LD:  nuttx.rel"
-	$(Q) $(LD) -r $(LDLINKFLAGS) $(RELPATHS) $(EXTRA_LIBPATHS) -o $@ $(REQUIREDOBJS) $(LDSTARTGROUP) $(RELLIBS) $(EXTRA_LIBS) $(LDENDGROUP) $(LDUNEXPORTSYMBOLS)
-ifneq ($(HOSTOS),Darwin)
-	$(Q) $(OBJCOPY) --redefine-syms=$(HOSTOS)-names.dat $@
-endif
-
 # Generate the final NuttX binary by linking the host-specific objects with the NuttX
 # specific objects (with munged names)
 
-nuttx$(EXEEXT): cleanrel nuttx.rel $(HOSTOBJS)
+# C++ global objects are constructed before main get executed, but it isn't a good
+# point for simulator because NuttX doesn't finish the kernel initialization yet.
+# So we have to skip the standard facilities and do the construction by ourself.
+# But how to achieve the goal?
+# 1.Command linker generate the default script(-verbose)
+# 2.Replace __init_array_start/__init_array_end with _sinit/_einit
+# 3.Append __init_array_start = .; __init_array_end = .;
+# Step 2 let nxtask_startup find objects need to construct
+# Step 3 cheat the host there is no object to construct
+# Note: the destructor can be fixed in the same way.
+
+nuttx$(EXEEXT): libarch$(LIBEXT) board/libboard$(LIBEXT) $(LINKOBJS) $(HOSTOBJS)
 	$(Q) echo "LD:  nuttx$(EXEEXT)"
-	$(Q) "$(CC)" $(CCLINKFLAGS) $(LIBPATHS) -o $(TOPDIR)/$@ nuttx.rel $(HOSTOBJS) $(DRVLIB) $(STDLIBS)
+	$(call PREPROCESS, nuttx-names.in, nuttx-names.dat)
+	$(Q) $(LD) -r $(LDLINKFLAGS) $(RELPATHS) $(EXTRA_LIBPATHS) -o nuttx.rel $(REQUIREDOBJS) $(LDSTARTGROUP) $(RELLIBS) $(EXTRA_LIBS) $(LDENDGROUP) $(LDUNEXPORTSYMBOLS)
+ifneq ($(HOSTOS),Darwin)
+	$(Q) $(OBJCOPY) --redefine-syms=nuttx-names.dat nuttx.rel
+	$(Q) $(CC) $(CCLINKFLAGS) -Wl,-verbose 2>&1 | \
+	     sed -e '/====/,/====/!d;//d' -e 's/__executable_start/_stext/g' -e 's/__init_array_start/_sinit/g' \
+	         -e 's/__init_array_end/_einit/g' -e 's/__fini_array_start/_sfini/g' -e 's/__fini_array_end/_efini/g' >nuttx.ld
+	$(Q) echo "__init_array_start = .; __init_array_end = .; __fini_array_start = .; __fini_array_end = .;" >>nuttx.ld
+endif
+	$(if $(CONFIG_HAVE_CXX),\
+	$(Q) "$(CXX)" $(CCLINKFLAGS) $(LIBPATHS) $(ARCHSCRIPT) -o $(TOPDIR)/$@ nuttx.rel $(HOSTOBJS) $(DRVLIB) $(STDLIBS),\
+	$(Q) "$(CC)" $(CCLINKFLAGS) $(LIBPATHS) $(ARCHSCRIPT) -o $(TOPDIR)/$@ nuttx.rel $(HOSTOBJS) $(DRVLIB) $(STDLIBS))
 	$(Q) $(NM) $(TOPDIR)/$@ | \
 		grep -v '\(compiled\)\|\(\.o$$\)\|\( [aUw] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)' | \
 		sort > $(TOPDIR)/System.map
@@ -305,7 +314,7 @@ export_startup: board/libboard$(LIBEXT) up_head.o $(HOSTOBJS)
 
 # Dependencies
 
-.depend: Makefile $(SRCS)
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) if [ -e board/Makefile ]; then \
 		$(MAKE) -C board TOPDIR="$(TOPDIR)" depend ; \
 	fi
@@ -314,14 +323,13 @@ export_startup: board/libboard$(LIBEXT) up_head.o $(HOSTOBJS)
 
 depend: .depend
 
-cleanrel:
-	$(Q) rm -f nuttx.rel $(HOSTOS)-names.dat
-
-clean: cleanrel
+clean:
 	$(Q) if [ -e board/Makefile ]; then \
 		$(MAKE) -C board TOPDIR="$(TOPDIR)" clean ; \
 	fi
+	$(call DELFILE, nuttx.ld)
 	$(call DELFILE, nuttx.rel)
+	$(call DELFILE, nuttx-names.dat)
 	$(call DELFILE, libarch$(LIBEXT))
 	$(call CLEAN)
 
@@ -332,6 +340,5 @@ distclean: clean
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)
 	$(call DELFILE, hostfs.h)
-	$(Q) rm -rf GNU
 
 -include Make.dep

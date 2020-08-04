@@ -61,14 +61,13 @@
  *   handle delayed processing from interrupt handlers.  This feature
  *   is required for some drivers but, if there are not complaints,
  *   can be safely disabled.  The worker thread also performs
- *   garbage collection -- completing any delayed memory deallocations
  *   from interrupt handlers.  If the worker thread is disabled,
  *   then that clean will be performed by the IDLE thread instead
  *   (which runs at the lowest of priority and may not be appropriate
  *   if memory reclamation is of high priority).  If CONFIG_SCHED_HPWORK
  *   is enabled, then the following options can also be used:
- * CONFIG_SCHED_HPNTHREADS - The number of thread in the high-priority queue's
- *   thread pool.  Default: 1
+ * CONFIG_SCHED_HPNTHREADS - The number of thread in the high-priority
+ *   queue's thread pool.  Default: 1
  * CONFIG_SCHED_HPWORKPRIORITY - The execution priority of the high-
  *   priority worker thread.  Default: 224
  * CONFIG_SCHED_HPWORKSTACKSIZE - The stack size allocated for the worker
@@ -101,38 +100,29 @@
  *   priority worker thread.  Default: 2048.
  */
 
-/* Is this a protected build (CONFIG_BUILD_PROTECTED=y) */
+/* Is this a flat build (CONFIG_BUILD_FLAT=y) */
 
-#if defined(CONFIG_BUILD_PROTECTED)
+#if defined(CONFIG_BUILD_FLAT)
 
-  /* Yes.. kernel worker threads are not built in a kernel build when we are
+  /* Yes.. user-space worker threads are not built in a flat build */
+
+#  undef CONFIG_LIB_USRWORK
+
+#elif !defined(__KERNEL__)
+
+  /* Kernel worker threads are not built in a kernel build when we are
    * building the user-space libraries.
    */
 
-#  ifndef __KERNEL__
-
-#    undef CONFIG_SCHED_HPWORK
-#    undef CONFIG_SCHED_LPWORK
-#    undef CONFIG_SCHED_WORKQUEUE
+#  undef CONFIG_SCHED_HPWORK
+#  undef CONFIG_SCHED_LPWORK
+#  undef CONFIG_SCHED_WORKQUEUE
 
   /* User-space worker threads are not built in a kernel build when we are
    * building the kernel-space libraries (but we still need to know that it
    * is configured).
    */
 
-#  endif
-
-#elif defined(CONFIG_BUILD_KERNEL)
-  /* The kernel only build is equivalent to the kernel part of the protected
-   * build.
-   */
-
-#else
-  /* User-space worker threads are not built in a flat build
-   * (CONFIG_BUILD_PROTECTED=n && CONFIG_BUILD_KERNEL=n)
-   */
-
-#  undef CONFIG_LIB_USRWORK
 #endif
 
 /* High priority, kernel work queue configuration ***************************/
@@ -290,7 +280,8 @@ enum work_evtype_e
   WORK_TCP_DISCONNECT,   /* Notify loss of TCP connection */
   WORK_UDP_READAHEAD,    /* Notify that UDP read-ahead data is available */
   WORK_UDP_WRITEBUFFER,  /* Notify that UDP write buffer is empty */
-  WORK_NETLINK_RESPONSE  /* Notify that Netlink response is available */
+  WORK_NETLINK_RESPONSE, /* Notify that Netlink response is available */
+  WORK_CAN_READAHEAD     /* Notify that CAN read-ahead data is available */
 };
 
 /* This structure describes one notification and is provided as input to
@@ -380,8 +371,8 @@ int work_queue(int qid, FAR struct work_s *work, worker_t worker,
  *
  * Description:
  *   Cancel previously queued work.  This removes work from the work queue.
- *   After work has been cancelled, it may be re-queue by calling work_queue()
- *   again.
+ *   After work has been cancelled, it may be re-queue by calling
+ *   work_queue() again.
  *
  * Input Parameters:
  *   qid    - The work queue ID

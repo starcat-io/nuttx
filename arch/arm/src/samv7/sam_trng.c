@@ -57,8 +57,8 @@
 #include <nuttx/fs/fs.h>
 #include <nuttx/drivers/drivers.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "sam_periphclks.h"
 #include "sam_trng.h"
@@ -363,7 +363,7 @@ static int sam_rng_initialize(void)
    * priority inheritance enabled.
    */
 
-  nxsem_setprotocol(&g_trngdev.waitsem, SEM_PRIO_NONE);
+  nxsem_set_protocol(&g_trngdev.waitsem, SEM_PRIO_NONE);
 
   /* Enable clocking to the TRNG */
 

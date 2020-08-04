@@ -1,37 +1,20 @@
 /****************************************************************************
  * arch/arm/src/lc823450/lc823450_mtd.c
  *
- *   Copyright 2014,2015,2017 Sony Video & Sound Products Inc.
- *   Author: Masayuki Ishikawa <Masayuki.Ishikawa@jp.sony.com>
- *   Author: Nobutaka Toyoshima <Nobutaka.Toyoshima@jp.sony.com>
- *   Author: Yasuhiro Osaki <Yasuhiro.Osaki@jp.sony.com>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -138,9 +121,9 @@ static struct lc823450_partinfo_s partinfo[LC823450_NPARTS] =
  * Name: mtd_semtake
  ****************************************************************************/
 
-static void mtd_semtake(FAR sem_t *sem)
+static int mtd_semtake(FAR sem_t *sem)
 {
-  nxsem_wait_uninterruptible(sem);
+  return nxsem_wait_uninterruptible(sem);
 }
 
 /****************************************************************************
@@ -196,7 +179,8 @@ static ssize_t lc823450_bread(FAR struct mtd_dev_s *dev, off_t startblock,
       type = SDDR_RW_INC_BYTE;
     }
 
-  finfo("startblockr=%d, nblocks=%d buf=0x%08p type=%x\n", startblock, nblocks, buf, type);
+  finfo("startblockr=%d, nblocks=%d buf=0x%08p type=%x\n",
+        startblock, nblocks, buf, type);
 
   DEBUGASSERT(dev && buf);
 
@@ -205,7 +189,11 @@ static ssize_t lc823450_bread(FAR struct mtd_dev_s *dev, off_t startblock,
       return -EINVAL;
     }
 
-  mtd_semtake(&priv->sem);
+  ret = mtd_semtake(&priv->sem);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   if (!g_mtdmaster[priv->channel])
     {
@@ -226,7 +214,8 @@ static ssize_t lc823450_bread(FAR struct mtd_dev_s *dev, off_t startblock,
 
   if (ret != OK)
     {
-      finfo("ERROR: Failed to read sector, ret=%d startblock=%d nblocks=%d\n",
+      finfo("ERROR: Failed to read sector, ret=%d startblock=%d "
+            "nblocks=%d\n",
             ret, startblock, nblocks);
       return ret;
     }
@@ -263,7 +252,8 @@ static ssize_t lc823450_bwrite(FAR struct mtd_dev_s *dev, off_t startblock,
       type = SDDR_RW_INC_BYTE;
     }
 
-  finfo("startblockr=%d, nblocks=%d buf=0x%08p type=%x\n", startblock, nblocks, buf, type);
+  finfo("startblockr=%d, nblocks=%d buf=0x%08p type=%x\n",
+        startblock, nblocks, buf, type);
 
   DEBUGASSERT(dev && buf);
 
@@ -272,7 +262,11 @@ static ssize_t lc823450_bwrite(FAR struct mtd_dev_s *dev, off_t startblock,
       return -EINVAL;
     }
 
-  mtd_semtake(&priv->sem);
+  ret = mtd_semtake(&priv->sem);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   if (!g_mtdmaster[priv->channel])
     {
@@ -293,7 +287,8 @@ static ssize_t lc823450_bwrite(FAR struct mtd_dev_s *dev, off_t startblock,
 
   if (ret != OK)
     {
-      finfo("ERROR: Failed to write sector, ret=%d startblock=%d nblocks=%d\n",
+      finfo("ERROR: Failed to write sector, ret=%d startblock=%d "
+            "nblocks=%d\n",
             ret, startblock, nblocks);
       return ret;
     }
@@ -305,16 +300,23 @@ static ssize_t lc823450_bwrite(FAR struct mtd_dev_s *dev, off_t startblock,
  * Name: lc823450_ioctl
  ****************************************************************************/
 
-static int lc823450_ioctl(FAR struct mtd_dev_s *dev, int cmd, unsigned long arg)
+static int lc823450_ioctl(FAR struct mtd_dev_s *dev, int cmd,
+                          unsigned long arg)
 {
-  int ret = -EINVAL;
+  int ret;
   FAR struct lc823450_mtd_dev_s *priv = (FAR struct lc823450_mtd_dev_s *)dev;
   FAR struct mtd_geometry_s *geo;
   FAR void **ppv;
 
   finfo("cmd=%xh, arg=%xh\n", cmd, arg);
 
-  mtd_semtake(&priv->sem);
+  ret = mtd_semtake(&priv->sem);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = -EINVAL;
 
   if (!g_mtdmaster[priv->channel])
     {
@@ -330,8 +332,8 @@ static int lc823450_ioctl(FAR struct mtd_dev_s *dev, int cmd, unsigned long arg)
         geo = (FAR struct mtd_geometry_s *)arg;
         if (geo)
           {
-            /* Populate the geometry structure with information needed to know
-             * the capacity and how to access the device.
+            /* Populate the geometry structure with information needed to
+             * know the capacity and how to access the device.
              */
 
             geo->blocksize = priv->blocksize;
@@ -395,14 +397,18 @@ static int lc823450_ioctl(FAR struct mtd_dev_s *dev, int cmd, unsigned long arg)
 
 static int mtd_mediainitialize(FAR struct lc823450_mtd_dev_s *dev)
 {
-  int ret = 0;
+  int ret;
   unsigned long nblocks;
   unsigned long blocksize;
   uint32_t sysclk = lc823450_get_ahb();
 
   finfo("enter\n");
 
-  mtd_semtake(&dev->sem);
+  ret = mtd_semtake(&dev->sem);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   ret = lc823450_sdc_initialize(dev->channel);
   DEBUGASSERT(ret == OK);
@@ -443,6 +449,7 @@ static int mtd_mediainitialize(FAR struct lc823450_mtd_dev_s *dev)
           goto get_card_size;
         }
 #endif
+
       /* Try to change to High Speed mode */
 
       ret = lc823450_sdc_changespeedmode(dev->channel, 1);
@@ -479,7 +486,8 @@ get_card_size:
       lc823450_sdc_cachectl(dev->channel, 1);
     }
 
-  finfo("ch=%d size=%lld \n", dev->channel, (uint64_t)blocksize * (uint64_t)nblocks);
+  finfo("ch=%d size=%lld \n",
+        dev->channel, (uint64_t)blocksize * (uint64_t)nblocks);
 
 exit_with_error:
   mtd_semgive(&dev->sem);
@@ -569,7 +577,8 @@ int lc823450_mtd_initialize(uint32_t devno)
 #if CONFIG_MTD_DEV_MAX == 1
   DEBUGASSERT(devno == CONFIG_MTD_DEVNO_EMMC);
 #else
-  DEBUGASSERT(devno == CONFIG_MTD_DEVNO_EMMC || devno == CONFIG_MTD_DEVNO_SDC);
+  DEBUGASSERT(devno == CONFIG_MTD_DEVNO_EMMC ||
+              devno == CONFIG_MTD_DEVNO_SDC);
 #endif
 
   /* Following block devices are created.
@@ -581,7 +590,11 @@ int lc823450_mtd_initialize(uint32_t devno)
    *  /dev/mtdblock0pN : Nth child partition
    */
 
-  mtd_semtake(&g_sem);
+  ret = mtd_semtake(&g_sem);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   if (g_mtdmaster[ch])
     {
@@ -603,7 +616,8 @@ int lc823450_mtd_initialize(uint32_t devno)
   ret = mmcl_initialize(devno, g_mtdmaster[ch]);
   if (ret != OK)
     {
-      finfo("Failed to create block device on master partition: ch=%d\n", ch);
+      finfo("Failed to create block device on master partition: ch=%d\n",
+            ch);
       kmm_free(g_mtdmaster[ch]);
       g_mtdmaster[ch] = NULL;
       mtd_semgive(&g_sem);
@@ -637,7 +651,8 @@ int lc823450_mtd_initialize(uint32_t devno)
     {
       DEBUGASSERT(partinfo[i].startblock < partinfo[i + 1].startblock);
       DEBUGASSERT(partinfo[i].startblock + partinfo[i].nblocks <= maxblock);
-      DEBUGASSERT(partinfo[i + 1].startblock + partinfo[i + 1].nblocks <= maxblock);
+      DEBUGASSERT(partinfo[i + 1].startblock + partinfo[i + 1].nblocks <=
+                  maxblock);
     }
 #endif
 
@@ -649,8 +664,10 @@ int lc823450_mtd_initialize(uint32_t devno)
         {
           if (partinfo[i].nblocks == 0)
             {
-              partinfo[i].nblocks = (i == 0)? maxblock - partinfo[i].startblock :
-                maxblock - (partinfo[i - 1].startblock + partinfo[i - 1].nblocks);
+              partinfo[i].nblocks = (i == 0) ?
+                maxblock - partinfo[i].startblock :
+                maxblock - (partinfo[i - 1].startblock +
+                partinfo[i - 1].nblocks);
             }
         }
 
@@ -743,7 +760,6 @@ exit_with_error:
   return ret;
 }
 
-
 /****************************************************************************
  * Name: lc823450_mtd_uninitialize
  ****************************************************************************/
@@ -758,7 +774,11 @@ int lc823450_mtd_uninitialize(uint32_t devno)
 
   DEBUGASSERT(devno == CONFIG_MTD_DEVNO_SDC);
 
-  mtd_semtake(&g_sem);
+  ret = mtd_semtake(&g_sem);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   priv = (FAR struct lc823450_mtd_dev_s *)g_mtdmaster[ch];
   if (!priv)
@@ -774,7 +794,12 @@ int lc823450_mtd_uninitialize(uint32_t devno)
   mtd_unregister(g_mtdmaster[ch]);
 #endif
 
-  mtd_semtake(&priv->sem);
+  ret = mtd_semtake(&priv->sem);
+  if (ret < 0)
+    {
+      mtd_semgive(&g_sem);
+      return ret;
+    }
 
   ret = lc823450_sdc_clearcardinfo(ch);
   DEBUGASSERT(ret == OK);

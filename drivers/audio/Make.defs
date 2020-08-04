@@ -39,6 +39,10 @@
 
 ifeq ($(CONFIG_DRIVERS_AUDIO),y)
 
+ifeq ($(CONFIG_AUDIO_CXD56),y)
+CSRCS += cxd56.c
+endif
+
 ifeq ($(CONFIG_AUDIO_VS1053),y)
 CSRCS += vs1053.c
 endif
@@ -52,6 +56,10 @@ ifeq ($(CONFIG_CS43L22_CLKDEBUG),y)
 CSRCS += cs43l22_debug.c
 endif
 endif
+endif
+
+ifeq ($(CONFIG_AUDIO_CS4344),y)
+CSRCS += cs4344.c
 endif
 
 ifeq ($(CONFIG_AUDIO_WM8904),y)

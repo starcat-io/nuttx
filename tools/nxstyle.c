@@ -1,35 +1,20 @@
 /********************************************************************************
  * tools/nxstyle.c
  *
- *   Copyright (C) 2015, 2018-2020 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN  ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ********************************************************************************/
 
@@ -116,6 +101,10 @@ enum pptype_e
 {
   PPLINE_NONE = 0,
   PPLINE_DEFINE,
+  PPLINE_IF,
+  PPLINE_ELIF,
+  PPLINE_ELSE,
+  PPLINE_ENDIF,
   PPLINE_OTHER
 };
 
@@ -187,8 +176,32 @@ static const struct file_section_s g_section_info[] =
   },
   {
     " * Public Function Prototypes\n",  /* Index: PUBLIC_FUNCTION_PROTOTYPES */
-    C_HEADER
+    C_SOURCE | C_HEADER
   }
+};
+
+static const char *g_white_prefix[] =
+{
+  "Elf",     /* Ref:  include/elf.h, include/elf32.h, include/elf64.h */
+  "PRIx",    /* Ref:  intttypes.h */
+  "SYS_",    /* Ref:  include/sys/syscall.h */
+  "STUB_",   /* Ref:  syscall/syscall_lookup.h, syscall/sycall_stublookup.c */
+  "b8",      /* Ref:  include/fixedmath.h */
+  "b16",     /* Ref:  include/fixedmath.h */
+  "b32",     /* Ref:  include/fixedmath.h */
+  "ub8",     /* Ref:  include/fixedmath.h */
+  "ub16",    /* Ref:  include/fixedmath.h */
+  "ub32",    /* Ref:  include/fixedmath.h */
+  NULL
+};
+
+static const char *g_white_list[] =
+{
+  "__EIT_entry",             /* Ref:  gnu_unwind_find_exidx.c */
+  "__gnu_Unwind_Find_exidx", /* Ref:  gnu_unwind_find_exidx.c */
+  "_Exit",                   /* Ref:  stdlib.h */
+  "_Unwind_Ptr",             /* Ref:  unwind-arm-common.h */
+  NULL
 };
 
 /********************************************************************************
@@ -348,7 +361,7 @@ static int block_comment_width(char *line)
 
   /* Skip over any trailing whitespace at the end of the line */
 
-  for (e = strlen(line) - 1; isspace(line[e]); e--)
+  for (e = strlen(line) - 1; e >= 0 && isspace(line[e]); e--)
     {
     }
 
@@ -491,6 +504,45 @@ static bool check_section_header(const char *line, int lineno)
 }
 
 /********************************************************************************
+ * Name:  white_prefix
+ *
+ * Description:
+ *   Return true if the identifier string begins with a white-listed prefix
+ *
+ ********************************************************************************/
+
+static bool white_list(const char *ident, int lineno)
+{
+  const char **pptr;
+  const char *str;
+
+  for (pptr = g_white_prefix;
+       (str = *pptr) != NULL;
+       pptr++)
+    {
+      if (strncmp(ident, str, strlen(str)) == 0)
+        {
+          return true;
+        }
+    }
+
+  for (pptr = g_white_list;
+       (str = *pptr) != NULL;
+       pptr++)
+    {
+      size_t len = strlen(str);
+
+      if (strncmp(ident, str, len) == 0 &&
+          isalnum(ident[len]) == 0)
+        {
+          return true;
+        }
+    }
+
+  return false;
+}
+
+/********************************************************************************
  * Public Functions
  ********************************************************************************/
 
@@ -526,6 +578,8 @@ int main(int argc, char **argv, char **envp)
   int dnest;            /* Data declaration nesting level on this line */
   int prevdnest;        /* Data declaration nesting level on the previous line */
   int pnest;            /* Parenthesis nesting level on this line */
+  int ppifnest;         /* #if nesting level on this line */
+  int inasm;            /* > 0: Within #ifdef __ASSEMBLY__ */
   int comment_lineno;   /* Line on which the last comment was closed */
   int blank_lineno;     /* Line number of the last blank line */
   int noblank_lineno;   /* A blank line is not needed after this line */
@@ -643,6 +697,8 @@ int main(int argc, char **argv, char **envp)
   bnest          = 0;           /* Brace nesting level on this line */
   dnest          = 0;           /* Data declaration nesting level on this line */
   pnest          = 0;           /* Parenthesis nesting level on this line */
+  ppifnest       = 0;           /* #if nesting level on this line */
+  inasm          = 0;           /* > 0: Within #ifdef __ASSEMBLY__ */
   comment_lineno = -1;          /* Line on which the last comment was closed */
   blank_lineno   = -1;          /* Line number of the last blank line */
   noblank_lineno = -1;          /* A blank line is not needed after this line */
@@ -751,7 +807,8 @@ int main(int argc, char **argv, char **envp)
                * another right brace, or a pre-processor directive like #endif
                */
 
-              if (strchr(line, '}') == NULL && line[n] != '#' &&
+              if (dnest == 0 &&
+                  strchr(line, '}') == NULL && line[n] != '#' &&
                   strncmp(&line[n], "else", 4) != 0 &&
                   strncmp(&line[n], "while", 5) != 0 &&
                   strncmp(&line[n], "break", 5) != 0)
@@ -850,71 +907,147 @@ int main(int argc, char **argv, char **envp)
            * line.
            */
 
+          ii = indent + 1;
+
           if (ppline == PPLINE_NONE)
             {
               /* Skip to the pre-processor command following the '#' */
 
-               for (ii = indent + 1;
-                    line[ii] != '\0' && isspace(line[ii]);
-                    ii++)
-                 {
-                 }
+              while (line[ii] != '\0' && isspace(line[ii]))
+                {
+                  ii++;
+                }
 
-               if (line[ii] != '\0')
-                 {
-                   /* Make sure that pre-processor definitions are all in
-                    * the pre-processor definitions section.
-                    */
+              if (line[ii] != '\0')
+                {
+                  /* Make sure that pre-processor definitions are all in
+                  * the pre-processor definitions section.
+                  */
 
-                   ppline = PPLINE_OTHER;
+                  ppline = PPLINE_OTHER;
 
-                   if (strncmp(&line[ii], "define", 6) == 0)
-                     {
-                       ppline = PPLINE_DEFINE;
+                  if (strncmp(&line[ii], "define", 6) == 0)
+                    {
+                      ppline = PPLINE_DEFINE;
 
-                       if (g_section != PRE_PROCESSOR_DEFINITIONS)
-                         {
-                           /* A complication is the header files always have
-                            * the idempotence guard definitions before the
-                            * "Pre-processor Definitions section".
-                            */
+                      if (g_section != PRE_PROCESSOR_DEFINITIONS)
+                        {
+                          /* A complication is the header files always have
+                           * the idempotence guard definitions before the
+                           * "Pre-processor Definitions section".
+                           */
 
-                           if (g_section == NO_SECTION &&
-                               g_file_type != C_HEADER)
-                             {
-                               /* Only a warning because there is some usage
-                                * of define outside the Pre-processor
-                                * Definitions section which is justifiable.
-                                * Should be manually checked.
-                                */
+                          if (g_section == NO_SECTION &&
+                              g_file_type != C_HEADER)
+                            {
+                              /* Only a warning because there is some usage
+                               * of define outside the Pre-processor
+                               * Definitions section which is justifiable.
+                               * Should be manually checked.
+                               */
 
-                               WARN("#define outside of 'Pre-processor "
-                                    "Definitions' section",
-                                    lineno, ii);
-                             }
-                         }
-                     }
+                              WARN("#define outside of 'Pre-processor "
+                                   "Definitions' section",
+                                   lineno, ii);
+                            }
+                        }
+                    }
 
-                   /* Make sure that files are included only in the Included
-                    * Files section.
-                    */
+                  /* Make sure that files are included only in the Included
+                   * Files section.
+                   */
 
-                   else if (strncmp(&line[ii], "include", 7) == 0)
-                     {
-                       if (g_section != INCLUDED_FILES)
-                         {
-                           /* Only a warning because there is some usage of
-                            * include outside the Included Files section
-                            * which may be is justifiable.  Should be
-                            * manually checked.
-                            */
+                  else if (strncmp(&line[ii], "include", 7) == 0)
+                    {
+                      if (g_section != INCLUDED_FILES)
+                        {
+                          /* Only a warning because there is some usage of
+                           * include outside the Included Files section
+                           * which may be is justifiable.  Should be
+                           * manually checked.
+                           */
 
-                           WARN("#include outside of 'Included Files' "
-                                "section",
-                                lineno, ii);
-                         }
-                     }
-                 }
+                          WARN("#include outside of 'Included Files' "
+                               "section",
+                               lineno, ii);
+                        }
+                    }
+                  else if (strncmp(&line[ii], "if", 2) == 0)
+                    {
+                      ppifnest++;
+
+                      ppline = PPLINE_IF;
+                      ii += 2;
+                    }
+                  else if (strncmp(&line[ii], "elif", 4) == 0)
+                    {
+                      if (ppifnest == inasm)
+                        {
+                          inasm = 0;
+                        }
+
+                      ppline = PPLINE_ELIF;
+                      ii += 4;
+                    }
+                  else if (strncmp(&line[ii], "else", 4) == 0)
+                    {
+                      if (ppifnest == inasm)
+                        {
+                          inasm = 0;
+                        }
+
+                      ppline = PPLINE_ELSE;
+                    }
+                  else if (strncmp(&line[ii], "endif", 4) == 0)
+                    {
+                      if (ppifnest == inasm)
+                        {
+                          inasm = 0;
+                        }
+
+                      ppifnest--;
+
+                      ppline = PPLINE_ENDIF;
+                    }
+               }
+            }
+
+          if (ppline == PPLINE_IF || ppline == PPLINE_ELIF)
+            {
+              int bdef = 0;
+
+              if (strncmp(&line[ii], "def", 3) == 0)
+                {
+                  bdef = 1;
+                  ii += 3;
+                }
+              else
+                {
+                  while (line[ii] != '\0' && isspace(line[ii]))
+                    {
+                      ii++;
+                    }
+
+                  if (strncmp(&line[ii], "defined", 7) == 0)
+                    {
+                      bdef = 1;
+                      ii += 7;
+                    }
+                }
+
+              if (bdef)
+                {
+                  while (line[ii] != '\0' &&
+                      (isspace(line[ii]) || line[ii] == '('))
+                    {
+                      ii++;
+                    }
+
+                  if (strncmp(&line[ii], "__ASSEMBLY__", 12) == 0)
+                    {
+                      inasm = ppifnest;
+                    }
+                }
             }
 
           /* Check if the next line will be a continuation of the pre-
@@ -929,7 +1062,12 @@ int main(int argc, char **argv, char **envp)
 
           /* Propagate rhcomment over preprocessor lines Issue #120 */
 
-          rhcomment = prevrhcmt;
+          if (prevrhcmt != 0)
+            {
+              /* Don't check position */
+
+              rhcomment = -1;
+            }
 
           lptr = strstr(line, "/*");
           if (lptr != NULL)
@@ -967,10 +1105,12 @@ int main(int argc, char **argv, char **envp)
 
                   rhcomment = -1;
 
-                  if (ncomment > 0 && (!strncmp(&line[ii], "if", 2)
-                      || !strncmp(&line[ii], "el", 2)))
+                  if (ncomment > 0 &&
+                      (ppline == PPLINE_IF ||
+                       ppline == PPLINE_ELSE ||
+                       ppline == PPLINE_ELIF))
                     {
-                      /* in #if...  and #el.. */
+                      /* in #if...  and #el... */
 
                       ERROR("No multiline comment right of code allowed here",
                           lineno, n);
@@ -1046,175 +1186,178 @@ int main(int argc, char **argv, char **envp)
        * example.
        */
 
-      else if (strncmp(&line[indent], "auto ", 5) == 0 ||
-               strncmp(&line[indent], "bool ", 5) == 0 ||
-               strncmp(&line[indent], "char ", 5) == 0 ||
-               strncmp(&line[indent], "CODE ", 5) == 0 ||
-               strncmp(&line[indent], "const ", 6) == 0 ||
-               strncmp(&line[indent], "double ", 7) == 0 ||
-               strncmp(&line[indent], "struct ", 7) == 0 ||
-               strncmp(&line[indent], "struct\n", 7) == 0 ||      /* May be unnamed */
-               strncmp(&line[indent], "enum ", 5) == 0 ||
-               strncmp(&line[indent], "extern ", 7) == 0 ||
-               strncmp(&line[indent], "EXTERN ", 7) == 0 ||
-               strncmp(&line[indent], "FAR ", 4) == 0 ||
-               strncmp(&line[indent], "float ", 6) == 0 ||
-               strncmp(&line[indent], "int ", 4) == 0 ||
-               strncmp(&line[indent], "int16_t ", 8) == 0 ||
-               strncmp(&line[indent], "int32_t ", 8) == 0 ||
-               strncmp(&line[indent], "long ", 5) == 0 ||
-               strncmp(&line[indent], "off_t ", 6) == 0 ||
-               strncmp(&line[indent], "register ", 9) == 0 ||
-               strncmp(&line[indent], "short ", 6) == 0 ||
-               strncmp(&line[indent], "signed ", 7) == 0 ||
-               strncmp(&line[indent], "size_t ", 7) == 0 ||
-               strncmp(&line[indent], "ssize_t ", 8) == 0 ||
-               strncmp(&line[indent], "static ", 7) == 0 ||
-               strncmp(&line[indent], "time_t ", 7) == 0 ||
-               strncmp(&line[indent], "typedef ", 8) == 0 ||
-               strncmp(&line[indent], "uint8_t ", 8) == 0 ||
-               strncmp(&line[indent], "uint16_t ", 9) == 0 ||
-               strncmp(&line[indent], "uint32_t ", 9) == 0 ||
-               strncmp(&line[indent], "union ", 6) == 0 ||
-               strncmp(&line[indent], "union\n", 6) == 0 ||      /* May be unnamed */
-               strncmp(&line[indent], "unsigned ", 9) == 0 ||
-               strncmp(&line[indent], "void ", 5) == 0 ||
-               strncmp(&line[indent], "volatile ", 9) == 0)
+      else if (inasm == 0)
         {
-          /* Check if this is extern "C";  We don't typically indent following
-           * this.
-           */
-
-          if (strncmp(&line[indent], "extern \"C\"", 10) == 0)
+          if (strncmp(&line[indent], "auto ", 5) == 0 ||
+                   strncmp(&line[indent], "bool ", 5) == 0 ||
+                   strncmp(&line[indent], "char ", 5) == 0 ||
+                   strncmp(&line[indent], "CODE ", 5) == 0 ||
+                   strncmp(&line[indent], "const ", 6) == 0 ||
+                   strncmp(&line[indent], "double ", 7) == 0 ||
+                   strncmp(&line[indent], "struct ", 7) == 0 ||
+                   strncmp(&line[indent], "struct\n", 7) == 0 || /* May be unnamed */
+                   strncmp(&line[indent], "enum ", 5) == 0 ||
+                   strncmp(&line[indent], "extern ", 7) == 0 ||
+                   strncmp(&line[indent], "EXTERN ", 7) == 0 ||
+                   strncmp(&line[indent], "FAR ", 4) == 0 ||
+                   strncmp(&line[indent], "float ", 6) == 0 ||
+                   strncmp(&line[indent], "int ", 4) == 0 ||
+                   strncmp(&line[indent], "int16_t ", 8) == 0 ||
+                   strncmp(&line[indent], "int32_t ", 8) == 0 ||
+                   strncmp(&line[indent], "long ", 5) == 0 ||
+                   strncmp(&line[indent], "off_t ", 6) == 0 ||
+                   strncmp(&line[indent], "register ", 9) == 0 ||
+                   strncmp(&line[indent], "short ", 6) == 0 ||
+                   strncmp(&line[indent], "signed ", 7) == 0 ||
+                   strncmp(&line[indent], "size_t ", 7) == 0 ||
+                   strncmp(&line[indent], "ssize_t ", 8) == 0 ||
+                   strncmp(&line[indent], "static ", 7) == 0 ||
+                   strncmp(&line[indent], "time_t ", 7) == 0 ||
+                   strncmp(&line[indent], "typedef ", 8) == 0 ||
+                   strncmp(&line[indent], "uint8_t ", 8) == 0 ||
+                   strncmp(&line[indent], "uint16_t ", 9) == 0 ||
+                   strncmp(&line[indent], "uint32_t ", 9) == 0 ||
+                   strncmp(&line[indent], "union ", 6) == 0 ||
+                   strncmp(&line[indent], "union\n", 6) == 0 ||  /* May be unnamed */
+                   strncmp(&line[indent], "unsigned ", 9) == 0 ||
+                   strncmp(&line[indent], "void ", 5) == 0 ||
+                   strncmp(&line[indent], "volatile ", 9) == 0)
             {
-              externc_lineno = lineno;
-            }
-
-          /* bfunctions:  True:  Processing private or public functions.
-           * bnest:       Brace nesting level on this line
-           * dnest:       Data declaration nesting level on this line
-           */
-
-          /* REVISIT: Also picks up function return types */
-
-          /* REVISIT: Logic problem for nested data/function declarations */
-
-          if ((!bfunctions || bnest > 0) && dnest == 0)
-            {
-              dnest = 1;
-            }
-
-          /* Check for multiple definitions of variables on the line.
-           * Ignores declarations within parentheses which are probably
-           * formal parameters.
-           */
-
-          if (pnest == 0)
-            {
-              int tmppnest;
-
-              /* Note, we have not yet parsed each character on the line so
-               * a comma have have been be preceded by '(' on the same line.
-               * We will have parse up to any comma to see if that is the
-               * case.
+              /* Check if this is extern "C";  We don't typically indent
+               * following this.
                */
 
-              for (i = indent, tmppnest = 0;
-                   line[i] != '\n' && line[i] != '\0';
-                   i++)
+              if (strncmp(&line[indent], "extern \"C\"", 10) == 0)
                 {
-                  if (tmppnest == 0 && line[i] == ',')
+                  externc_lineno = lineno;
+                }
+
+              /* bfunctions:  True:  Processing private or public functions.
+               * bnest:       Brace nesting level on this line
+               * dnest:       Data declaration nesting level on this line
+               */
+
+              /* REVISIT: Also picks up function return types */
+
+              /* REVISIT: Logic problem for nested data/function declarations */
+
+              if ((!bfunctions || bnest > 0) && dnest == 0)
+                {
+                  dnest = 1;
+                }
+
+              /* Check for multiple definitions of variables on the line.
+               * Ignores declarations within parentheses which are probably
+               * formal parameters.
+               */
+
+              if (pnest == 0)
+                {
+                  int tmppnest;
+
+                  /* Note, we have not yet parsed each character on the line so
+                   * a comma have have been be preceded by '(' on the same line.
+                   * We will have parse up to any comma to see if that is the
+                   * case.
+                   */
+
+                  for (i = indent, tmppnest = 0;
+                       line[i] != '\n' && line[i] != '\0';
+                       i++)
                     {
-                       ERROR("Multiple data definitions", lineno, i + 1);
-                      break;
-                    }
-                  else if (line[i] == '(')
-                    {
-                      tmppnest++;
-                    }
-                  else if (line[i] == ')')
-                    {
-                      if (tmppnest < 1)
+                      if (tmppnest == 0 && line[i] == ',')
                         {
-                          /* We should catch this later */
+                           ERROR("Multiple data definitions", lineno, i + 1);
+                          break;
+                        }
+                      else if (line[i] == '(')
+                        {
+                          tmppnest++;
+                        }
+                      else if (line[i] == ')')
+                        {
+                          if (tmppnest < 1)
+                            {
+                              /* We should catch this later */
+
+                              break;
+                            }
+
+                          tmppnest--;
+                        }
+                      else if (line[i] == ';')
+                        {
+                          /* Break out if the semicolon terminates the
+                           * declaration is found.  Avoids processing any
+                           * righthand comments in most cases.
+                           */
 
                           break;
                         }
-
-                      tmppnest--;
-                    }
-                  else if (line[i] == ';')
-                    {
-                      /* Break out if the semicolon terminates the
-                       * declaration is found.  Avoids processing any
-                       * righthand comments in most cases.
-                       */
-
-                      break;
                     }
                 }
             }
-        }
 
-      /* Check for a keyword indicating the beginning of a statement.
-       * REVISIT:  This, obviously, will not detect statements that do not
-       * begin with a C keyword (such as assignment statements).
-       */
+          /* Check for a keyword indicating the beginning of a statement.
+           * REVISIT:  This, obviously, will not detect statements that do not
+           * begin with a C keyword (such as assignment statements).
+           */
 
-      else if (strncmp(&line[indent], "break ", 6) == 0 ||
-               strncmp(&line[indent], "case ", 5) == 0 ||
-#if 0 /* Part of switch */
-               strncmp(&line[indent], "case ", 5) == 0 ||
-#endif
-               strncmp(&line[indent], "continue ", 9) == 0 ||
+          else if (strncmp(&line[indent], "break ", 6) == 0 ||
+                   strncmp(&line[indent], "case ", 5) == 0 ||
+    #if 0 /* Part of switch */
+                   strncmp(&line[indent], "case ", 5) == 0 ||
+    #endif
+                   strncmp(&line[indent], "continue ", 9) == 0 ||
 
-#if 0 /* Part of switch */
-               strncmp(&line[indent], "default ", 8) == 0 ||
-#endif
-               strncmp(&line[indent], "do ", 3) == 0 ||
-               strncmp(&line[indent], "else ", 5) == 0 ||
-               strncmp(&line[indent], "goto ", 5) == 0 ||
-               strncmp(&line[indent], "if ", 3) == 0 ||
-               strncmp(&line[indent], "return ", 7) == 0 ||
-#if 0 /*  Doesn't follow pattern */
-               strncmp(&line[indent], "switch ", 7) == 0 ||
-#endif
-               strncmp(&line[indent], "while ", 6) == 0)
-        {
-          bstatm = true;
-        }
+    #if 0 /* Part of switch */
+                   strncmp(&line[indent], "default ", 8) == 0 ||
+    #endif
+                   strncmp(&line[indent], "do ", 3) == 0 ||
+                   strncmp(&line[indent], "else ", 5) == 0 ||
+                   strncmp(&line[indent], "goto ", 5) == 0 ||
+                   strncmp(&line[indent], "if ", 3) == 0 ||
+                   strncmp(&line[indent], "return ", 7) == 0 ||
+    #if 0 /*  Doesn't follow pattern */
+                   strncmp(&line[indent], "switch ", 7) == 0 ||
+    #endif
+                   strncmp(&line[indent], "while ", 6) == 0)
+            {
+              bstatm = true;
+            }
 
-      /* Spacing works a little differently for and switch statements */
+          /* Spacing works a little differently for and switch statements */
 
-      else if (strncmp(&line[indent], "for ", 4) == 0)
-        {
-          bfor   = true;
-          bstatm = true;
-        }
-      else if (strncmp(&line[indent], "switch ", 7) == 0)
-        {
-          bswitch = true;
-        }
+          else if (strncmp(&line[indent], "for ", 4) == 0)
+            {
+              bfor   = true;
+              bstatm = true;
+            }
+          else if (strncmp(&line[indent], "switch ", 7) == 0)
+            {
+              bswitch = true;
+            }
 
-      /* Also check for C keywords with missing white space */
+          /* Also check for C keywords with missing white space */
 
-      else if (strncmp(&line[indent], "do(", 3) == 0 ||
-               strncmp(&line[indent], "if(", 3) == 0 ||
-               strncmp(&line[indent], "while(", 6) == 0)
-        {
-          ERROR("Missing whitespace after keyword", lineno, n);
-          bstatm = true;
-        }
-      else if (strncmp(&line[indent], "for(", 4) == 0)
-        {
-          ERROR("Missing whitespace after keyword", lineno, n);
-          bfor   = true;
-          bstatm = true;
-        }
-      else if (strncmp(&line[indent], "switch(", 7) == 0)
-        {
-          ERROR("Missing whitespace after keyword", lineno, n);
-          bswitch = true;
+          else if (strncmp(&line[indent], "do(", 3) == 0 ||
+                   strncmp(&line[indent], "if(", 3) == 0 ||
+                   strncmp(&line[indent], "while(", 6) == 0)
+            {
+              ERROR("Missing whitespace after keyword", lineno, n);
+              bstatm = true;
+            }
+          else if (strncmp(&line[indent], "for(", 4) == 0)
+            {
+              ERROR("Missing whitespace after keyword", lineno, n);
+              bfor   = true;
+              bstatm = true;
+            }
+          else if (strncmp(&line[indent], "switch(", 7) == 0)
+            {
+              ERROR("Missing whitespace after keyword", lineno, n);
+              bswitch = true;
+            }
         }
 
       /* STEP 3: Parse each character on the line */
@@ -1278,6 +1421,7 @@ int main(int argc, char **argv, char **envp)
                    *   IGMPv2      as an IGMP version number
                    *   [0-9]p[0-9] as a decimal point
                    *   d[0-9]      as a divisor
+                   *   Hz          for frequencies (including KHz, MHz, etc.)
                    */
 
                    if (!have_lower && islower(line[n]))
@@ -1318,8 +1462,8 @@ int main(int argc, char **argv, char **envp)
                              }
                            break;
 
-                         /* Sequences containing 'p' or 'd' must have been
-                          * preceded by upper case characters.
+                         /* Sequences containing 'p', 'd', or 'z' must have
+                          * been preceded by upper case characters.
                           */
 
                          case 'p':
@@ -1338,6 +1482,15 @@ int main(int argc, char **argv, char **envp)
                              }
                              break;
 
+                         case 'z':
+                           if (!have_upper || n < 1 ||
+                               line[n - 1] != 'H')
+                             {
+                               have_lower = true;
+                             }
+                             break;
+                           break;
+
                          default:
                            have_lower = true;
                            break;
@@ -1352,26 +1505,9 @@ int main(int argc, char **argv, char **envp)
 
               if (have_upper && have_lower)
                 {
-                  /* REVISIT:  Although pre-processor definitions are
-                   * supposed to be all upper-case, there are exceptions
-                   * such as using 'p' for a decimal point or 'MHz'.
-                   * Those will be reported here, but probably should be
-                   * considered false alarms.
-                   */
+                  /* Ignore symbols that begin with white-listed prefixes */
 
-                  /* Ignore inttype.h strings beginning with PRIx and
-                   * system calls beginning with SYS_
-                   */
-
-                  if ((strncmp(&line[ident_index], "PRIx", 4) == 0) ||
-                      (strncmp(&line[ident_index], "SYS_", 4) == 0))
-                    {
-                      /* No error */
-                    }
-
-                  /* Ignore ELF stuff like Elf32_Ehdr. */
-
-                  else if ((strncmp(&line[ident_index], "Elf", 3) == 0))
+                  if (white_list(&line[ident_index], lineno))
                     {
                       /* No error */
                     }
@@ -1471,7 +1607,7 @@ int main(int argc, char **argv, char **envp)
                     {
                       ERROR("Closing C comment not indented", lineno, n);
                     }
-                  else if (!isspace((int)line[n + 1]) && line[n - 2] != '*')
+                  else if (!isspace((int)line[n - 2]) && line[n - 2] != '*')
                     {
                        ERROR("Missing space before closing C comment", lineno,
                              n);
@@ -1589,14 +1725,14 @@ int main(int argc, char **argv, char **envp)
               bquote = false;
             }
 
-          /* The reset of the line is only examined of we are not in a comment
-           * or a string.
+          /* The rest of the line is only examined of we are not in a comment,
+           * in a string or in assembly.
            *
            * REVISIT: Should still check for whitespace at the end of the
            * line.
            */
 
-          if (ncomment == 0 && !bstring)
+          if (ncomment == 0 && !bstring && inasm == 0)
             {
               switch (line[n])
                 {
@@ -1606,9 +1742,11 @@ int main(int argc, char **argv, char **envp)
                   {
                     if (n > indent)
                       {
-                        /* REVISIT: dnest is always > 0 here if bfunctions == false */
+                        /* REVISIT: dnest is always > 0 here if bfunctions ==
+                         * false.
+                         */
 
-                        if (dnest == 0 || !bfunctions)
+                        if (dnest == 0 || !bfunctions || lineno == rbrace_lineno)
                           {
                              ERROR("Left bracket not on separate line", lineno,
                                    n);
@@ -1754,6 +1892,13 @@ int main(int argc, char **argv, char **envp)
                                            lineno, endx);
                                   }
                               }
+                            else if (line[endx] == '=')
+                              {
+                                /* There's a struct initialization following */
+
+                                check_spaces_leftright(line, lineno, endx, endx);
+                                dnest = 1;
+                              }
                             else
                               {
                                  ERROR("Garbage follows right bracket",
@@ -1766,7 +1911,9 @@ int main(int argc, char **argv, char **envp)
                           }
                       }
 
-                    /* The right brace should not be preceded with a a blank line */
+                    /* The right brace should not be preceded with a a blank
+                     * line.
+                     */
 
                     if (lineno == blank_lineno + 1)
                       {
@@ -1911,6 +2058,19 @@ int main(int argc, char **argv, char **envp)
                       check_spaces_leftright(line, lineno, n, n + 1);
                       n++;
                     }
+
+                  /* Scientific notation with a negative exponent (eg. 10e-10)
+                   * REVISIT: This fails for cases where the variable name
+                   *          ends with 'e' preceded by a digit:
+                   *          a = abc1e-10;
+                   *          a = ABC1E-10;
+                   */
+
+                  else if ((line[n - 1] == 'e' || line[n - 1] == 'E') &&
+                           isdigit(line[n + 1]) && isdigit(line[n - 2]))
+                    {
+                      n++;
+                    }
                   else
                     {
                       /* '-' may function as a unary operator and snuggle
@@ -1974,7 +2134,7 @@ int main(int argc, char **argv, char **envp)
 
                 case '/':
 
-                  /* C comment terminator*/
+                  /* C comment terminator */
 
                   if (line[n - 1] == '*')
                     {
@@ -2232,30 +2392,65 @@ int main(int argc, char **argv, char **envp)
 
       /* Loop terminates when NUL or newline character found */
 
-      if (line[n] == '\n')
+      if (line[n] == '\n' || line[n] == '\0')
         {
+          /* If the parse terminated on the NULL, then back up to the last
+           * character (which should be the newline).
+           */
+
+          int m = n;
+          if (line[m] == '\0' && m > 0)
+            {
+              m--;
+            }
+
           /* Check for space at the end of the line.  Except for carriage
            * returns which we have already reported (one time) above.
            */
 
-          if (n > 1 && isspace((int)line[n - 1]) && line[n - 1] != '\r')
+          if (m > 1 && isspace((int)line[m - 1]) &&
+              line[m - 1] != '\n' && line[m - 1] != '\r')
             {
-               ERROR("Dangling whitespace at the end of line", lineno, n);
+               ERROR("Dangling whitespace at the end of line", lineno, m);
             }
 
-          /* Check for long lines */
+          /* The line width is determined by the location of the final
+           * asterisk in block comments.  The closing line of the block
+           * comment will exceed that by one one character, the '/'
+           * following the final asterisk.
+           */
 
-          if (n > g_maxline)
+          else if (m > g_maxline)
             {
-              if (g_file_type == C_SOURCE)
-                {
-                  ERROR("Long line found", lineno, n);
-                }
-              else if (g_file_type == C_HEADER)
+              bool bslash;
+              int a;
 
+              for (bslash = false, a = m;
+                   a > 2 && strchr("\n\r/", line[a]) != NULL;
+                   a--)
                 {
-                  WARN("Long line found", lineno, n);
+                  if (line[a] == '/')
+                    {
+                      bslash = true;
+                    }
                 }
+
+              if (bslash && line[a] == '*')
+                {
+                  m = a + 1;
+                }
+            }
+
+          /* Check for long lines
+           *
+           * REVISIT:  Long line checks suppressed on right hand comments
+           * for now.  This just prevents a large number of difficult-to-
+           * fix complaints that we would have otherwise.
+           */
+
+          if (m > g_maxline && !rhcomment)
+            {
+              ERROR("Long line found", lineno, m);
             }
         }
 

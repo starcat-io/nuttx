@@ -87,7 +87,7 @@
  *
  ****************************************************************************/
 
-static void nxsig_timeout(int argc, wdparm_t itcb)
+static void nxsig_timeout(int argc, wdparm_t itcb, ...)
 {
 #ifdef CONFIG_SMP
   irqstate_t flags;
@@ -358,7 +358,7 @@ int nxsig_timedwait(FAR const sigset_t *set, FAR struct siginfo *info,
               /* Start the watchdog */
 
               wd_start(rtcb->waitdog, waitticks,
-                       (wdentry_t)nxsig_timeout, 1, wdparm.pvarg);
+                       nxsig_timeout, 1, wdparm.pvarg);
 
               /* Now wait for either the signal or the watchdog, but
                * first, make sure this is not the idle task,
@@ -406,7 +406,7 @@ int nxsig_timedwait(FAR const sigset_t *set, FAR struct siginfo *info,
            * that we were waiting for?
            */
 
-          if (sigismember(set, rtcb->sigunbinfo.si_signo))
+          if (nxsig_ismember(set, rtcb->sigunbinfo.si_signo))
             {
               /* Yes.. the return value is the number of the signal that
                * awakened us.

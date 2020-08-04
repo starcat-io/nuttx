@@ -50,8 +50,8 @@
 #include "arm.h"
 #include "mmu.h"
 #include "fpu.h"
-#include "up_internal.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "a1x_lowputc.h"
 #include "a1x_boot.h"
@@ -59,6 +59,7 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
 /* The vectors are, by default, positioned at the beginning of the text
  * section.  They will always have to be copied to the correct location.
  *
@@ -247,8 +248,8 @@ static void a1x_copyvectorblock(void)
   a1x_vectorpermissions(MMU_L2_VECTRWFLAGS);
 #endif
 
-  /* Copy the vectors into ISRAM at the address that will be mapped to the vector
-   * address:
+  /* Copy the vectors into ISRAM at the address that will be mapped to the
+   * vector address:
    *
    *   A1X_VECTOR_PADDR - Unmapped, physical address of vector table in SRAM
    *   A1X_VECTOR_VSRAM - Virtual address of vector table in SRAM
@@ -341,7 +342,7 @@ void arm_boot(void)
    * driver.
    */
 
-  up_earlyserialinit();
+  arm_earlyserialinit();
 #endif
 
   /* Perform board-specific initialization,  This must include:

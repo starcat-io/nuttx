@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include <debug.h>
 
 #include <nuttx/semaphore.h>
 #include <nuttx/mm/mm.h>
@@ -86,20 +87,13 @@
 /* Define MONITOR_MM_SEMAPHORE to enable semaphore state monitoring */
 
 #ifdef MONITOR_MM_SEMAPHORE
-#  include <debug.h>
 #  define msemerr  _err
 #  define msemwarn _warn
 #  define mseminfo _info
 #else
-#  ifdef CONFIG_CPP_HAVE_VARARGS
-#    define msemerr(x...)
-#    define msemwarn(x...)
-#    define mseminfo(x...)
-#  else
-#    define msemerr  (void)
-#    define msemwarn (void)
-#    define mseminfo (void)
-#  endif
+#  define msemerr  _none
+#  define msemwarn _none
+#  define mseminfo _none
 #endif
 
 /****************************************************************************
@@ -173,6 +167,12 @@ int mm_trysemaphore(FAR struct mm_heap_s *heap)
    * avoid taking the fatal 'if' logic and will fall through to use the
    * 'else', albeit with a nonsensical PID value.
    */
+
+  if (my_pid < 0)
+    {
+      ret = my_pid;
+      goto errout;
+    }
 
   /* Does the current task already hold the semaphore?  Is the current
    * task actually running?

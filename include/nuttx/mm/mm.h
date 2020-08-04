@@ -1,35 +1,20 @@
 /****************************************************************************
  * include/nuttx/mm/mm.h
  *
- *   Copyright (C) 2007-2009, 2013-2014, 2017 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -52,6 +37,7 @@
  ****************************************************************************/
 
 /* Configuration ************************************************************/
+
 /* If the MCU has a small (16-bit) address capability, then we will use
  * a smaller chunk header that contains 16-bit size/offset information.
  * We will also use the smaller header on MCUs with wider addresses if
@@ -98,9 +84,7 @@
  */
 
 #undef MM_KERNEL_USRHEAP_INIT
-#if defined(CONFIG_BUILD_PROTECTED) && defined(__KERNEL__)
-#  define MM_KERNEL_USRHEAP_INIT 1
-#elif !defined(CONFIG_BUILD_KERNEL)
+#if !defined(CONFIG_BUILD_KERNEL) && defined(__KERNEL__)
 #  define MM_KERNEL_USRHEAP_INIT 1
 #endif
 
@@ -111,6 +95,7 @@
 #endif
 
 /* Chunk Header Definitions *************************************************/
+
 /* These definitions define the characteristics of allocator
  *
  * MM_MIN_SHIFT is used to define MM_MIN_CHUNK.
@@ -176,7 +161,7 @@
 # define MM_ALLOC_BIT    0x80000000
 #endif
 #define MM_IS_ALLOCATED(n) \
-  ((int)((struct mm_allocnode_s*)(n)->preceding) < 0))
+  ((int)((struct mm_allocnode_s*)(n)->preceding) < 0)
 
 /****************************************************************************
  * Public Types
@@ -185,10 +170,10 @@
 /* Determines the size of the chunk size/offset type */
 
 #ifdef CONFIG_MM_SMALL
-   typedef uint16_t mmsize_t;
+typedef uint16_t mmsize_t;
 #  define MMSIZE_MAX UINT16_MAX
 #else
-   typedef uint32_t mmsize_t;
+typedef uint32_t mmsize_t;
 #  define MMSIZE_MAX UINT32_MAX
 #endif
 
@@ -222,6 +207,11 @@ struct mm_freenode_s
   mmsize_t preceding;              /* Size of the preceding chunk */
   FAR struct mm_freenode_s *flink; /* Supports a doubly linked list */
   FAR struct mm_freenode_s *blink;
+};
+
+struct mm_delaynode_s
+{
+  struct mm_delaynode_s *flink;
 };
 
 /* What is the size of the freenode? */
@@ -263,6 +253,10 @@ struct mm_heap_s
    */
 
   struct mm_freenode_s mm_nodelist[MM_NNODES];
+
+  /* Free delay list, for some situation can't do free immdiately */
+
+  struct mm_delaynode_s *mm_delaylist;
 };
 
 /****************************************************************************
@@ -289,7 +283,6 @@ extern "C"
  *   no global user heap structure.
  */
 
-#if defined(CONFIG_ARCH_ADDRENV) && defined(CONFIG_BUILD_KERNEL)
 /* In the kernel build, there a multiple user heaps; one for each task
  * group.  In this build configuration, the user heap structure lies
  * in a reserved region at the beginning of the .bss/.data address
@@ -297,13 +290,12 @@ extern "C"
  * ARCH_DATA_RESERVE_SIZE
  */
 
-#elif defined(CONFIG_BUILD_PROTECTED) && defined(__KERNEL__)
 /* In the protected mode, there are two heaps:  A kernel heap and a single
  * user heap.  In that case the user heap structure lies in the user space
  * (with a reference in the userspace interface).
  */
 
-#else
+#if defined(CONFIG_BUILD_FLAT) || !defined(__KERNEL__)
 /* Otherwise, the user heap data structures are in common .bss */
 
 EXTERN struct mm_heap_s g_mmheap;
@@ -353,12 +345,12 @@ void mm_takesemaphore(FAR struct mm_heap_s *heap);
 int  mm_trysemaphore(FAR struct mm_heap_s *heap);
 void mm_givesemaphore(FAR struct mm_heap_s *heap);
 
-/* Functions contained in umm_sem.c ****************************************/
+/* Functions contained in umm_sem.c *****************************************/
 
 int  umm_trysemaphore(void);
 void umm_givesemaphore(void);
 
-/* Functions contained in kmm_sem.c ****************************************/
+/* Functions contained in kmm_sem.c *****************************************/
 
 #ifdef CONFIG_MM_KERNEL_HEAP
 int  kmm_trysemaphore(void);
@@ -447,9 +439,7 @@ FAR void *mm_brkaddr(FAR struct mm_heap_s *heap, int region);
 
 /* Functions contained in umm_brkaddr.c *************************************/
 
-#if !defined(CONFIG_BUILD_PROTECTED) || !defined(__KERNEL__)
 FAR void *umm_brkaddr(int region);
-#endif
 
 /* Functions contained in kmm_brkaddr.c *************************************/
 
@@ -459,8 +449,7 @@ FAR void *kmm_brkaddr(int region);
 
 /* Functions contained in mm_sbrk.c *****************************************/
 
-#if defined(CONFIG_ARCH_ADDRENV) && defined(CONFIG_MM_PGALLOC) && \
-    defined(CONFIG_ARCH_USE_MMU)
+#if defined(CONFIG_ARCH_ADDRENV) && defined(CONFIG_MM_PGALLOC)
 FAR void *mm_sbrk(FAR struct mm_heap_s *heap, intptr_t incr,
                   uintptr_t maxbreak);
 #endif
@@ -468,7 +457,7 @@ FAR void *mm_sbrk(FAR struct mm_heap_s *heap, intptr_t incr,
 /* Functions contained in kmm_sbrk.c ****************************************/
 
 #if defined(CONFIG_MM_KERNEL_HEAP) && defined(CONFIG_ARCH_ADDRENV) && \
-    defined(CONFIG_MM_PGALLOC) && defined(CONFIG_ARCH_USE_MMU)
+    defined(CONFIG_MM_PGALLOC)
 FAR void *kmm_sbrk(intptr_t incr);
 #endif
 
@@ -479,9 +468,7 @@ void mm_extend(FAR struct mm_heap_s *heap, FAR void *mem, size_t size,
 
 /* Functions contained in umm_extend.c **************************************/
 
-#if !defined(CONFIG_BUILD_PROTECTED) || !defined(__KERNEL__)
 void umm_extend(FAR void *mem, size_t size, int region);
-#endif
 
 /* Functions contained in kmm_extend.c **************************************/
 
@@ -497,12 +484,8 @@ int mm_mallinfo(FAR struct mm_heap_s *heap, FAR struct mallinfo *info);
 /* Functions contained in kmm_mallinfo.c ************************************/
 
 #ifdef CONFIG_MM_KERNEL_HEAP
-#ifdef CONFIG_CAN_PASS_STRUCTS
 struct mallinfo kmm_mallinfo(void);
-#else
-int kmm_mallinfo(struct mallinfo *info);
-#endif /* CONFIG_CAN_PASS_STRUCTS */
-#endif /* CONFIG_MM_KERNEL_HEAP */
+#endif
 
 /* Functions contained in mm_shrinkchunk.c **********************************/
 

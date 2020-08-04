@@ -1,4 +1,4 @@
-/***************************************************************************
+/****************************************************************************
  * boards/arm/cxd56xx/drivers/audio/cxd56_audio_aca.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
@@ -354,7 +354,7 @@ typedef enum
  * Public Function Prototypes
  ****************************************************************************/
 
-extern uint32_t as_aca_control(uint8_t type, uint32_t param);
+extern uint32_t fw_as_acacontrol(uint8_t type, uint32_t param);
 
 /****************************************************************************
  * Private Functions
@@ -493,7 +493,8 @@ static void get_sp_split_on(uint8_t cf_sp_spliton,
     }
 }
 
-static void get_sp_driver(uint8_t cfg_sp_drv, FAR as_aca_sp_drv_sel_id_t *sp_drv)
+static void get_sp_driver(uint8_t cfg_sp_drv,
+                          FAR as_aca_sp_drv_sel_id_t *sp_drv)
 {
   switch (cfg_sp_drv)
     {
@@ -574,7 +575,8 @@ void get_input_param(as_aca_pulco_in_param_t *param,
         {
           mic_id = mic_sel - 1;
           param->mic_gain[mic_id] = (gain->gain[i] >= MIC_GAIN_MAX) ?
-                                     MIC_GAIN_MAX : (gain->gain[i] / 30) * 30;
+                                     MIC_GAIN_MAX :
+                                    (gain->gain[i] / 30) * 30;
 
           pga_gain = gain->gain[i] - param->mic_gain[mic_id];
           param->pga_gain[mic_id] = (pga_gain >= PGA_GAIN_MAX) ?
@@ -628,13 +630,13 @@ void get_pwon_out_param(as_aca_pulco_out_param_t *param)
   get_sp_driver((uint8_t)cxd56_audio_config_get_spdriver(), &param->sp_drv);
 }
 
-/***************************************************************************
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_poweron(void)
 {
-  if (as_aca_control(AS_ACA_CHECK_ID, (uint32_t)NULL) != 0)
+  if (fw_as_acacontrol(AS_ACA_CHECK_ID, (uint32_t)NULL) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_CHKID;
     }
@@ -642,7 +644,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweron(void)
   as_aca_pulco_param_t pwon_param;
   get_pwon_param(&pwon_param);
 
-  if (as_aca_control(AS_ACA_POWER_ON_COMMON, (uint32_t)&pwon_param) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_ON_COMMON, (uint32_t)&pwon_param) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWON;
     }
@@ -650,7 +652,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweron(void)
   as_ser_des_param_t serial_param;
   get_serial_param(&serial_param);
 
-  if (as_aca_control(AS_ACA_SET_SERDES, (uint32_t)&serial_param) != 0)
+  if (fw_as_acacontrol(AS_ACA_SET_SERDES, (uint32_t)&serial_param) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_SERIAL;
     }
@@ -660,7 +662,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweron(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_poweroff(void)
 {
-  if (as_aca_control(AS_ACA_POWER_OFF_COMMON, (uint32_t)NULL) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_OFF_COMMON, (uint32_t)NULL) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWOFF;
     }
@@ -670,7 +672,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweroff(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_poweron_micbias(void)
 {
-  if (as_aca_control(AS_ACA_POWER_ON_MICBIAS, (uint32_t)NULL) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_ON_MICBIAS, (uint32_t)NULL) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWON_MBIAS;
     }
@@ -678,13 +680,15 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweron_micbias(void)
   return CXD56_AUDIO_ECODE_OK;
 }
 
-CXD56_AUDIO_ECODE cxd56_audio_aca_poweron_input(FAR cxd56_audio_mic_gain_t *gain)
+CXD56_AUDIO_ECODE cxd56_audio_aca_poweron_input(
+                                 FAR cxd56_audio_mic_gain_t *gain)
 {
   as_aca_pulco_in_param_t pwon_input_param;
 
   get_input_param(&pwon_input_param, gain);
 
-  if (as_aca_control(AS_ACA_POWER_ON_INPUT, (uint32_t)&pwon_input_param) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_ON_INPUT,
+     (uint32_t)&pwon_input_param) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWON_INPUT;
     }
@@ -698,7 +702,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_set_smaster(void)
 
   get_smaster_param(&smaster_param);
 
-  if (as_aca_control(AS_ACA_SET_SMASTER, (uint32_t)&smaster_param) != 0)
+  if (fw_as_acacontrol(AS_ACA_SET_SMASTER, (uint32_t)&smaster_param) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_SET_SMASTER;
     }
@@ -712,7 +716,8 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweron_output(void)
 
   get_pwon_out_param(&pwon_output_param);
 
-  if (as_aca_control(AS_ACA_POWER_ON_OUTPUT, (uint32_t)&pwon_output_param) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_ON_OUTPUT,
+     (uint32_t)&pwon_output_param) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWON_OUTPUT;
     }
@@ -722,7 +727,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweron_output(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_poweroff_input(void)
 {
-  if (as_aca_control(AS_ACA_POWER_OFF_INPUT, (uint32_t)NULL) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_OFF_INPUT, (uint32_t)NULL) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWOFF_INPUT;
     }
@@ -732,7 +737,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweroff_input(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_poweroff_output(void)
 {
-  if (as_aca_control(AS_ACA_POWER_OFF_OUTPUT, (uint32_t)NULL) != 0)
+  if (fw_as_acacontrol(AS_ACA_POWER_OFF_OUTPUT, (uint32_t)NULL) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_PWOFF_OUTPUT;
     }
@@ -742,7 +747,8 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_poweroff_output(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_enable_output(void)
 {
-  if (as_aca_control(AS_ACA_SET_OUTPUT_DEVICE, (uint32_t)AS_OUT_DEV_SP) != 0)
+  if (fw_as_acacontrol(AS_ACA_SET_OUTPUT_DEVICE,
+                       (uint32_t)AS_OUT_DEV_SP) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_ENABLE_OUTPUT;
     }
@@ -752,7 +758,8 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_enable_output(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_disable_output(void)
 {
-  if (as_aca_control(AS_ACA_SET_OUTPUT_DEVICE, (uint32_t)AS_OUT_DEV_OFF) != 0)
+  if (fw_as_acacontrol(AS_ACA_SET_OUTPUT_DEVICE,
+     (uint32_t)AS_OUT_DEV_OFF) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_DISABLE_OUTPUT;
     }
@@ -760,13 +767,14 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_disable_output(void)
   return CXD56_AUDIO_ECODE_OK;
 }
 
-CXD56_AUDIO_ECODE cxd56_audio_aca_set_micgain(FAR cxd56_audio_mic_gain_t *gain)
+CXD56_AUDIO_ECODE cxd56_audio_aca_set_micgain(
+                             FAR cxd56_audio_mic_gain_t *gain)
 {
   as_aca_pulco_in_param_t mic_gain_param;
 
   get_input_param(&mic_gain_param, gain);
 
-  if (as_aca_control(AS_ACA_INIT_AMIC, (uint32_t)&mic_gain_param) != 0)
+  if (fw_as_acacontrol(AS_ACA_INIT_AMIC, (uint32_t)&mic_gain_param) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_SET_MICGAIN;
     }
@@ -776,7 +784,7 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_set_micgain(FAR cxd56_audio_mic_gain_t *gain)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_notify_micbootdone(void)
 {
-  if (as_aca_control(AS_ACA_SET_AMIC_BOOT_DONE, (uint32_t)NULL) != 0)
+  if (fw_as_acacontrol(AS_ACA_SET_AMIC_BOOT_DONE, (uint32_t)NULL) != 0)
     {
       return CXD56_AUDIO_ECODE_ANA_NOTIFY_MICBOOT;
     }
@@ -786,12 +794,12 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_notify_micbootdone(void)
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_read_reg(as_aca_pulco_reg_param_t *param)
 {
-  as_aca_control(AS_ACA_GET_REGISTER, (uint32_t)param);
+  fw_as_acacontrol(AS_ACA_GET_REGISTER, (uint32_t)param);
   return CXD56_AUDIO_ECODE_OK;
 }
 
 CXD56_AUDIO_ECODE cxd56_audio_aca_write_reg(as_aca_pulco_reg_param_t *param)
 {
-  as_aca_control(AS_ACA_SET_REGISTER, (uint32_t)param);
+  fw_as_acacontrol(AS_ACA_SET_REGISTER, (uint32_t)param);
   return CXD56_AUDIO_ECODE_OK;
 }

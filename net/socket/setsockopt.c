@@ -57,6 +57,7 @@
 #include "udp/udp.h"
 #include "usrsock/usrsock.h"
 #include "utils/utils.h"
+#include "can/can.h"
 
 /****************************************************************************
  * Public Functions
@@ -87,7 +88,8 @@
  ****************************************************************************/
 
 static int psock_socketlevel_option(FAR struct socket *psock, int option,
-                                    FAR const void *value, socklen_t value_len)
+                                    FAR const void *value,
+                                    socklen_t value_len)
 {
   /* Verify that the socket option if valid (but might not be supported ) */
 
@@ -259,7 +261,9 @@ static int psock_socketlevel_option(FAR struct socket *psock, int option,
 
           net_lock();
 
-          /* Set or clear the linger option bit and linger time (in deciseconds) */
+          /* Set or clear the linger option bit and linger time
+           * (in deciseconds)
+           */
 
           if (setting->l_onoff)
             {
@@ -271,6 +275,29 @@ static int psock_socketlevel_option(FAR struct socket *psock, int option,
               _SO_CLROPT(psock->s_options, option);
               psock->s_linger = 0;
             }
+
+          net_unlock();
+        }
+        break;
+#endif
+
+#ifdef CONFIG_NET_TIMESTAMP
+      case SO_TIMESTAMP:  /* Generates a timestamp for each incoming packet */
+        {
+          /* Verify that option is at least the size of an integer. */
+
+          if (value_len < sizeof(FAR int32_t))
+            {
+              return -EINVAL;
+            }
+
+          /* Lock the network so that we have exclusive access to the socket
+           * options.
+           */
+
+          net_lock();
+
+          psock->s_timestamp = *((FAR int32_t *)value);
 
           net_unlock();
         }
@@ -315,8 +342,8 @@ static int psock_socketlevel_option(FAR struct socket *psock, int option,
  *   See <sys/socket.h> a complete list of values for the socket level
  *   'option' argument.
  *
- *   Protocol level options, such as SOL_TCP, are defined in protocol-specific
- *   header files, for example include/netinet/tcp.h
+ *   Protocol level options, such as SOL_TCP, are defined in
+ *   protocol-specific header files, for example include/netinet/tcp.h
  *
  * Input Parameters:
  *   psock     Socket structure of socket to operate on
@@ -372,27 +399,33 @@ int psock_setsockopt(FAR struct socket *psock, int level, int option,
         ret = psock_socketlevel_option(psock, option, value, value_len);
         break;
 
-      case SOL_TCP:    /* TCP protocol socket options (see include/netinet/tcp.h) */
+      case IPPROTO_TCP:/* TCP protocol socket options (see include/netinet/tcp.h) */
 #ifdef CONFIG_NET_TCPPROTO_OPTIONS
         ret = tcp_setsockopt(psock, option, value, value_len);
         break;
 #endif
 
-      case SOL_UDP:    /* UDP protocol socket options (see include/netinet/udp.h) */
+      case IPPROTO_UDP:/* UDP protocol socket options (see include/netinet/udp.h) */
 #ifdef CONFIG_NET_UDPPROTO_OPTIONS
         ret = udp_setsockopt(psock, option, value, value_len);
         break;
 #endif
 
 #ifdef CONFIG_NET_IPv4
-      case SOL_IP:     /* TCP protocol socket options (see include/netinet/in.h) */
+      case IPPROTO_IP:/* TCP protocol socket options (see include/netinet/in.h) */
         ret = ipv4_setsockopt(psock, option, value, value_len);
         break;
 #endif
 
 #ifdef CONFIG_NET_IPv6
-      case SOL_IPV6:   /* TCP protocol socket options (see include/netinet/in.h) */
+      case IPPROTO_IPV6:/* TCP protocol socket options (see include/netinet/in.h) */
         ret = ipv6_setsockopt(psock, option, value, value_len);
+        break;
+#endif
+
+#ifdef CONFIG_NET_CANPROTO_OPTIONS
+      case SOL_CAN_RAW:   /* CAN protocol socket options (see include/netpacket/can.h) */
+        ret = can_setsockopt(psock, option, value, value_len);
         break;
 #endif
 
@@ -419,8 +452,8 @@ int psock_setsockopt(FAR struct socket *psock, int level, int option,
  *   See <sys/socket.h> a complete list of values for the socket level
  *   'option' argument.
  *
- *   Protocol level options, such as SOL_TCP, are defined in protocol-specific
- *   header files, for example include/netinet/tcp.h
+ *   Protocol level options, such as SOL_TCP, are defined in
+ *   protocol-specific header files, for example include/netinet/tcp.h
  *
  * Input Parameters:
  *   sockfd    Socket descriptor of socket
@@ -470,7 +503,7 @@ int setsockopt(int sockfd, int level, int option, const void *value,
   ret = psock_setsockopt(psock, level, option, value, value_len);
   if (ret < 0)
     {
-      _SO_SETERRNO(psock, -ret);
+      set_errno(-ret);
       return ERROR;
     }
 

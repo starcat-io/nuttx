@@ -33,14 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
-
-DELIM ?= $(strip /)
-
-ASRCS =
-CSRCS =
-DEPPATH := --dep-path .
-VPATH := .
+include $(TOPDIR)/Make.defs
 
 ifeq ($(CONFIG_LIBDSP),y)
 CSRCS += lib_pid.c
@@ -72,7 +65,7 @@ $(COBJS): %$(OBJEXT): %.c
 $(BIN): $(OBJS)
 	$(call ARCHIVE, $@, $(OBJS))
 
-.depend: Makefile $(SRCS)
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
 	$(Q) touch $@
 

@@ -45,7 +45,7 @@ extern "C"
 #endif
 
 /****************************************************************************
- * include files
+ * Included Files
  ****************************************************************************/
 
 #include <arch/chip/gnss_type.h>
@@ -55,7 +55,9 @@ extern "C"
  *
  * param arg
  * Start mode value of uint32_t. Not address pointer.
- * One of #CXD56_GNSS_STMOD_COLD, #CXD56_GNSS_STMOD_WARM, #CXD56_GNSS_STMOD_HOT
+ * One of #CXD56_GNSS_STMOD_COLD,
+ *        #CXD56_GNSS_STMOD_WARM,
+ *        #CXD56_GNSS_STMOD_HOT
  */
 
 #define CXD56_GNSS_IOCTL_START 1
@@ -177,8 +179,8 @@ extern "C"
 #define CXD56_GNSS_IOCTL_GET_TCXO_OFFSET 10
 
 /* Set receiver time to GNSS.
- * The UTC time standard is used for the receiver time stored in a argument of
- * cxd56_gnss_datetime type.
+ * The UTC time standard is used for the receiver time stored in a argument
+ * of cxd56_gnss_datetime type.
  * The receiver position, current time and TCXO offset value, ephemeris data
  * are required in order to initiate a hot start.
  * Set the time with this command before hot start if GPS time is not counted
@@ -525,12 +527,47 @@ extern "C"
 
 #define CXD56_GNSS_IOCTL_GET_VAR_EPHEMERIS 49
 
+/* Set usecase mode
+ * This command must be issued in idle mode.
+ *
+ * param[in] arg
+ * The usecase definitions
+ */
+
+#define CXD56_GNSS_IOCTL_SET_USECASE 50
+
+/* Get usecase mode
+ *
+ * param[out] arg
+ * The usecase definitions
+ */
+
+#define CXD56_GNSS_IOCTL_GET_USECASE 51
+
+/* Set enable or disable of 1PPS output
+ * This command must be issued in idle mode.
+ *
+ * param[in] arg
+ * enable(1) or disable(0)
+ */
+
+#define CXD56_GNSS_IOCTL_SET_1PPS_OUTPUT 52
+
+/**
+ * Get the current 1PPS output setting
+ *
+ * @param[out] arg
+ * enable(1) or disable(0)
+ */
+
+#define CXD56_GNSS_IOCTL_GET_1PPS_OUTPUT 53
+
 /* check macros for GNSS commands */
 
 #define CXD56_GNSS_IOCTL_INVAL 0
-#define CXD56_GNSS_IOCTL_MAX   50
+#define CXD56_GNSS_IOCTL_MAX   54
 
-/* Same value to GD Start mode CXD56_GNSS_STMOD_XXXX for GD_Start */
+/* Same value to GD Start mode CXD56_GNSS_STMOD_XXXX for fw_gd_start */
 
 #define CXD56_GNSS_STMOD_COLD       0 /* Cold Start */
 #define CXD56_GNSS_STMOD_WARM       1 /* Warm Start */
@@ -591,6 +628,10 @@ extern "C"
 
 #define CXD56_GNSS_READ_OFFSET_DCREPORT     0x9800
 
+/* Offset for SAR/RLM */
+
+#define CXD56_GNSS_READ_OFFSET_SARRLM       0x9900
+
 /* Offset for Spectrum data */
 
 #define CXD56_GNSS_READ_OFFSET_SPECTRUM     0xa000
@@ -640,6 +681,10 @@ extern "C"
 /* Signal type is QZSS DC report */
 
 #define CXD56_GNSS_SIG_DCREPORT     15
+
+/* Signal type is GAL SAR/RLM */
+
+#define CXD56_GNSS_SIG_SARRLM       16
 
 /****************************************************************************
  * Public Types

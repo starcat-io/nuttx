@@ -88,6 +88,11 @@ config LIBC_ARCH_ELF
 	bool
 	default n
 
+config LIBC_ARCH_ELF_64BIT
+	bool
+	default n
+	depends on LIBC_ARCH_ELF
+
 config LIBM_ARCH_CEIL
 	bool
 	default n
@@ -161,6 +166,9 @@ source libs/libc/machine/sim/Kconfig
 endif
 if ARCH_X86
 source libs/libc/machine/x86/Kconfig
+endif
+if ARCH_XTENSA
+source libs/libc/machine/xtensa/Kconfig
 endif
 
 endmenu # Architecture-Specific Support

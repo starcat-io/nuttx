@@ -33,9 +33,8 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
 
-ASRCS =
 CSRCS = nrf52_boot.c nrf52_bringup.c
 
 ifeq ($(CONFIG_LIB_BOARDCTL),y)
@@ -70,6 +69,14 @@ endif
 
 ifeq ($(CONFIG_LPWAN_SX127X),y)
 CSRCS += nrf52_sx127x.c
+endif
+
+ifeq ($(CONFIG_NRF52840DK_HIGHPRI),y)
+CSRCS += nrf52_highpri.c
+endif
+
+ifeq ($(CONFIG_TIMER),y)
+CSRCS += nrf52_timer.c
 endif
 
 include $(TOPDIR)/boards/Board.mk

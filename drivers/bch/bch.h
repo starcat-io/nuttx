@@ -85,7 +85,8 @@ struct bchlib_s
 #undef EXTERN
 #if defined(__cplusplus)
 #define EXTERN extern "C"
-extern "C" {
+extern "C"
+{
 #else
 #define EXTERN extern
 #endif
@@ -96,7 +97,7 @@ EXTERN const struct file_operations bch_fops;
  * Public Function Prototypes
  ****************************************************************************/
 
-EXTERN void bchlib_semtake(FAR struct bchlib_s *bch);
+EXTERN int  bchlib_semtake(FAR struct bchlib_s *bch);
 EXTERN int  bchlib_flushsector(FAR struct bchlib_s *bch);
 EXTERN int  bchlib_readsector(FAR struct bchlib_s *bch, size_t sector);
 

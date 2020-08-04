@@ -86,7 +86,6 @@ static inline void nxtask_atexit(FAR struct tcb_s *tcb)
 
   if (group && group->tg_nmembers == 1)
     {
-#if defined(CONFIG_SCHED_ATEXIT_MAX) && CONFIG_SCHED_ATEXIT_MAX > 1
       int index;
 
       /* Call each atexit function in reverse order of registration atexit()
@@ -95,37 +94,22 @@ static inline void nxtask_atexit(FAR struct tcb_s *tcb)
        * group exits, i.e., from higher to lower indices.
        */
 
-      for (index = CONFIG_SCHED_ATEXIT_MAX - 1; index >= 0; index--)
+      for (index = CONFIG_SCHED_EXIT_MAX - 1; index >= 0; index--)
         {
-          if (group->tg_atexitfunc[index])
+          if (group->tg_exit[index].func.at)
             {
               atexitfunc_t func;
 
               /* Nullify the atexit function to prevent its reuse. */
 
-              func = group->tg_atexitfunc[index];
-              group->tg_atexitfunc[index] = NULL;
+              func = group->tg_exit[index].func.at;
+              group->tg_exit[index].func.at = NULL;
 
               /* Call the atexit function */
 
               (*func)();
             }
         }
-#else
-      if (group->tg_atexitfunc)
-        {
-          atexitfunc_t func;
-
-          /* Nullify the atexit function to prevent its reuse. */
-
-          func = group->tg_atexitfunc;
-          group->tg_atexitfunc = NULL;
-
-          /* Call the atexit function */
-
-          (*func)();
-        }
-#endif
     }
 }
 #else
@@ -160,7 +144,6 @@ static inline void nxtask_onexit(FAR struct tcb_s *tcb, int status)
 
   if (group && group->tg_nmembers == 1)
     {
-#if defined(CONFIG_SCHED_ONEXIT_MAX) && CONFIG_SCHED_ONEXIT_MAX > 1
       int index;
 
       /* Call each on_exit function in reverse order of registration.
@@ -169,37 +152,26 @@ static inline void nxtask_onexit(FAR struct tcb_s *tcb, int status)
        * when the task group exits, i.e., from higher to lower indices.
        */
 
-      for (index = CONFIG_SCHED_ONEXIT_MAX - 1; index >= 0; index--)
+      for (index = CONFIG_SCHED_EXIT_MAX - 1; index >= 0; index--)
         {
-          if (group->tg_onexitfunc[index])
+          if (group->tg_exit[index].func.on)
             {
               onexitfunc_t func;
+              FAR void    *arg;
 
               /* Nullify the on_exit function to prevent its reuse. */
 
-              func = group->tg_onexitfunc[index];
-              group->tg_onexitfunc[index] = NULL;
+              func = group->tg_exit[index].func.on;
+              arg  = group->tg_exit[index].arg;
+
+              group->tg_exit[index].func.on = NULL;
+              group->tg_exit[index].arg     = NULL;
 
               /* Call the on_exit function */
 
-              (*func)(status, group->tg_onexitarg[index]);
+              (*func)(status, arg);
             }
         }
-#else
-      if (group->tg_onexitfunc)
-        {
-          onexitfunc_t func;
-
-          /* Nullify the on_exit function to prevent its reuse. */
-
-          func = group->tg_onexitfunc;
-          group->tg_onexitfunc = NULL;
-
-          /* Call the on_exit function */
-
-          (*func)(status, group->tg_onexitarg);
-        }
-#endif
     }
 }
 #else
@@ -228,7 +200,7 @@ static inline void nxtask_exitstatus(FAR struct task_group_s *group,
     {
       /* No.. Find the exit status entry for this task in the parent TCB */
 
-      child = group_findchild(group, getpid());
+      child = group_find_child(group, getpid());
       if (child)
         {
 #ifndef HAVE_GROUP_MEMBERS
@@ -272,7 +244,7 @@ static inline void nxtask_groupexit(FAR struct task_group_s *group)
     {
       /* No.. Find the exit status entry for this task in the parent TCB */
 
-      child = group_findchild(group, getpid());
+      child = group_find_child(group, getpid());
       if (child)
         {
           /* Mark that all members of the child task group has exited */
@@ -462,7 +434,7 @@ static inline void nxtask_signalparent(FAR struct tcb_s *ctcb, int status)
    * handle multiple calls to nxtask_signalparent.
    */
 
-  ptcb = sched_gettcb(ctcb->group->tg_ppid);
+  ptcb = nxsched_get_tcb(ctcb->group->tg_ppid);
   if (ptcb == NULL)
     {
       /* The parent no longer exists... bail */
@@ -570,8 +542,7 @@ static inline void nxtask_flushstreams(FAR struct tcb_s *tcb)
 
   if (group && group->tg_nmembers == 1)
     {
-#if (defined(CONFIG_BUILD_PROTECTED) || defined(CONFIG_BUILD_KERNEL)) && \
-     defined(CONFIG_MM_KERNEL_HEAP)
+#ifdef CONFIG_MM_KERNEL_HEAP
       lib_flushall(tcb->group->tg_streamlist);
 #else
       lib_flushall(&tcb->group->tg_streamlist);

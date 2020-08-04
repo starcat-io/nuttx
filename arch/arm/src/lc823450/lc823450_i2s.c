@@ -1,35 +1,20 @@
 /****************************************************************************
  * arch/arm/src/lc823450/lc823450_i2s.c
  *
- *   Copyright 2017, 2018 Sony Video & Sound Products Inc.
- *   Author: Masayuki Ishikawa <Masayuki.Ishikawa@jp.sony.com>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -51,7 +36,7 @@
 #include <nuttx/audio/audio.h>
 #include <nuttx/audio/i2s.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "lc823450_dma.h"
 #include "lc823450_i2s.h"
 #include "lc823450_syscontrol.h"
@@ -197,15 +182,19 @@ static uint32_t _i2s_tx_th_bytes;
  * Private Function Prototypes
  ****************************************************************************/
 
-static uint32_t lc823450_i2s_rxsamplerate(struct i2s_dev_s *dev, uint32_t rate);
+static uint32_t lc823450_i2s_rxsamplerate(struct i2s_dev_s *dev,
+                                          uint32_t rate);
 static uint32_t lc823450_i2s_rxdatawidth(struct i2s_dev_s *dev, int bits);
-static int      lc823450_i2s_receive(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
+static int      lc823450_i2s_receive(struct i2s_dev_s *dev,
+                                     struct ap_buffer_s *apb,
                                      i2s_callback_t callback, void *arg,
                                      uint32_t timeout);
 
-static uint32_t lc823450_i2s_txsamplerate(struct i2s_dev_s *dev, uint32_t rate);
+static uint32_t lc823450_i2s_txsamplerate(struct i2s_dev_s *dev,
+                                          uint32_t rate);
 static uint32_t lc823450_i2s_txdatawidth(struct i2s_dev_s *dev, int bits);
-static int      lc823450_i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
+static int      lc823450_i2s_send(struct i2s_dev_s *dev,
+                                  struct ap_buffer_s *apb,
                                   i2s_callback_t callback, void *arg,
                                   uint32_t timeout);
 
@@ -319,16 +308,17 @@ static void _setup_audio_pll(uint32_t freq)
  * Name: _i2s_semtake
  ****************************************************************************/
 
-static void _i2s_semtake(FAR sem_t *sem)
+static int _i2s_semtake(FAR sem_t *sem)
 {
-  nxsem_wait_uninterruptible(sem);
+  return nxsem_wait_uninterruptible(sem);
 }
 
 /****************************************************************************
  * Name: lc823450_i2s_rxsamplerate
  ****************************************************************************/
 
-static uint32_t lc823450_i2s_rxsamplerate(struct i2s_dev_s *dev, uint32_t rate)
+static uint32_t lc823450_i2s_rxsamplerate(struct i2s_dev_s *dev,
+                                          uint32_t rate)
 {
   /* Change ASRC FSO rate */
 
@@ -410,7 +400,8 @@ static void _setup_tx_threshold(uint32_t tx_th)
  * Name: lc823450_i2s_rxdatawidth
  ****************************************************************************/
 
-static int lc823450_i2s_ioctl(struct i2s_dev_s *dev, int cmd, unsigned long arg)
+static int lc823450_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
+                              unsigned long arg)
 {
   FAR const struct audio_caps_desc_s *cap_desc;
   uint32_t tx_th;
@@ -435,7 +426,8 @@ static int lc823450_i2s_ioctl(struct i2s_dev_s *dev, int cmd, unsigned long arg)
 
             rate[0] = getreg32(SSRC_FSI) >> 13;
             ch[0]   = (getreg32(BUFCTL('C')) & BUFCTL_MONO) ? 1 : 2;
-            fmt[0]  = getreg32(AUDSEL) & AUDSEL_DECSEL ? AUDIO_FMT_MP3 : AUDIO_FMT_PCM;
+            fmt[0]  = getreg32(AUDSEL) & AUDSEL_DECSEL ?
+                               AUDIO_FMT_MP3 : AUDIO_FMT_PCM;
 
             if (rate[0] != rate[1])
               {
@@ -496,10 +488,14 @@ static void _i2s_rxdma_callback(DMA_HANDLE hdma, void *arg, int result)
  * Name: lc823450_i2s_receive
  ****************************************************************************/
 
-static int lc823450_i2s_receive(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
-                                i2s_callback_t callback, void *arg,
+static int lc823450_i2s_receive(struct i2s_dev_s *dev,
+                                struct ap_buffer_s *apb,
+                                i2s_callback_t callback,
+                                void *arg,
                                 uint32_t timeout)
 {
+  int ret = OK;
+
 #if 1 /* TODO: should move to rxsamplerate later */
   if (false == _b_input_started)
     {
@@ -508,7 +504,6 @@ static int lc823450_i2s_receive(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
       /* Start J Buffer */
 
       modifyreg32(ABUFACCEN, 0, ABUFACCEN_CDCEN('J'));
-
 
       /* J Buffer : ACLTALN=0, ACLTEN=0 */
 
@@ -522,7 +517,19 @@ static int lc823450_i2s_receive(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
 
   /* Wait for Audio Buffer */
 
-  _i2s_semtake(&_sem_buf_over);
+  ret = _i2s_semtake(&_sem_buf_over);
+  if (ret < 0)
+    {
+      /* Disable J Buffer Over Level IRQ */
+
+      modifyreg32(ABUFIRQEN0, ABUFIRQEN0_BOLIRQEN('J'), 0);
+
+      /* Stop J Buffer */
+
+      modifyreg32(ABUFACCEN, ABUFACCEN_CDCEN('J'), 0);
+
+      return ret;
+    }
 
   volatile uint32_t *ptr = (uint32_t *)&apb->samp[apb->curbyte];
   uint32_t n = apb->nmaxbytes;
@@ -539,7 +546,15 @@ static int lc823450_i2s_receive(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
                     _i2s_rxdma_callback,
                     &_sem_rxdma);
 
-  _i2s_semtake(&_sem_rxdma);
+  ret = _i2s_semtake(&_sem_rxdma);
+  if (ret < 0)
+    {
+      /* Stop DMA because semtake failed */
+
+      lc823450_dmastop(_hrxdma);
+
+      return ret;
+    }
 
   /* Invoke the callback handler */
 
@@ -561,7 +576,8 @@ static void _i2s_txdma_callback(DMA_HANDLE hdma, void *arg, int result)
  * Name: lc823450_i2s_txsamplerate
  ****************************************************************************/
 
-static uint32_t lc823450_i2s_txsamplerate(struct i2s_dev_s *dev, uint32_t rate)
+static uint32_t lc823450_i2s_txsamplerate(struct i2s_dev_s *dev,
+                                          uint32_t rate)
 {
   /* Change SSRC FSI rate */
 
@@ -643,6 +659,7 @@ static int lc823450_i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
   uint32_t n = apb->nbytes;
   uint32_t bufc_enabled;
   uint32_t decsel;
+  int ret = OK;
 
   DEBUGASSERT(0 < n);
 
@@ -665,7 +682,15 @@ static int lc823450_i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
 
       /* Wait for Audio Buffer */
 
-      _i2s_semtake(&_sem_buf_under);
+      ret = _i2s_semtake(&_sem_buf_under);
+      if (ret < 0)
+        {
+          /* Disable C Buffer Under Level IRQ */
+
+          modifyreg32(ABUFIRQEN0, ABUFIRQEN0_BULIRQEN('C'), 0);
+
+          return ret;
+        }
     }
 
   if (0 == decsel && (n & 0x3))
@@ -705,7 +730,15 @@ static int lc823450_i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
                     _i2s_txdma_callback,
                     &_sem_txdma);
 
-  _i2s_semtake(&_sem_txdma);
+  ret = _i2s_semtake(&_sem_txdma);
+  if (ret < 0)
+    {
+      /* Stop DMA because semtake failed */
+
+      lc823450_dmastop(_htxdma);
+
+      return ret;
+    }
 
 #ifdef SHOW_BUFFERING
   if (0 == bufc_enabled)
@@ -1024,11 +1057,11 @@ FAR struct i2s_dev_s *lc823450_i2sdev_initialize(void)
 
   /* Backup the current affinity */
 
-  nxsched_getaffinity(getpid(), sizeof(cpuset0), &cpuset0);
+  nxsched_get_affinity(getpid(), sizeof(cpuset0), &cpuset0);
 
   /* Set the new affinity which assigns to CPU0 */
 
-  nxsched_setaffinity(getpid(), sizeof(cpuset1), &cpuset1);
+  nxsched_set_affinity(getpid(), sizeof(cpuset1), &cpuset1);
   nxsig_usleep(10 * 1000);
 #endif
 
@@ -1041,7 +1074,7 @@ FAR struct i2s_dev_s *lc823450_i2sdev_initialize(void)
 #ifdef CONFIG_SMP
   /* Restore the original affinity */
 
-  nxsched_setaffinity(getpid(), sizeof(cpuset0), &cpuset0);
+  nxsched_set_affinity(getpid(), sizeof(cpuset0), &cpuset0);
   nxsig_usleep(10 * 1000);
 #endif
 

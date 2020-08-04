@@ -96,12 +96,9 @@
 
 #define TIMER_ABSTIME      1
 
-#ifndef CONFIG_LIBC_LOCALTIME
-/* Local time is the same as gmtime in this implementation */
+/* Time base values for timespec_get.  */
 
-#  define localtime(c)     gmtime(c)
-#  define localtime_r(c,r) gmtime_r(c,r)
-#endif
+#define TIME_UTC           1
 
 /********************************************************************************
  * Public Types
@@ -196,15 +193,14 @@ clock_t clock(void);
 int clock_settime(clockid_t clockid, FAR const struct timespec *tp);
 int clock_gettime(clockid_t clockid, FAR struct timespec *tp);
 int clock_getres(clockid_t clockid, FAR struct timespec *res);
+int timespec_get(FAR struct timespec *t, int b);
 
 time_t mktime(FAR struct tm *tp);
 FAR struct tm *gmtime(FAR const time_t *timep);
 FAR struct tm *gmtime_r(FAR const time_t *timep, FAR struct tm *result);
 
-#ifdef CONFIG_LIBC_LOCALTIME
 FAR struct tm *localtime(FAR const time_t *timep);
 FAR struct tm *localtime_r(FAR const time_t *timep, FAR struct tm *result);
-#endif
 
 size_t strftime(FAR char *s, size_t max, FAR const char *format,
                 FAR const struct tm *tm);

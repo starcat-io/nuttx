@@ -58,6 +58,7 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
 /* USB trace dumping */
 
 #ifndef CONFIG_USBDEV_TRACE
@@ -80,14 +81,13 @@
 static int usbtrace_syslog(FAR const char *fmt, ...)
 {
   va_list ap;
-  int ret;
 
-  /* Let nx_vsyslog do the real work */
+  /* Let vsyslog do the real work */
 
   va_start(ap, fmt);
-  ret = nx_vsyslog(LOG_EMERG, fmt, &ap);
+  vsyslog(LOG_EMERG, fmt, ap);
   va_end(ap);
-  return ret;
+  return OK;
 }
 
 static int assert_tracecallback(FAR struct usbtrace_s *trace, FAR void *arg)
@@ -101,8 +101,7 @@ static int assert_tracecallback(FAR struct usbtrace_s *trace, FAR void *arg)
  * Name: xtensa_assert
  ****************************************************************************/
 
-static void xtensa_assert(int errorcode) noreturn_function;
-static void xtensa_assert(int errorcode)
+static void xtensa_assert(void)
 {
   /* Dump the processor state */
 
@@ -117,7 +116,7 @@ static void xtensa_assert(int errorcode)
 #ifdef CONFIG_BOARD_CRASHDUMP
   /* Perform board-specific crash dump */
 
-  board_crashdump(up_getsp(), running_task(), filename, lineno);
+  board_crashdump(xtensa_getsp(), running_task(), filename, lineno);
 #endif
 
   /* Flush any buffered SYSLOG data (from the above) */
@@ -128,21 +127,21 @@ static void xtensa_assert(int errorcode)
 
   if (CURRENT_REGS || running_task()->flink == NULL)
     {
-       /* Blink the LEDs forever */
+      /* Blink the LEDs forever */
 
-       up_irq_save();
-        for (; ; )
-          {
+      up_irq_save();
+      for (; ; )
+        {
 #if CONFIG_BOARD_RESET_ON_ASSERT >= 1
-            board_reset(CONFIG_BOARD_ASSERT_RESET_VALUE);
+          board_reset(CONFIG_BOARD_ASSERT_RESET_VALUE);
 #endif
 #ifdef CONFIG_ARCH_LEDS
-            board_autoled_on(LED_PANIC);
-            up_mdelay(250);
-            board_autoled_off(LED_PANIC);
-            up_mdelay(250);
+          board_autoled_on(LED_PANIC);
+          up_mdelay(250);
+          board_autoled_off(LED_PANIC);
+          up_mdelay(250);
 #endif
-          }
+        }
     }
   else
     {
@@ -151,7 +150,6 @@ static void xtensa_assert(int errorcode)
 #if CONFIG_BOARD_RESET_ON_ASSERT >= 2
       board_reset(CONFIG_BOARD_ASSERT_RESET_VALUE);
 #endif
-      exit(errorcode);
     }
 }
 
@@ -163,7 +161,7 @@ static void xtensa_assert(int errorcode)
  * Name: up_assert
  ****************************************************************************/
 
-void up_assert(const uint8_t *filename, int lineno)
+void up_assert(const char *filename, int lineno)
 {
 #if CONFIG_TASK_NAME_SIZE > 0 && defined(CONFIG_DEBUG_ALERT)
   struct tcb_s *rtcb = running_task();
@@ -183,7 +181,7 @@ void up_assert(const uint8_t *filename, int lineno)
         filename, lineno);
 #endif
 
-  xtensa_assert(EXIT_FAILURE);
+  xtensa_assert();
 }
 
 /****************************************************************************
@@ -229,7 +227,7 @@ void xtensa_panic(int xptcode, uint32_t *regs)
 #endif
 
   CURRENT_REGS = regs;
-  xtensa_assert(EXIT_FAILURE); /* Should not return */
+  xtensa_assert(); /* Should not return */
   for (; ; );
 }
 
@@ -254,7 +252,8 @@ void xtensa_panic(int xptcode, uint32_t *regs)
  *      Level-1 interrupt as indicated by set level-1 bits in the INTERRUPT
  *      register.
  *   5  AllocaCause
- *      MOVSP instruction, if caller’s registers are not in the register file.
+ *      MOVSP instruction, if caller’s registers are not in the register
+ *      file.
  *   6  IntegerDivideByZeroCause
  *      QUOS, QUOU, REMS, or REMU divisor operand is zero.
  *   7  PCValueErrorCause Next PC Value Illegal
@@ -312,7 +311,7 @@ void xtensa_panic(int xptcode, uint32_t *regs)
  *
  ****************************************************************************/
 
-void xtensa_user(int exccause, uint32_t *regs)
+void xtensa_user_panic(int exccause, uint32_t *regs)
 {
 #if CONFIG_TASK_NAME_SIZE > 0 && defined(CONFIG_DEBUG_ALERT)
   struct tcb_s *rtcb = running_task();
@@ -333,6 +332,6 @@ void xtensa_user(int exccause, uint32_t *regs)
 #endif
 
   CURRENT_REGS = regs;
-  xtensa_assert(EXIT_FAILURE); /* Should not return */
+  xtensa_assert(); /* Should not return */
   for (; ; );
 }

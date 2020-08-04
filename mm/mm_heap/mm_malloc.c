@@ -44,6 +44,7 @@
 #include <debug.h>
 #include <string.h>
 
+#include <nuttx/arch.h>
 #include <nuttx/mm/mm.h>
 
 /****************************************************************************
@@ -53,6 +54,45 @@
 #ifndef NULL
 #  define NULL ((void *)0)
 #endif
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+static void mm_free_delaylist(FAR struct mm_heap_s *heap)
+{
+#if defined(CONFIG_BUILD_FLAT) || defined(__KERNEL__)
+  FAR struct mm_delaynode_s *tmp;
+  irqstate_t flags;
+
+  /* Move the delay list to local */
+
+  flags = enter_critical_section();
+
+  tmp = heap->mm_delaylist;
+  heap->mm_delaylist = NULL;
+
+  leave_critical_section(flags);
+
+  /* Test if the delayed is empty */
+
+  while (tmp)
+    {
+      FAR void *address;
+
+      /* Get the first delayed deallocation */
+
+      address = tmp;
+      tmp = tmp->flink;
+
+      /* The address should always be non-NULL since that was checked in the
+       * 'while' condition above.
+       */
+
+      mm_free(heap, address);
+    }
+#endif
+}
 
 /****************************************************************************
  * Public Functions
@@ -75,6 +115,10 @@ FAR void *mm_malloc(FAR struct mm_heap_s *heap, size_t size)
   size_t alignsize;
   void *ret = NULL;
   int ndx;
+
+  /* Firstly, free mm_delaylist */
+
+  mm_free_delaylist(heap);
 
   /* Ignore zero-length allocations */
 
@@ -157,7 +201,8 @@ FAR void *mm_malloc(FAR struct mm_heap_s *heap, size_t size)
         {
           /* Get a pointer to the next node in physical memory */
 
-          next = (FAR struct mm_freenode_s *)(((FAR char *)node) + node->size);
+          next = (FAR struct mm_freenode_s *)
+                 (((FAR char *)node) + node->size);
 
           /* Create the remainder node */
 

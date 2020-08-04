@@ -8,7 +8,8 @@
  * modified to become a NuttX driver and to use the Oneshot Timer API.
  *
  * The PX4 driver is here:
- * https://github.com/PX4/Firmware/blob/master/src/drivers/stm32/tone_alarm/tone_alarm.cpp
+ * https://github.com/PX4/Firmware/blob/master/ \
+ * src/drivers/stm32/tone_alarm/tone_alarm.cpp
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,7 +81,7 @@
 #define MODE_LEGATO   2
 #define MODE_STACCATO 3
 
-/* Max tune string length*/
+/* Max tune string length */
 
 #define MAX_TUNE_LEN (1 * 256)
 
@@ -114,7 +115,10 @@ static char tune_buf[MAX_TUNE_LEN];
 
 /* Semitone offsets from C for the characters 'A'-'G' */
 
-static const uint8_t g_note_tab[] = { 9, 11, 0, 2, 4, 5, 7 };
+static const uint8_t g_note_tab[] =
+{
+  9, 11, 0, 2, 4, 5, 7
+};
 
 /* Notes in Frequency */
 
@@ -168,7 +172,6 @@ static ssize_t tone_read(FAR struct file *filep, FAR char *buffer,
                          size_t buflen);
 static ssize_t tone_write(FAR struct file *filep, FAR const char *buffer,
                           size_t buflen);
-
 
 /****************************************************************************
  * Private Data
@@ -325,7 +328,16 @@ static void stop_note(FAR struct tone_upperhalf_s *upper)
 {
   FAR struct pwm_lowerhalf_s *tone = upper->devtone;
 
-  tone->ops->stop(tone);
+#ifdef CONFIG_PWM_MULTICHAN
+  upper->tone.channels[0].channel = upper->channel;
+  upper->tone.channels[0].duty    = 0;
+#else
+  upper->tone.duty                = 0;
+#endif
+
+  /* REVISIT: Should check the return value */
+
+  tone->ops->start(tone, &upper->tone);
 }
 
 /****************************************************************************
@@ -358,12 +370,9 @@ static void start_tune(FAR struct tone_upperhalf_s *upper, const char *tune)
   g_silence_length = 0;
   g_repeat         = false;
 
-  /* Schedule a callback to start playing */
+  /* Start playing tune */
 
-  ts.tv_sec        = 1;
-  ts.tv_nsec       = 0;
-
-  ONESHOT_START(upper->oneshot, oneshot_callback, upper, &ts);
+  next_note(upper);
 }
 
 /****************************************************************************
@@ -406,7 +415,8 @@ static void next_note(FAR struct tone_upperhalf_s *upper)
     }
 
   /* Make sure we still have a tune - may be removed by the write / ioctl
-   * handler */
+   * handler
+   */
 
   if ((g_next == NULL) || (g_tune == NULL))
     {
@@ -719,7 +729,7 @@ static uint8_t next_number(void)
   uint8_t number = 0;
   int c;
 
-  for (;;)
+  for (; ; )
     {
       c = next_char();
 
@@ -782,9 +792,10 @@ static int tone_open(FAR struct file *filep)
       goto errout;
     }
 
-  /* Increment the count of references to the device.  If this the first time
-   * that the driver has been opened for this device, then initialize the
-   * device. */
+  /* Increment the count of references to the device.
+   * If this the first time that the driver has been opened for this device,
+   * then initialize the device.
+   */
 
   tmp = upper->crefs + 1;
   if (tmp == 0)
@@ -831,8 +842,10 @@ static int tone_close(FAR struct file *filep)
       goto errout;
     }
 
-  /* Decrement the references to the driver.  If the reference count will
-   * decrement to 0, then uninitialize the driver. */
+  /* Decrement the references to the driver.
+   * If the reference count will decrement to 0,
+   * then uninitialize the driver.
+   */
 
   if (upper->crefs > 1)
     {
@@ -946,7 +959,8 @@ int tone_register(FAR const char *path, FAR struct pwm_lowerhalf_s *tone,
   /* Allocate the upper-half data structure */
 
   upper =
-    (FAR struct tone_upperhalf_s *)kmm_zalloc(sizeof(struct tone_upperhalf_s));
+    (FAR struct tone_upperhalf_s *)kmm_zalloc(
+                              sizeof(struct tone_upperhalf_s));
 
   if (!upper)
     {

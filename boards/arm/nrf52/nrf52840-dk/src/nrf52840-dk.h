@@ -88,7 +88,7 @@
 #ifndef __ASSEMBLY__
 
 /****************************************************************************
- * Public Functions
+ * Public Functions Prototypes
  ****************************************************************************/
 
 /****************************************************************************
@@ -120,7 +120,7 @@ int nrf52_bringup(void);
 void nrf52_spidev_initialize(void);
 #endif
 
-/*****************************************************************************
+/****************************************************************************
  * Name: nrf52_lsm6dsl_initialize
  *
  * Description:
@@ -132,7 +132,7 @@ void nrf52_spidev_initialize(void);
 int nrf52_lsm6dsl_initialize(char *devpath);
 #endif
 
-/*****************************************************************************
+/****************************************************************************
  * Name: nrf52_lsm303agr_initialize
  *
  * Description:
@@ -144,7 +144,7 @@ int nrf52_lsm6dsl_initialize(char *devpath);
 int nrf52_lsm303agr_initialize(char *devpath);
 #endif
 
-/*****************************************************************************
+/****************************************************************************
  * Name: nrf52_hts221_initialize
  *
  * Description:
@@ -156,15 +156,28 @@ int nrf52_lsm303agr_initialize(char *devpath);
 int nrf52_hts221_initialize(char *devpath);
 #endif
 
-/*****************************************************************************
+/****************************************************************************
  * Name: nrf52_lpwaninitialize
  *
  * Description:
  *   Initialize SX127X LPWAN interaface.
+ *
  ****************************************************************************/
 
 #ifdef CONFIG_LPWAN_SX127X
 int nrf52_lpwaninitialize(void);
+#endif
+
+/****************************************************************************
+ * Name: nrf52_timer_driver_setup
+ *
+ * Description:
+ *   Initialize TIMER driver.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_TIMER
+int nrf52_timer_driver_setup(FAR const char *devpath, int timer);
 #endif
 
 #endif /* __ASSEMBLY__ */

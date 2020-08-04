@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-/* This file should never be included directed but, rather,
+/* This file should never be included directly but, rather,
  * only indirectly through nuttx/arch.h
  */
 
@@ -43,6 +43,12 @@
 /****************************************************************************
  * Included Files
  ****************************************************************************/
+
+#include <nuttx/config.h>
+
+/* Include chip-specific definitions */
+
+#include <arch/chip/arch.h>
 
 /****************************************************************************
  * Pre-processor Definitions

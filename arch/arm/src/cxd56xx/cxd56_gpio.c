@@ -50,7 +50,7 @@
 #include <debug.h>
 
 #include "chip.h"
-#include "up_arch.h"
+#include "arm_arch.h"
 
 #include "cxd56_pinconfig.h"
 #include "cxd56_gpio.h"
@@ -259,7 +259,7 @@ bool cxd56_gpio_read(uint32_t pin)
   return ((regval & (1 << shift)) != 0);
 }
 
-/************************************************************
+/****************************************************************************
  * Name: cxd56_gpio_status
  *
  * Description:
@@ -268,7 +268,7 @@ bool cxd56_gpio_read(uint32_t pin)
  * Returned Value:
  *   OK on success; A negated errno value on failure.
  *
- *************************************************************/
+ ****************************************************************************/
 
 int cxd56_gpio_status(uint32_t pin, cxd56_gpio_status_t *stat)
 {

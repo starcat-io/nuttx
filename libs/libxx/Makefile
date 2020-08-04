@@ -33,32 +33,9 @@
 #
 ###########################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
 
-# Sources
-
-ASRCS =
-CSRCS =
-
-CXXSRCS  = libxx_cxapurevirtual.cxx libxx_eabi_atexit.cxx libxx_cxa_atexit.cxx
-CXXSRCS += libxx_cxa_guard.cxx
-ifeq ($(CONFIG_CXX_EXCEPTION),y)
-CXXSRCS += libxx__gnu_unwind_find_exidx.cxx
-endif
-
-# Some of the libs/libxx/ files are not need if uClibc++ or libcxx is installed
-# because uClibx++ or libcxx will replace them
-
-ifeq (,$(findstring y,$(CONFIG_UCLIBCXX) $(CONFIG_LIBCXX)))
-CXXSRCS += libxx_delete.cxx libxx_delete_sized.cxx libxx_deletea.cxx
-CXXSRCS += libxx_deletea_sized.cxx libxx_new.cxx libxx_newa.cxx
-CXXSRCS += libxx_stdthrow.cxx
-endif
-
-# Paths
-
-DEPPATH = --dep-path .
-VPATH = .
+CXXSRCS = libxx_cxa_atexit.cxx libxx_eabi_atexit.cxx
 
 # Include the uClibc++ Make.defs file if selected.  If it is included,
 # the uClibc++/Make.defs file will add its files to the source file list,
@@ -71,11 +48,11 @@ VPATH = .
 # in the NuttX uClibc++ GIT repository for more information
 
 ifeq ($(CONFIG_UCLIBCXX),y)
-include uClibc++/Make.defs
-endif
-
-ifeq ($(CONFIG_LIBCXX),y)
+include uClibc++.defs
+else ifeq ($(CONFIG_LIBCXX),y)
 include libcxx/Make.defs
+else
+include cxx.defs
 endif
 
 # Object Files
@@ -83,14 +60,15 @@ endif
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
 CXXOBJS = $(CXXSRCS:.cxx=$(OBJEXT))
+CPPOBJS = $(CPPSRCS:.cpp=$(OBJEXT))
 
-SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
-OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
+SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS) $(CPPSRCS)
+OBJS = $(AOBJS) $(COBJS) $(CXXOBJS) $(CPPOBJS)
 
 BIN = libxx$(LIBEXT)
 
 all: $(BIN)
-.PHONY: depend clean distclean
+.PHONY: depend clean distclean dirlinks
 
 $(AOBJS): %$(OBJEXT): %.S
 	$(call ASSEMBLE, $<, $@)
@@ -101,10 +79,15 @@ $(COBJS): %$(OBJEXT): %.c
 $(CXXOBJS): %$(OBJEXT): %.cxx
 	$(call COMPILEXX, $<, $@)
 
+$(CPPOBJS): %$(OBJEXT): %.cpp
+	$(call COMPILEXX, $<, $@)
+
 $(BIN):	$(OBJS)
 	$(call ARCHIVE, $@, $(OBJS))
 
-.depend: Makefile $(SRCS)
+dirlinks::
+
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CXX)" -- $(CXXFLAGS) -- $(SRCS) >Make.dep
 	$(Q) touch $@
 
@@ -114,7 +97,7 @@ clean:
 	$(call DELFILE, $(BIN))
 	$(call CLEAN)
 
-distclean: clean
+distclean:: clean
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)
 

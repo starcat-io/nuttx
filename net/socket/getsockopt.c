@@ -52,6 +52,7 @@
 #include "tcp/tcp.h"
 #include "usrsock/usrsock.h"
 #include "utils/utils.h"
+#include "can/can.h"
 
 /****************************************************************************
  * Private Functions
@@ -92,7 +93,8 @@
  ****************************************************************************/
 
 static int psock_socketlevel_option(FAR struct socket *psock, int option,
-                                    FAR void *value, FAR socklen_t *value_len)
+                                    FAR void *value,
+                                    FAR socklen_t *value_len)
 {
   /* Verify that the socket option if valid (but might not be supported ) */
 
@@ -121,7 +123,8 @@ static int psock_socketlevel_option(FAR struct socket *psock, int option,
 
           default:          /* Other options are passed to usrsock daemon. */
             {
-              return usrsock_getsockopt(conn, SOL_SOCKET, option, value, value_len);
+              return usrsock_getsockopt(conn, SOL_SOCKET,
+                                        option, value, value_len);
             }
         }
     }
@@ -276,7 +279,22 @@ static int psock_socketlevel_option(FAR struct socket *psock, int option,
         }
         break;
 
-      /* The following are not yet implemented (return values other than {0,1) */
+#ifdef CONFIG_NET_TIMESTAMP
+      case SO_TIMESTAMP:
+        {
+          if (*value_len != sizeof(int))
+            {
+              return -EINVAL;
+            }
+
+          *(FAR int *)value = (int)psock->s_timestamp;
+        }
+        break;
+#endif
+
+      /* The following are not yet implemented
+       * (return values other than {0,1})
+       */
 
       case SO_LINGER:     /* Lingers on a close() if data is present */
       case SO_RCVBUF:     /* Sets receive buffer size */
@@ -342,7 +360,7 @@ static int psock_socketlevel_option(FAR struct socket *psock, int option,
 int psock_getsockopt(FAR struct socket *psock, int level, int option,
                      FAR void *value, FAR socklen_t *value_len)
 {
-  int ret;
+  int ret = OK;
 
   /* Verify that the sockfd corresponds to valid, allocated socket */
 
@@ -357,27 +375,33 @@ int psock_getsockopt(FAR struct socket *psock, int level, int option,
 
   switch (level)
     {
-      case SOL_SOCKET: /* Socket-level options (see include/sys/socket.h) */
+      case SOL_SOCKET:   /* Socket-level options (see include/sys/socket.h) */
        ret = psock_socketlevel_option(psock, option, value, value_len);
        break;
 
-      case SOL_TCP:    /* TCP protocol socket options (see include/netinet/tcp.h) */
+      case IPPROTO_TCP:  /* TCP protocol socket options (see include/netinet/tcp.h) */
 #ifdef CONFIG_NET_TCPPROTO_OPTIONS
        ret = tcp_getsockopt(psock, option, value, value_len);
        break;
 #endif
 
+      case SOL_CAN_RAW:/* CAN protocol socket options (see include/netpacket/can.h) */
+#ifdef CONFIG_NET_CANPROTO_OPTIONS
+       ret = can_getsockopt(psock, option, value, value_len);
+#endif
+       break;
+
       /* These levels are defined in sys/socket.h, but are not yet
        * implemented.
        */
 
-      case SOL_IP:     /* TCP protocol socket options (see include/netinet/ip.h) */
-      case SOL_IPV6:   /* TCP protocol socket options (see include/netinet/ip6.h) */
-      case SOL_UDP:    /* TCP protocol socket options (see include/netinit/udp.h) */
+      case IPPROTO_IP:   /* TCP protocol socket options (see include/netinet/ip.h) */
+      case IPPROTO_IPV6: /* TCP protocol socket options (see include/netinet/ip6.h) */
+      case IPPROTO_UDP:  /* TCP protocol socket options (see include/netinit/udp.h) */
         ret = -ENOSYS;
        break;
 
-      default:         /* The provided level is invalid */
+      default:           /* The provided level is invalid */
         ret = -EINVAL;
        break;
     }
@@ -431,7 +455,8 @@ int psock_getsockopt(FAR struct socket *psock, int level, int option,
  *
  ****************************************************************************/
 
-int getsockopt(int sockfd, int level, int option, void *value, socklen_t *value_len)
+int getsockopt(int sockfd, int level, int option,
+               void *value, socklen_t *value_len)
 {
   FAR struct socket *psock;
   int ret;
@@ -445,7 +470,7 @@ int getsockopt(int sockfd, int level, int option, void *value, socklen_t *value_
   ret = psock_getsockopt(psock, level, option, value, value_len);
   if (ret < 0)
     {
-      _SO_SETERRNO(psock, -ret);
+      set_errno(-ret);
       return ERROR;
     }
 

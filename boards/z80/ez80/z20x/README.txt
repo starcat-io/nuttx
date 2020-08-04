@@ -204,12 +204,34 @@ Common Configuration Notes
 Configuration Subdirectories
 ----------------------------
 
-  nsh_ram:
+  hello:
+
+    This is a minimal "Hello, World!" program that runs out of RAM.  It is
+    a small program that is really useful only for testing the bootloader.
+
+    NOTES:
+
+    1. Debugging from RAM
+
+       You can debug from RAM version using ZDS-II as follows:
+
+       a. Connect to the debugger,
+       b. Reset, Go, and Break.  This will initialize the external RAM
+       c. Break and Load the nuttx.lod file
+       c. Set the PC to 0x050000
+       d. Single step a few times to make sure things look good, then
+       e. Go
+
+  nsh:
 
     This configuration builds the NuttShell (NSH).  That code can be
     found in apps/system/nsh and apps/system/nshlib..  For more
     information see:  apps/system/nsh/README.txt and
     Documentation/NuttShell.html.
+
+    To be usable, this configuration should:  (1) Use the same BAUD
+    as the bootloader and (2) switch from the MMC/SD card to the second
+    partition in the W25 part.
 
     NOTES:
 
@@ -290,14 +312,14 @@ Configuration Subdirectories
        NOTE:  The is no card detect signal so the microSD card must be
        placed in the card slot before the system is started.
 
-    3. Debugging the RAM version
+    3. Debugging from RAM
 
-       You can debug the all RAM version using ZDS-II as follows:
+       You can debug from RAM version using ZDS-II as follows:
 
        a. Connect to the debugger,
        b. Reset, Go, and Break.  This will initialize the external RAM
        c. Break and Load the nuttx.lod file
-       c. Set the PC to 0x040000
+       c. Set the PC to 0x050000
        d. Single step a few times to make sure things look good, then
        e. Go
 
@@ -316,6 +338,31 @@ Configuration Subdirectories
     vector resides at address 0x050000 in external SRAM.
 
     The boot loader source is located at boards/z20x/src/w25_main.c.
+
+    When starting, you may see one of two things, depending upon whether or
+    not there is a valid, bootable image in the W25 FLASH partition:
+
+    1. If there is a bootable image in FLASH, you should see something like:
+
+        Verifying 203125 bytes in the W25 Serial FLASH
+        Successfully verified 203125 bytes in the W25 Serial FLASH
+        [L]oad [B]oot
+        .........
+
+       The program will wait up to 5 seconds for you to provide a response:
+       B to load the program program from the W25 and start it, or L to
+       download a new program from serial and write it to FLASH.
+
+       If nothing is pressed in within the 5 second delay, the program will
+       continue to boot the program just as though B were pressed.
+
+       If L is pressed, then you should see the same dialog as for the case
+       where there is no valid binary image in FLASH.
+
+    2. If there is no valid program in FLASH (or if L is pressed), you will
+       be asked to :
+
+         Send HEX file now.
 
     NOTES:
 
@@ -346,3 +393,8 @@ Configuration Subdirectories
 
        Things worth trying:  4800 BAUD, smaller Rx buffer, large Rx FIFO
        trigger level.
+
+    2. Booting large programs from the serial FLASH is unbearably slow;
+       you will think that the system is simply not booting at all.  There
+       is probably some bug contributing to this probably (maybe the timer
+       interrupt rate?)

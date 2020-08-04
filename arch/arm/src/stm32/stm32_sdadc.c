@@ -60,8 +60,8 @@
 #include <nuttx/analog/adc.h>
 #include <nuttx/analog/ioctl.h>
 
-#include "up_internal.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "chip.h"
 #include "stm32.h"
@@ -820,7 +820,7 @@ static void sdadc_reset(FAR struct adc_dev_s *dev)
 
   sdadc_rccreset(priv, false);
 
-  /* Enable the SDADC (and wait it stabilizes) */
+  /* Enable the SDADC (and wait until it stabilizes) */
 
   sdadc_enable(priv, true);
 

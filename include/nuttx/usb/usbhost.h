@@ -1,44 +1,30 @@
 /************************************************************************************
  * include/nuttx/usb/usbhost.h
  *
- *   Copyright (C) 2010-2015 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * References:
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ************************************************************************************/
+
+/* References:
  *   "Universal Serial Bus Mass Storage Class, Specification Overview,"
  *   Revision 1.2,  USB Implementer's Forum, June 23, 2003.
  *
  *   "Universal Serial Bus Mass Storage Class, Bulk-Only Transport,"
  *   Revision 1.0, USB Implementer's Forum, September 31, 1999.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ************************************************************************************/
+ */
 
 #ifndef __INCLUDE_NUTTX_USB_USBHOST_H
 #define __INCLUDE_NUTTX_USB_USBHOST_H
@@ -77,12 +63,12 @@
  * Name: CLASS_CREATE
  *
  * Description:
- *   This macro will call the create() method of struct usbhost_registry_s.  The create()
- *   method is a callback into the class implementation.  It is used to (1) create
- *   a new instance of the USB host class state and to (2) bind a USB host driver
- *   "session" to the class instance.  Use of this create() method will support
- *   environments where there may be multiple USB ports and multiple USB devices
- *   simultaneously connected.
+ *   This macro will call the create() method of struct usbhost_registry_s.
+ *   The create() method is a callback into the class implementation.  It is used
+ *   to (1) create a new instance of the USB host class state and to (2) bind a
+ *   USB host driver "session" to the class instance.  Use of this create() method
+ *   will support environments where there may be multiple USB ports and multiple
+ *   USB devices simultaneously connected.
  *
  * Input Parameters:
  *   reg - The USB host class registry entry previously obtained from a call to
@@ -112,14 +98,16 @@
  *
  * Description:
  *   This macro will call the connect() method of struct usbhost_class_s.  This
- *   method is a callback into the devclass implementation.  It is used to provide the
- *   device's configuration descriptor to the devclass so that the devclass may initialize
- *   properly
+ *   method is a callback into the devclass implementation.  It is used to provide
+ *   the device's configuration descriptor to the devclass so that the devclass may
+ *   initialize properly.
  *
  * Input Parameters:
- *   devclass - The USB host class entry previously obtained from a call to create().
- *   configdesc - A pointer to a uint8_t buffer container the configuration descriptor.
- *   desclen - The length in bytes of the configuration descriptor.
+ *   devclass   - The USB host class entry previously obtained from a call
+ *                to create().
+ *   configdesc - A pointer to a uint8_t buffer containing the configuration
+ *                descriptor.
+ *   desclen    - The length in bytes of the configuration descriptor.
  *
  * Returned Value:
  *   On success, zero (OK) is returned. On a failure, a negated errno value is
@@ -163,7 +151,7 @@
 
 #define CLASS_DISCONNECTED(devclass) ((devclass)->disconnected(devclass))
 
-/****************************************************************************
+/************************************************************************************
  * Name: CONN_WAIT
  *
  * Description:
@@ -186,7 +174,7 @@
  *   - Called from a single thread so no mutual exclusion is required.
  *   - Never called from an interrupt handler.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 #define CONN_WAIT(conn,hport) ((conn)->wait(conn,hport))
 
@@ -644,8 +632,8 @@ struct usbhost_id_s
  * connected to the USB port.
  */
 
-struct usbhost_hubport_s;    /* Forward reference to the hub state structure */
-struct usbhost_class_s;  /* Forward reference to the class state structure */
+struct usbhost_hubport_s;   /* Forward reference to the hub state structure */
+struct usbhost_class_s;     /* Forward reference to the class state structure */
 struct usbhost_registry_s
 {
   /* This field is used to implement a singly-link registry structure.  Because of
@@ -685,6 +673,7 @@ typedef FAR void *usbhost_ep_t;
  * represented by struct usbhost_driver_s.  Connected to the HCD are one
  * or more hubs.  At a minimum, the root hub is always present. Each hub
  * has from 1 to 4 ports.
+ */
 
 /* Every class connects to the host controller driver (HCD) via a port on a
  * hub.  That hub may be an external hub or the internal, root hub.  The
@@ -730,9 +719,9 @@ struct usbhost_roothubport_s
 
 struct usbhost_class_s
 {
- /* Class instances are associated with devices connected on one port on a
-  * hub and are represented by this structure.
-  */
+  /* Class instances are associated with devices connected on one port on a
+   * hub and are represented by this structure.
+   */
 
   FAR struct usbhost_hubport_s *hport;  /* The port used by this class instance */
 
@@ -758,11 +747,12 @@ struct usbhost_class_s
 struct usbhost_epdesc_s
 {
   FAR struct usbhost_hubport_s *hport; /* Hub port that supports the endpoint */
-  uint8_t addr;                  /* Endpoint address */
-  bool in;                       /* Direction: true->IN */
-  uint8_t xfrtype;               /* Transfer type.  See USB_EP_ATTR_XFER_* in usb.h */
-  uint8_t interval;              /* Polling interval */
-  uint16_t mxpacketsize;         /* Max packetsize */
+  uint8_t addr;                        /* Endpoint address */
+  bool in;                             /* Direction: true->IN */
+  uint8_t xfrtype;                     /* Transfer type.  See USB_EP_ATTR_XFER_*
+                                        * in usb.h */
+  uint8_t interval;                    /* Polling interval */
+  uint16_t mxpacketsize;               /* Max packetsize */
 };
 
 /* struct usbhost_connection_s provides as interface between platform-specific
@@ -936,7 +926,7 @@ extern "C"
 #endif
 
 /************************************************************************************
- * Public Functions
+ * Public Function Prototypes
  ************************************************************************************/
 
 /************************************************************************************
@@ -985,7 +975,7 @@ const struct usbhost_registry_s *
   usbhost_findclass(FAR const struct usbhost_id_s *id);
 
 #ifdef CONFIG_USBHOST_HUB
- /****************************************************************************
+/************************************************************************************
  * Name: usbhost_hub_initialize
  *
  * Description:
@@ -1000,13 +990,13 @@ const struct usbhost_registry_s *
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_hub_initialize(void);
 #endif
 
 #ifdef CONFIG_USBHOST_MSC
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_msc_initialize
  *
  * Description:
@@ -1021,13 +1011,13 @@ int usbhost_hub_initialize(void);
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_msc_initialize(void);
 #endif
 
 #ifdef CONFIG_USBHOST_CDCACM
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_cdcacm_initialize
  *
  * Description:
@@ -1042,13 +1032,34 @@ int usbhost_msc_initialize(void);
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_cdcacm_initialize(void);
 #endif
 
+#ifdef CONFIG_USBHOST_FT232R
+/************************************************************************************
+ * Name: usbhost_ft232r_initialize
+ *
+ * Description:
+ *   Initialize the USB FT232R driver.  This function should be called
+ *   be platform-specific code in order to initialize and register support
+ *   for the FT232R.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   On success this function will return zero (OK);  A negated errno value
+ *   will be returned on failure.
+ *
+ ************************************************************************************/
+
+int usbhost_ft232r_initialize(void);
+#endif
+
 #ifdef CONFIG_USBHOST_HIDKBD
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_kbdinit
  *
  * Description:
@@ -1063,13 +1074,13 @@ int usbhost_cdcacm_initialize(void);
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_kbdinit(void);
 #endif
 
 #ifdef CONFIG_USBHOST_HIDMOUSE
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_mouse_init
  *
  * Description:
@@ -1084,13 +1095,13 @@ int usbhost_kbdinit(void);
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_mouse_init(void);
 #endif
 
 #ifdef CONFIG_USBHOST_XBOXCONTROLLER
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_xboxcontroller_init
  *
  * Description:
@@ -1105,12 +1116,12 @@ int usbhost_mouse_init(void);
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_xboxcontroller_init(void);
 #endif
 
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_wlaninit
  *
  * Description:
@@ -1125,11 +1136,11 @@ int usbhost_xboxcontroller_init(void);
  *   On success this function will return zero (OK);  A negated errno value
  *   will be returned on failure.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_wlaninit(void);
 
-/****************************************************************************
+/************************************************************************************
  * Name: usbhost_enumerate
  *
  * Description:
@@ -1161,7 +1172,7 @@ int usbhost_wlaninit(void);
  *   - Called from a single thread so no mutual exclusion is required.
  *   - Never called from an interrupt handler.
  *
- ****************************************************************************/
+ ************************************************************************************/
 
 int usbhost_enumerate(FAR struct usbhost_hubport_s *hub,
                       FAR struct usbhost_class_s **devclass);

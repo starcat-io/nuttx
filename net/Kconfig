@@ -70,7 +70,7 @@ config NET_ETH_PKTSIZE
 		590.
 
 		IPv6 hosts are required to be able to handle an MSS of 1220 octets,
-		resulting in a minimum buffer size of of 1220+20+40+14 = 1294
+		resulting in a minimum buffer size of 1220+20+40+14 = 1294
 
 		To get an MTU of 1500, for example, you would need packet buffer of
 		size 1514.
@@ -150,6 +150,11 @@ config NET_LOOPBACK_PKTSIZE
 		CONFIG_NET_LOOPBACK_PKTSIZE is zero, meaning that this maximum
 		packet size will be used by loopback driver.
 
+menuconfig NET_MBIM
+	bool "MBIM modem support"
+	depends on USBHOST_CDCMBIM
+	default n
+
 menuconfig NET_SLIP
 	bool "SLIP support"
 	select ARCH_HAVE_NETDEV_STATISTICS
@@ -184,9 +189,9 @@ config SLIP_NINTERFACES
 
 config SLIP_STACKSIZE
 	int "SLIP stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
-		Select the stack size of the SLIP RX and TX tasks.  Default: 2048
+		Select the stack size of the SLIP RX and TX tasks.
 
 config SLIP_DEFPRIO
 	int "SLIP priority"
@@ -226,23 +231,6 @@ config NET_TUN_PKTSIZE
 
 endif # NET_TUN
 
-config NET_USRSOCK
-	bool "User-space networking stack API"
-	default n
-	---help---
-		Enable or disable user-space networking stack support.
-
-		User-space networking stack API allows user-space daemon to
-		provide TCP/IP stack implementation for NuttX network.
-
-		Main use for this is to allow use and integration of
-		HW-provided TCP/IP stacks for NuttX.
-
-		For example, user-space daemon can translate /dev/usrsock API
-		requests to HW TCP/IP API requests while rest of the user-space
-		can access standard socket API, with socket descriptors that
-		can be used with NuttX system calls.
-
 config NETDEV_LATEINIT
 	bool "Late driver initialization"
 	default n
@@ -269,7 +257,7 @@ config NETDEV_LATEINIT
 		Examples of this latter situation includes such things as network
 		drivers that required some setup via an I2C I/O expander, or network
 		drivers that depend on USB, SPI, I2C, PCI, serial, or other
-		interfaces that may not be ready when up_netiniailize() is normally
+		interfaces that may not be ready when up_netinitialize() is normally
 		called.
 
 endmenu # Link layer support
@@ -344,6 +332,7 @@ source "net/socket/Kconfig"
 source "net/inet/Kconfig"
 source "net/pkt/Kconfig"
 source "net/local/Kconfig"
+source "net/can/Kconfig"
 source "net/netlink/Kconfig"
 source "net/tcp/Kconfig"
 source "net/udp/Kconfig"
@@ -354,7 +343,6 @@ source "net/icmpv6/Kconfig"
 source "net/mld/Kconfig"
 source "net/igmp/Kconfig"
 source "net/arp/Kconfig"
-source "net/loopback/Kconfig"
 source "net/procfs/Kconfig"
 source "net/usrsock/Kconfig"
 source "net/utils/Kconfig"

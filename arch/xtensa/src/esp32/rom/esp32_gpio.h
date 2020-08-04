@@ -6,7 +6,7 @@
  *   Copyright (C) 2016 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
- * Derivies from sample code provided by Expressif Systems:
+ * Derives from sample code provided by Espressif Systems:
  *
  * Copyright 2010-2016 Espressif Systems (Shanghai) PTE LTD
  *
@@ -64,7 +64,8 @@ typedef enum gpio_inttype_e GPIO_INT_TYPE;
 
 /* GPIO interrupt handler, registered through gpio_intr_handler_register */
 
-typedef void (*gpio_intr_handler_fn_t)(uint32_t intr_mask, bool high, void *arg);
+typedef void (*gpio_intr_handler_fn_t)(uint32_t intr_mask, bool high,
+              void *arg);
 
 /****************************************************************************
  * Public Function Prototypes
@@ -260,7 +261,8 @@ void gpio_intr_ack_high(uint32_t ack_mask);
  *
  * Input Parameters:
  *   i          - gpio number.
- *   intr_state - only GPIO_PIN_INTR_LOLEVEL\GPIO_PIN_INTR_HILEVEL can be used
+ *   intr_state - only GPIO_PIN_INTR_LOLEVEL\GPIO_PIN_INTR_HILEVEL can be
+ *                used
  *
  * Returned Value:
  *  None

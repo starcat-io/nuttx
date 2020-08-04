@@ -1,4 +1,4 @@
-/***************************************************************************
+/****************************************************************************
  * boards/arm/cxd56xx/drivers/audio/cxd56_audio_bca_reg.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-/***************************************************************************
+/****************************************************************************
  * Included Files
  ****************************************************************************/
 
@@ -43,7 +43,7 @@
 #include "cxd56_audio_config.h"
 #include "cxd56_audio_bca_reg.h"
 
-/***************************************************************************
+/****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
@@ -70,7 +70,7 @@ enum dma_i2s_out_sel_e
 
 #define BCA_REG_MAX_BIT 32
 
-/***************************************************************************
+/****************************************************************************
  * Public Data
  ****************************************************************************/
 
@@ -244,7 +244,7 @@ const struct audio_bca_reg_s g_bca_reg[BCA_REG_MAX_ENTRY] =
   {0x2730,  0, 32, 0x00000000},  /* AHB MASTER I2S2 MASK (0x00)       */
 };
 
-/***************************************************************************
+/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
@@ -420,7 +420,7 @@ void enable_i2s2_out_fmt16(void)
   write_bca_reg(BCA_I2S2_OUT_SAMPLE_NO,     0);
 }
 
-/***************************************************************************
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -649,7 +649,7 @@ bool cxd56_audio_bca_reg_is_dma_fifo_empty(cxd56_audio_dma_t handle)
         break;
 
       default:
-        reg_id = BCA_I2S2_OUT_RTF_TRG;
+        reg_id = BCA_I2S2_OUT_RTD_TRG;
         break;
     }
 
@@ -878,7 +878,7 @@ void cxd56_audio_bca_reg_set_sample_no(cxd56_audio_dma_t handle,
         break;
 
       case CXD56_AUDIO_DMAC_I2S0_DOWN:
-        reg_id = BCA_I2S2_OUT_SAMPLE_NO;
+        reg_id = BCA_I2S1_OUT_SAMPLE_NO;
         break;
 
       default:
@@ -902,11 +902,11 @@ void cxd56_audio_bca_reg_start_dma(cxd56_audio_dma_t handle,
         break;
 
       case CXD56_AUDIO_DMAC_I2S0_DOWN:
-        reg_id = BCA_I2S1_OUT_RTF_TRG;
+        reg_id = BCA_I2S1_OUT_RTD_TRG;
         break;
 
       default:
-        reg_id = BCA_I2S2_OUT_RTF_TRG;
+        reg_id = BCA_I2S2_OUT_RTD_TRG;
         break;
     }
 
@@ -924,11 +924,11 @@ void cxd56_audio_bca_reg_stop_dma(cxd56_audio_dma_t handle)
         break;
 
       case CXD56_AUDIO_DMAC_I2S0_DOWN:
-        reg_id = BCA_I2S1_OUT_RTF_TRG;
+        reg_id = BCA_I2S1_OUT_RTD_TRG;
         break;
 
       default:
-        reg_id = BCA_I2S2_OUT_RTF_TRG;
+        reg_id = BCA_I2S2_OUT_RTD_TRG;
         break;
     }
 
@@ -1152,11 +1152,11 @@ uint32_t cxd56_audio_bca_reg_get_dma_state(cxd56_audio_dma_t handle)
         break;
 
       case CXD56_AUDIO_DMAC_I2S0_DOWN:
-        reg_id = BCA_I2S1_OUT_RTF_TRG;
+        reg_id = BCA_I2S1_OUT_RTD_TRG;
         break;
 
       default:
-        reg_id = BCA_I2S2_OUT_RTF_TRG;
+        reg_id = BCA_I2S2_OUT_RTD_TRG;
         break;
     }
 

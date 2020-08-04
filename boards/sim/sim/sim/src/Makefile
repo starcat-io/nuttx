@@ -37,7 +37,6 @@ include $(TOPDIR)/Make.defs
 
 # Add dummy.c to ensure that we have at least one object.
 # On some platforms like macOS, we can't create an empty archive.
-ASRCS =
 CSRCS = dummy.c
 
 ifeq ($(CONFIG_BOARD_LATE_INITIALIZE),y)
@@ -71,6 +70,13 @@ ifeq ($(CONFIG_GPIO_LOWER_HALF),y)
   CSRCS += sim_ioexpander.c
 else
   CSRCS += sim_gpio.c
+endif
+endif
+
+ifeq ($(CONFIG_NSH_ROMFSETC),y)
+ifneq ($(CONFIG_NSH_CUSTOMROMFS),y)
+  RCSRCS = etc/init.d/rcS
+  RCRAWS = etc/group etc/passwd
 endif
 endif
 

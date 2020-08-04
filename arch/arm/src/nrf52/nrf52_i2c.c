@@ -47,7 +47,7 @@
 #include <nuttx/semaphore.h>
 #include <arch/board/board.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 
 #include "nrf52_gpio.h"
 #include "nrf52_i2c.h"
@@ -85,7 +85,7 @@ struct nrf52_i2c_priv_s
   uint32_t                freq;     /* Current I2C frequency */
   int                     dcnt;     /* Current message length */
   uint16_t                flags;    /* Current message flags */
-  uint16_t                addr;     /* Current I2C address*/
+  uint16_t                addr;     /* Current I2C address */
   sem_t                   sem_excl; /* Mutual exclusion semaphore */
 #ifndef CONFIG_I2C_POLLED
   sem_t sem_isr;                    /* Interrupt wait semaphore */
@@ -222,6 +222,12 @@ static int nrf52_i2c_transfer(FAR struct i2c_master_s *dev,
   FAR struct nrf52_i2c_priv_s *priv = (FAR struct nrf52_i2c_priv_s *)dev;
   uint32_t regval = 0;
   int      ret = OK;
+
+  ret = nxsem_wait(&priv->sem_excl);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Reset ptr and dcnt */
 
@@ -397,7 +403,8 @@ static int nrf52_i2c_transfer(FAR struct i2c_master_s *dev,
 #endif
 
 errout:
-    return ret;
+  nxsem_post(&priv->sem_excl);
+  return ret;
 }
 
 /****************************************************************************
@@ -590,7 +597,7 @@ static int nrf52_i2c_sem_init(FAR struct nrf52_i2c_priv_s *priv)
    */
 
   nxsem_init(&priv->sem_isr, 0, 0);
-  nxsem_setprotocol(&priv->sem_isr, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->sem_isr, SEM_PRIO_NONE);
 #endif
 
   return OK;

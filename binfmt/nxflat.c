@@ -58,8 +58,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* CONFIG_DEBUG_FEATURES, CONFIG_DEBUG_INFO, and CONFIG_DEBUG_BINFMT have to be
- * defined or CONFIG_NXFLAT_DUMPBUFFER does nothing.
+/* CONFIG_DEBUG_FEATURES, CONFIG_DEBUG_INFO, and CONFIG_DEBUG_BINFMT
+ * have to be defined or CONFIG_NXFLAT_DUMPBUFFER does nothing.
  */
 
 #if !defined(CONFIG_DEBUG_INFO) || !defined (CONFIG_DEBUG_BINFMT)
@@ -263,7 +263,7 @@ static int nxflat_unloadbinary(FAR struct binary_s *binp)
       binp->alloc[0] = NULL;
 
       /* The reference count will be decremented to zero and the dspace
-       * container will be freed in sched/sched_releasetcb.c
+       * container will be freed in sched/nxsched_release_tcb.c
        */
     }
 

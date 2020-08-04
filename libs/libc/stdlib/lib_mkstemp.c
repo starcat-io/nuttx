@@ -1,35 +1,20 @@
 /****************************************************************************
  * libs/libc/stdlib/lib_mkstemp.c
  *
- *   Copyright (C) 2014, 2017 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -49,15 +34,9 @@
 
 #include <nuttx/semaphore.h>
 
-#ifdef CONFIG_FS_WRITABLE
-
 /****************************************************************************
  * Pre-processor definitions
  ****************************************************************************/
-
-#ifndef CONFIG_LIBC_TMPDIR
-#  define CONFIG_LIBC_TMPDIR "/tmp"
-#endif
 
 #define MAX_XS        6
 #define MIN_NUMERIC   0    /* 0-9:   Numeric */
@@ -174,14 +153,14 @@ static void get_base62(FAR uint8_t *ptr)
 static void copy_base62(FAR const uint8_t *src, FAR char *dest, int len)
 {
   if (len < MAX_XS)
-     {
-       src += MAX_XS - len;
-     }
+    {
+      src += MAX_XS - len;
+    }
 
-   for (; len > 0; len--)
-     {
-       *dest++ = base62_to_char(*src++);
-     }
+  for (; len > 0; len--)
+    {
+      *dest++ = base62_to_char(*src++);
+    }
 }
 
 /****************************************************************************
@@ -219,29 +198,28 @@ int mkstemp(FAR char *path_template)
   uint8_t base62[MAX_XS];
   uint32_t retries;
   FAR char *xptr;
-  FAR char *ptr;
   int xlen;
   int fd;
   int i;
 
   /* Count the number of X's at the end of the template */
 
-  xptr = strchr(path_template, 'X');
-  if (!xptr)
+  xptr = &path_template[strlen(path_template)];
+  for (xlen = 0; xlen < MAX_XS && path_template < xptr && *(xptr - 1) == 'X';
+       xlen++, xptr--);
+
+  if (xlen == 0)
     {
       /* No Xs?  There should always really be 6 */
 
       return open(path_template, O_RDWR | O_CREAT | O_EXCL, 0666);
     }
 
-  /* There is at least one.. count all of them */
-
-  for (xlen = 0, ptr = xptr; xlen < MAX_XS && *ptr == 'X'; xlen++, ptr++);
-
   /* Ignore any X's after the sixth */
 
   if (xlen > MAX_XS)
     {
+      xptr += xlen - MAX_XS;
       xlen = MAX_XS;
     }
 
@@ -292,4 +270,3 @@ int mkstemp(FAR char *path_template)
   return ERROR;
 }
 
-#endif /* CONFIG_FS_WRITABLE */

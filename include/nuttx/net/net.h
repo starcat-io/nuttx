@@ -1,36 +1,20 @@
 /****************************************************************************
  * include/nuttx/net/net.h
  *
- *   Copyright (C) 2007, 2009-2014, 2016-2019 Gregory Nutt. All rights
- *     reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -67,7 +51,7 @@
  *
  * This is only important when compiling libraries (libc or libnx) that are
  * used both by the OS (libkc.a and libknx.a) or by the applications
- * (libuc.a and libunx.a).  The that case, the correct interface must be
+ * (libc.a and libnx.a).  In that case, the correct interface must be
  * used for the build context.
  *
  * REVISIT:  In the flat build, the same functions must be used both by
@@ -111,6 +95,7 @@
 
 /* Definitions of 8-bit socket flags */
 
+#define _SF_INITD           0x01  /* Bit 0: Socket structure is initialized */
 #define _SF_CLOEXEC         0x04  /* Bit 2: Close on execute */
 #define _SF_NONBLOCK        0x08  /* Bit 3: Don't block if no data (TCP/READ only) */
 #define _SF_LISTENING       0x10  /* Bit 4: SOCK_STREAM is listening */
@@ -122,18 +107,36 @@
 /* Connection state encoding:
  *
  *  _SF_CONNECTED==1 && _SF_CLOSED==0 - the socket is connected
- *  _SF_CONNECTED==0 && _SF_CLOSED==1 - the socket was gracefully disconnected
+ *  _SF_CONNECTED==0 && _SF_CLOSED==1 - the socket was gracefully
+ *                                      disconnected
  *  _SF_CONNECTED==0 && _SF_CLOSED==0 - the socket was rudely disconnected
  */
 
 /* Macro to manage the socket state and flags */
 
+#define _SS_INITD(s)        (((s) & _SF_INITD)     != 0)
 #define _SS_ISCLOEXEC(s)    (((s) & _SF_CLOEXEC)   != 0)
 #define _SS_ISNONBLOCK(s)   (((s) & _SF_NONBLOCK)  != 0)
 #define _SS_ISLISTENING(s)  (((s) & _SF_LISTENING) != 0)
 #define _SS_ISBOUND(s)      (((s) & _SF_BOUND)     != 0)
 #define _SS_ISCONNECTED(s)  (((s) & _SF_CONNECTED) != 0)
 #define _SS_ISCLOSED(s)     (((s) & _SF_CLOSED)    != 0)
+
+/* Determine if a socket is valid.  Valid means both (1) allocated and (2)
+ * successfully initialized:
+ *
+ *   Allocated:    psock->s_crefs > 0
+ *   Initialized:  _SF_INITD bit set in psock->s_flags
+ *
+ * This logic is used within the OS to pick the sockets to be cloned when a
+ * new task is created.  A complexity in SMP mode is that a socket may be
+ * allocated, but not yet initialized when the socket is cloned by another
+ * pthread.
+ */
+
+#define _PS_ALLOCD(psock)   ((psock)->s_crefs > 0)
+#define _PS_INITD(psock)    (_SS_INITD((psock)->s_flags))
+#define _PS_VALID(psock)    (_PS_ALLOCD(psock) && _PS_INITD(psock))
 
 /****************************************************************************
  * Public Types
@@ -152,7 +155,9 @@ enum net_lltype_e
   NET_LL_BLUETOOTH,    /* Bluetooth */
   NET_LL_IEEE80211,    /* IEEE 802.11 */
   NET_LL_IEEE802154,   /* IEEE 802.15.4 MAC */
-  NET_LL_PKTRADIO      /* Non-standard packet radio */
+  NET_LL_PKTRADIO,     /* Non-standard packet radio */
+  NET_LL_MBIM,         /* CDC-MBIM USB host driver */
+  NET_LL_CAN           /* CAN bus */
 };
 
 /* This defines a bitmap big enough for one bit for each socket option */
@@ -211,6 +216,12 @@ struct sock_intf_s
   CODE ssize_t    (*si_recvfrom)(FAR struct socket *psock, FAR void *buf,
                     size_t len, int flags, FAR struct sockaddr *from,
                     FAR socklen_t *fromlen);
+#ifdef CONFIG_NET_CMSG
+  CODE ssize_t    (*si_recvmsg)(FAR struct socket *psock,
+    FAR struct msghdr *msg, int flags);
+  CODE ssize_t    (*si_sendmsg)(FAR struct socket *psock,
+    FAR struct msghdr *msg, int flags);
+#endif
   CODE int        (*si_close)(FAR struct socket *psock);
 #ifdef CONFIG_NET_USRSOCK
   CODE int        (*si_ioctl)(FAR struct socket *psock, int cmd,
@@ -266,6 +277,9 @@ struct socket
   socktimeo_t   s_sndtimeo;  /* Send timeout value (in deciseconds) */
 #ifdef CONFIG_NET_SOLINGER
   socktimeo_t   s_linger;    /* Linger timeout value (in deciseconds) */
+#endif
+#ifdef CONFIG_NET_TIMESTAMP
+  int32_t       s_timestamp; /* Socket timestamp enabled/disabled */
 #endif
 #endif
 
@@ -365,6 +379,25 @@ void net_initialize(void);
  ****************************************************************************/
 
 int net_lock(void);
+
+/****************************************************************************
+ * Name: net_trylock
+ *
+ * Description:
+ *   Try to take the network lock only when it is currently not locked.
+ *   Otherwise, it locks the semaphore.  In either
+ *   case, the call returns without blocking.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; a negated errno value is returned on
+ *   failured (probably -EAGAIN).
+ *
+ ****************************************************************************/
+
+int net_trylock(void);
 
 /****************************************************************************
  * Name: net_unlock
@@ -496,9 +529,9 @@ FAR struct iob_s *net_ioballoc(bool throttled, enum iob_user_e consumerid);
  * Description:
  *   Check if the socket descriptor is valid for the provided TCB and if it
  *   supports the requested access.  This trivial operation is part of the
- *   fdopen() operation when the fdopen() is performed on a socket descriptor.
- *   It simply performs some sanity checking before permitting the socket
- *   descriptor to be wrapped as a C FILE stream.
+ *   fdopen() operation when the fdopen() is performed on a socket
+ *   descriptor.  It simply performs some sanity checking before permitting
+ *   the socket descriptor to be wrapped as a C FILE stream.
  *
  ****************************************************************************/
 
@@ -731,7 +764,8 @@ int psock_listen(FAR struct socket *psock, int backlog);
  * Input Parameters:
  *   psock    Reference to the listening socket structure
  *   addr     Receives the address of the connecting client
- *   addrlen  Input: allocated size of 'addr', Return: returned size of 'addr'
+ *   addrlen  Input: allocated size of 'addr', Return: returned size of
+ *            'addr'
  *   newsock  Location to return the accepted socket information.
  *
  * Returned Value:
@@ -1224,7 +1258,7 @@ int psock_getpeername(FAR struct socket *psock, FAR struct sockaddr *addr,
                       FAR socklen_t *addrlen);
 
 /****************************************************************************
- * Name: psock_ioctl
+ * Name: psock_ioctl and psock_vioctl
  *
  * Description:
  *   Perform network device specific operations.
@@ -1232,7 +1266,7 @@ int psock_getpeername(FAR struct socket *psock, FAR struct sockaddr *addr,
  * Input Parameters:
  *   psock    A pointer to a NuttX-specific, internal socket structure
  *   cmd      The ioctl command
- *   arg      The argument of the ioctl cmd
+ *   ap      The argument of the ioctl cmd
  *
  * Returned Value:
  *   A non-negative value is returned on success; a negated errno value is
@@ -1254,10 +1288,11 @@ int psock_getpeername(FAR struct socket *psock, FAR struct sockaddr *addr,
  *
  ****************************************************************************/
 
-int psock_ioctl(FAR struct socket *psock, int cmd, unsigned long arg);
+int psock_vioctl(FAR struct socket *psock, int cmd, va_list ap);
+int psock_ioctl(FAR struct socket *psock, int cmd, ...);
 
 /****************************************************************************
- * Name: netdev_ioctl
+ * Name: netdev_vioctl
  *
  * Description:
  *   Perform network device specific operations.
@@ -1265,7 +1300,7 @@ int psock_ioctl(FAR struct socket *psock, int cmd, unsigned long arg);
  * Input Parameters:
  *   sockfd   Socket descriptor of device
  *   cmd      The ioctl command
- *   arg      The argument of the ioctl cmd
+ *   ap       The argument of the ioctl cmd
  *
  * Returned Value:
  *   A non-negative value is returned on success; a negated errno value is
@@ -1287,7 +1322,7 @@ int psock_ioctl(FAR struct socket *psock, int cmd, unsigned long arg);
  *
  ****************************************************************************/
 
-int netdev_ioctl(int sockfd, int cmd, unsigned long arg);
+int netdev_vioctl(int sockfd, int cmd, va_list ap);
 
 /****************************************************************************
  * Name: psock_poll
@@ -1337,14 +1372,11 @@ int net_poll(int sockfd, struct pollfd *fds, bool setup);
  * Name: psock_dup
  *
  * Description:
- *   Clone a socket descriptor to an arbitrary descriptor number.  If file
- *   descriptors are implemented, then this is called by dup() for the case
- *   of socket file descriptors.  If file descriptors are not implemented,
- *   then this function IS dup().
+ *   Clone a socket descriptor to an arbitrary descriptor number.
  *
  * Returned Value:
- *   On success, returns the number of characters sent.  On any error,
- *   a negated errno value is returned:.
+ *   On success, returns the number of new socket.  On any error,
+ *   a negated errno value is returned.
  *
  ****************************************************************************/
 
@@ -1354,14 +1386,11 @@ int psock_dup(FAR struct socket *psock, int minsd);
  * Name: net_dup
  *
  * Description:
- *   Clone a socket descriptor to an arbitrary descriptor number.  If file
- *   descriptors are implemented, then this is called by dup() for the case
- *   of socket file descriptors.  If file descriptors are not implemented,
- *   then this function IS dup().
+ *   Clone a socket descriptor to an arbitrary descriptor number.
  *
  * Returned Value:
- *   On success, returns the number of characters sent.  On any error,
- *   a negated errno value is returned:.
+ *   On success, returns the number of new socket.  On any error,
+ *   a negated errno value is returned.
  *
  ****************************************************************************/
 
@@ -1381,14 +1410,11 @@ int psock_dup2(FAR struct socket *psock1, FAR struct socket *psock2);
  * Name: net_dup2
  *
  * Description:
- *   Clone a socket descriptor to an arbitrary descriptor number.  If file
- *   descriptors are implemented, then this is called by dup2() for the case
- *   of socket file descriptors.  If file descriptors are not implemented,
- *   then this function IS dup2().
+ *   Clone a socket descriptor to an arbitrary descriptor number.
  *
  * Returned Value:
- *   On success, returns the number of characters sent.  On any error,
- *   a negated errno value is returned:.
+ *   Zero (OK) is returned on success; a negated errno value is returned on
+ *   any failure.
  *
  ****************************************************************************/
 
@@ -1555,7 +1581,8 @@ int net_vfcntl(int sockfd, int cmd, va_list ap);
  *
  * Input Parameters:
  *   dev    - The device driver structure to be registered.
- *   lltype - Link level protocol used by the driver (Ethernet, SLIP, TUN, ...
+ *   lltype - Link level protocol used by the driver (Ethernet, SLIP, TUN,
+ *            ...
  *
  * Returned Value:
  *   0:Success; negated errno on failure

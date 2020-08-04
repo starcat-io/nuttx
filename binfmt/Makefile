@@ -34,17 +34,10 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
-DELIM ?= $(strip /)
-
-ifeq ($(WINTOOL),y)
-INCDIROPT = -w
-endif
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(TOPDIR)$(DELIM)sched"}
+include $(TOPDIR)/Make.defs
 
 # Basic BINFMT source files
 
-BINFMT_ASRCS  =
 BINFMT_CSRCS  = binfmt_globals.c binfmt_initialize.c binfmt_register.c binfmt_unregister.c
 BINFMT_CSRCS += binfmt_loadmodule.c binfmt_unloadmodule.c binfmt_execmodule.c
 BINFMT_CSRCS += binfmt_exec.c binfmt_copyargv.c binfmt_dumpmodule.c
@@ -65,12 +58,8 @@ endif
 
 # Add configured binary modules
 
-VPATH =
-SUBDIRS =
-DEPPATH = --dep-path .
-
-include libnxflat$(DELIM)Make.defs
-include libelf$(DELIM)Make.defs
+include libnxflat/Make.defs
+include libelf/Make.defs
 
 BINFMT_AOBJS = $(BINFMT_ASRCS:.S=$(OBJEXT))
 BINFMT_COBJS = $(BINFMT_CSRCS:.c=$(OBJEXT))
@@ -92,7 +81,7 @@ $(BINFMT_COBJS): %$(OBJEXT): %.c
 $(BIN): $(BINFMT_OBJS)
 	$(call ARCHIVE, $@, $(BINFMT_OBJS))
 
-.depend: Makefile $(BINFMT_SRCS)
+.depend: Makefile $(BINFMT_SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(BINFMT_SRCS) >Make.dep
 	$(Q) touch $@
 

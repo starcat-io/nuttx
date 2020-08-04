@@ -11,8 +11,35 @@ Contents
   - Serial Console
   - LEDs
   - Networking
-
+  - IPv6 Integration
+  - HTTP Server Integration on IPv4
+  - DHCP Client Integration on IPv4
+  - DHCP Server Integration on IPv4
+  - FTP Server Integration on IPv4
+  - FTP Client Integration on IPv4
+  - TFTP Client Integration on IPv4
+  - Telnet Server Integration on IPv4
+  - Telnet Client Integration on IPv4
+  - Ustream Socket Integration on IPv4
+  - Udgram Socket Integration on IPv4
+  - SMTP Client Integration on IPv4
+  - Raw Socket Integration
+  - Custom User Socket Integration
+  - IGMPv2 Integration
+  - Inherit telnet server Integration
+  - VNC Server Integration
+  - PPPD Integration
+  - HTTP Client Integration
+  - NTP Client Integration
+  - NFS Client Integration
+  - MLD Integration
+  - ICMPv6 AutoConfig Integration
+  - IP Forwarding Integration for IPv4
+  - DNS Name Resolution Integration for IPv4
+  - LINK MONITOR Integration
   - RTC
+  - File Systems
+  - Standby RAM
   - Debugging
 
 Board Features
@@ -38,9 +65,7 @@ Status/Open Issues
 ==================
 Ethernet
 ---------
-1.Observed instability in Link Management, due to difference in hardware design.(No Separate Interrupt line for PHY)
-2.Currently tested only ping and udpblaster application.
-3. Executed long run ping and udpblaster stress test for 12 hrs. Code is able to execute for 12hrs without any breakage.
+
 
 Serial Console
 ==============

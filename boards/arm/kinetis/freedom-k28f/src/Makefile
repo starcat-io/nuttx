@@ -33,9 +33,8 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
 
-ASRCS =
 CSRCS = k28_boot.c k28_bringup.c k28_spi.c k28_i2c.c
 
 ifeq ($(CONFIG_LIB_BOARDCTL),y)

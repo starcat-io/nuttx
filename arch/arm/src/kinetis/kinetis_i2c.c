@@ -56,8 +56,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "kinetis_config.h"
 #include "chip.h"
@@ -113,8 +113,14 @@ struct kinetis_i2c_config_s
 
 struct kinetis_i2cdev_s
 {
-  struct i2c_master_s dev;    /* Generic I2C device */
-  const struct kinetis_i2c_config_s *config; /* Port configuration */
+  /* Generic I2C device */
+
+  struct i2c_master_s dev;
+
+  /* Port configuration */
+
+  const struct kinetis_i2c_config_s *config;
+
   uint32_t frequency;         /* Current I2C frequency */
   uint16_t nmsg;              /* Number of transfer remaining */
   uint16_t wrcnt;             /* number of bytes sent to tx fifo */
@@ -143,8 +149,11 @@ static void kinetis_i2c_putreg(struct kinetis_i2cdev_s *priv,
 /* Exclusion Helpers */
 
 static inline void kinetis_i2c_sem_init(FAR struct kinetis_i2cdev_s *priv);
-static inline void kinetis_i2c_sem_destroy(FAR struct kinetis_i2cdev_s *priv);
-static inline void kinetis_i2c_sem_wait(FAR struct kinetis_i2cdev_s *priv);
+static inline void
+  kinetis_i2c_sem_destroy(FAR struct kinetis_i2cdev_s *priv);
+static inline int kinetis_i2c_sem_wait(FAR struct kinetis_i2cdev_s *priv);
+static int
+  kinetis_i2c_sem_wait_noncancelable(FAR struct kinetis_i2cdev_s *priv);
 static inline void kinetis_i2c_sem_post(struct kinetis_i2cdev_s *priv);
 
 /* Signal Helper */
@@ -323,7 +332,7 @@ static inline void kinetis_i2c_sem_init(FAR struct kinetis_i2cdev_s *priv)
    */
 
   nxsem_init(&priv->wait, 0, 0);
-  nxsem_setprotocol(&priv->wait, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->wait, SEM_PRIO_NONE);
 }
 
 /****************************************************************************
@@ -344,13 +353,28 @@ static inline void kinetis_i2c_sem_destroy(FAR struct kinetis_i2cdev_s *priv)
  * Name: kinetis_i2c_sem_wait
  *
  * Description:
+ *   Take the exclusive access, waiting as necessary.  May be interrupted by
+ *   a signal.
+ *
+ ****************************************************************************/
+
+static inline int kinetis_i2c_sem_wait(FAR struct kinetis_i2cdev_s *priv)
+{
+  return nxsem_wait(&priv->mutex);
+}
+
+/****************************************************************************
+ * Name: kinetis_i2c_sem_wait_noncancelable
+ *
+ * Description:
  *   Take the exclusive access, waiting as necessary
  *
  ****************************************************************************/
 
-static inline void kinetis_i2c_sem_wait(FAR struct kinetis_i2cdev_s *priv)
+static int
+  kinetis_i2c_sem_wait_noncancelable(FAR struct kinetis_i2cdev_s *priv)
 {
-  nxsem_wait_uninterruptible(&priv->mutex);
+  return nxsem_wait_uninterruptible(&priv->mutex);
 }
 
 /****************************************************************************
@@ -370,7 +394,7 @@ static inline void kinetis_i2c_sem_post(struct kinetis_i2cdev_s *priv)
  * Name: kinetis_i2c_wait
  *
  * Description:
- *   Wait on the signaling semaphore
+ *   Wait on the signaling semaphore.  May be interrupted by a signal.
  *
  ****************************************************************************/
 
@@ -806,11 +830,11 @@ static int kinetis_i2c_start(struct kinetis_i2cdev_s *priv)
     {
       /* We are not currently the bus master, wait for bus ready or timeout */
 
-      start = clock_systimer();
+      start = clock_systime_ticks();
 
       while (kinetis_i2c_getreg(priv, KINETIS_I2C_S_OFFSET) & I2C_S_BUSY)
         {
-          if (clock_systimer() - start > I2C_TIMEOUT)
+          if (clock_systime_ticks() - start > I2C_TIMEOUT)
             {
               priv->state = STATE_TIMEOUT;
               return -EIO;
@@ -830,12 +854,12 @@ static int kinetis_i2c_start(struct kinetis_i2cdev_s *priv)
        * a timeout occurs
        */
 
-      start = clock_systimer();
+      start = clock_systime_ticks();
 
       while ((kinetis_i2c_getreg(priv, KINETIS_I2C_S_OFFSET) & I2C_S_BUSY)
              == 0)
         {
-          if (clock_systimer() - start > I2C_TIMEOUT)
+          if (clock_systime_ticks() - start > I2C_TIMEOUT)
             {
               priv->state = STATE_TIMEOUT;
               return -EIO;
@@ -1121,14 +1145,18 @@ static int kinetis_i2c_transfer(struct i2c_master_s *dev,
 {
   struct kinetis_i2cdev_s *priv = (struct kinetis_i2cdev_s *)dev;
   int msg_n;
-  int rv;
+  int ret;
 
   i2cinfo("msgs=%p count=%d\n", msgs, count);
   DEBUGASSERT(dev != NULL && msgs != NULL && (unsigned)count <= UINT16_MAX);
 
   /* Get exclusive access to the I2C bus */
 
-  kinetis_i2c_sem_wait(priv);
+  ret = kinetis_i2c_sem_wait(priv);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Set up for the transfer */
 
@@ -1210,13 +1238,13 @@ timeout:
 
   /* Get the result before releasing the bus  */
 
-  rv  = (priv->state != STATE_OK) ? -EIO : 0;
+  ret  = (priv->state != STATE_OK) ? -EIO : 0;
 
   /* Release access to I2C bus */
 
   kinetis_i2c_sem_post(priv);
 
-  return rv;
+  return ret;
 }
 
 /****************************************************************************
@@ -1242,7 +1270,7 @@ static int kinetis_i2c_reset(struct i2c_master_s *dev)
   uint32_t scl_gpio;
   uint32_t sda_gpio;
   uint32_t frequency;
-  int ret = ERROR;
+  int ret;
 
   DEBUGASSERT(dev);
 
@@ -1252,7 +1280,13 @@ static int kinetis_i2c_reset(struct i2c_master_s *dev)
 
   /* Lock out other clients */
 
-  kinetis_i2c_sem_wait(priv);
+  ret = kinetis_i2c_sem_wait_noncancelable(priv);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = -EIO;
 
   /* Save the current frequency */
 

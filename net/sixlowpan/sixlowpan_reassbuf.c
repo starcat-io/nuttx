@@ -62,9 +62,9 @@
  * Private Data
  ****************************************************************************/
 
-/* The g_free_reass is a list of reassembly buffer structures that are available for
- * general use.  The number of messages in this list is a system configuration
- * item.  Protected only by the network lock.
+/* The g_free_reass is a list of reassembly buffer structures that are
+ * available for general use.  The number of messages in this list is a
+ * system configuration item.  Protected only by the network lock.
  */
 
 static FAR struct sixlowpan_reassbuf_s *g_free_reass;
@@ -75,7 +75,8 @@ static FAR struct sixlowpan_reassbuf_s *g_active_reass;
 
 /* Pool of pre-allocated reassembly buffer structures */
 
-static struct sixlowpan_reassbuf_s g_metadata_pool[CONFIG_NET_6LOWPAN_NREASSBUF];
+static struct sixlowpan_reassbuf_s
+              g_metadata_pool[CONFIG_NET_6LOWPAN_NREASSBUF];
 
 /****************************************************************************
  * Public Functions
@@ -98,7 +99,7 @@ static struct sixlowpan_reassbuf_s g_metadata_pool[CONFIG_NET_6LOWPAN_NREASSBUF]
  ****************************************************************************/
 
 static bool sixlowpan_compare_fragsrc(FAR struct sixlowpan_reassbuf_s *reass,
-                                      FAR const struct netdev_varaddr_s *fragsrc)
+                                  FAR const struct netdev_varaddr_s *fragsrc)
 {
   /* The addresses cannot match if they are not the same size */
 
@@ -156,7 +157,7 @@ static void sixlowpan_reass_expire(void)
         {
           /* Get the elpased time of the reassembly */
 
-          elapsed = clock_systimer() - reass->rb_time;
+          elapsed = clock_systime_ticks() - reass->rb_time;
 
           /* If the reassembly has expired, then free the reassembly buffer */
 
@@ -245,8 +246,8 @@ void sixlowpan_reass_initialize(void)
   FAR struct sixlowpan_reassbuf_s *reass;
   int i;
 
-  /* Initialize g_free_reass, the list of reassembly buffer structures that are
-   * available for allocation.
+  /* Initialize g_free_reass, the list of reassembly buffer structures that
+   * are available for allocation.
    */
 
   g_free_reass = NULL;
@@ -314,8 +315,8 @@ FAR struct sixlowpan_reassbuf_s *
 #ifdef CONFIG_NET_6LOWPAN_REASS_STATIC
       reass         = NULL;
 #else
-      /* If we cannot get a reassembly buffer instance from the free list, then we
-       * will have to allocate one from the kernel memory pool.
+      /* If we cannot get a reassembly buffer instance from the free list,
+       * then we will have to allocate one from the kernel memory pool.
        */
 
       reass = (FAR struct sixlowpan_reassbuf_s *)
@@ -335,7 +336,7 @@ FAR struct sixlowpan_reassbuf_s *
       reass->rb_pool     = pool;
       reass->rb_active   = true;
       reass->rb_reasstag = reasstag;
-      reass->rb_time     = clock_systimer();
+      reass->rb_time     = clock_systime_ticks();
 
       /* Add the reassembly buffer to the list of active reassembly buffers */
 
@@ -428,8 +429,8 @@ void sixlowpan_reass_free(FAR struct sixlowpan_reassbuf_s *reass)
 
   sixlowpan_remove_active(reass);
 
-  /* If this is a pre-allocated reassembly buffer structure, then just put it back
-   * in the free list.
+  /* If this is a pre-allocated reassembly buffer structure, then just put it
+   * back in the free list.
    */
 
   if (reass->rb_pool == REASS_POOL_PREALLOCATED)
@@ -446,7 +447,7 @@ void sixlowpan_reass_free(FAR struct sixlowpan_reassbuf_s *reass)
 
       /* Otherwise, deallocate it. */
 
-      sched_kfree(reass);
+      kmm_free(reass);
 #endif
     }
 

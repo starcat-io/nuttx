@@ -89,16 +89,14 @@ static size_t do_stackcheck(uintptr_t alloc, size_t size)
       return 0;
     }
 
-  /* Get aligned addresses of the top and bottom of the stack */
+  /* Get aligned addresses of the top and bottom of the stack
+   * Skip over the TLS data structure at the bottom of the stack
+   */
 
-#ifdef CONFIG_TLS
-  /* Skip over the TLS data structure at the bottom of the stack */
-
+#ifdef CONFIG_TLS_ALIGNED
   DEBUGASSERT((alloc & TLS_STACK_MASK) == 0);
-  start = alloc + sizeof(struct tls_info_s);
-#else
-  start = alloc & ~3;
 #endif
+  start = alloc + sizeof(struct tls_info_s);
   end   = (alloc + size + 3) & ~3;
 
   /* Get the adjusted size based on the top and bottom of the stack */
@@ -132,7 +130,7 @@ static size_t do_stackcheck(uintptr_t alloc, size_t size)
       int j;
 
       ptr = (FAR uint32_t *)start;
-      for (i = 0; i < size; i += 4*64)
+      for (i = 0; i < size; i += 4 * 64)
         {
           for (j = 0; j < 64; j++)
             {
@@ -202,7 +200,8 @@ ssize_t up_check_stack_remain(void)
 #if CONFIG_ARCH_INTERRUPTSTACK > 3
 size_t up_check_intstack(void)
 {
-  return do_stackcheck((uintptr_t)&g_intstackalloc, (CONFIG_ARCH_INTERRUPTSTACK & ~3));
+  return do_stackcheck((uintptr_t)&g_intstackalloc,
+                       (CONFIG_ARCH_INTERRUPTSTACK & ~3));
 }
 
 size_t up_check_intstack_remain(void)

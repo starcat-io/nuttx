@@ -412,8 +412,6 @@ SDCard support:
 
     CONFIG_FS_FAT=y
 
-    CONFIG_FS_WRITABLE=y
-
     CONFIG_MMCSD=y
     CONFIG_MMCSD_NSLOTS=1
     CONFIG_MMCSD_SPI=y
@@ -483,7 +481,7 @@ Nokia 5110 LCD Display support:
   nsh> ?
   help usage:  help [-v] [<cmd>]
 
-    [           dd          free        mb          sh          usleep
+    [           dd          free        mb          source      usleep
     ?           echo        help        mh          sleep       xd
     cat         exec        hexdump     mw          test
     cd          exit        kill        pwd         true
@@ -754,13 +752,13 @@ Configurations
        b. Execute 'make menuconfig' in nuttx/ in order to start the
           reconfiguration process.
 
-    2. By default, this configuration uses the CodeSourcery toolchain
+    2. By default, this configuration uses the ARM EABI toolchain
        for Windows and builds under Cygwin (or probably MSYS).  That
        can easily be reconfigured, of course.
 
        CONFIG_HOST_WINDOWS=y                   : Builds under Windows
        CONFIG_WINDOWS_CYGWIN=y                 : Using Cygwin
-       CONFIG_ARMV7M_TOOLCHAIN_CODESOURCERYW=y : CodeSourcery for Windows
+       CONFIG_ARMV7M_TOOLCHAIN_GNU_EABIW=y     : GNU EABI toolchain for Windows
 
     3. This configuration does have UART2 output enabled and set up as
        the system logging device:

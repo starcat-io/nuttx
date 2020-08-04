@@ -57,8 +57,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 #include "dm320_usb.h"
 
 /****************************************************************************
@@ -1753,7 +1753,7 @@ static void dm320_epreset(unsigned int index)
 static inline void dm320_epinitialize(struct dm320_usbdev_s *priv)
 {
   uint16_t  offset;     /* Full USB buffer offset */
-  uint8_t addrhi;     /* MS bytes of ofset */
+  uint8_t addrhi;     /* MS bytes of offset */
   uint8_t addrlo;     /* LS bytes of offset */
   int     i;
 
@@ -1765,7 +1765,7 @@ static inline void dm320_epinitialize(struct dm320_usbdev_s *priv)
   dm320_putreg8(USB_CSR2_FLFIFO, DM320_USB_CSR2);
   dm320_putreg8(USB_CSR2_FLFIFO, DM320_USB_CSR2);
 
-  /* EP0 Fifo size/address (ofset == 0) */
+  /* EP0 Fifo size/address (offset == 0) */
 
   dm320_putreg8(0x00, DM320_USB_TXFIFO1);
   dm320_putreg8(0x00, DM320_USB_RXFIFO1);
@@ -1867,8 +1867,8 @@ static void dm320_ctrlinitialize(FAR struct dm320_usbdev_s *priv)
 
   /* Initialize interrupts *****************************************************/
 
-  up_ack_irq(DM320_IRQ_USB0);                /* Clear USB controller interrupt */
-  up_ack_irq(DM320_IRQ_USB1);                /* Clear USB DMA interrupt flag */
+  arm_ack_irq(DM320_IRQ_USB0);                /* Clear USB controller interrupt */
+  arm_ack_irq(DM320_IRQ_USB1);                /* Clear USB DMA interrupt flag */
 
   dm320_getreg8(DM320_USB_INTRTX1);          /* Clear TX interrupt */
   dm320_getreg8(DM320_USB_INTRRX1);          /* Clear RX interrupt */
@@ -2392,14 +2392,14 @@ static int dm320_pullup(struct usbdev_s *dev, bool enable)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: up_usbinitialize
+ * Name: arm_usbinitialize
  *
  * Description:
  *   Initialize USB hardware
  *
  ****************************************************************************/
 
-void up_usbinitialize(void)
+void arm_usbinitialize(void)
 {
   struct dm320_usbdev_s *priv = &g_usbdev;
   struct dm320_ep_s *privep;
@@ -2499,14 +2499,14 @@ void up_usbinitialize(void)
   return;
 
 errout:
-  up_usbuninitialize();
+  arm_usbuninitialize();
 }
 
 /****************************************************************************
- * Name: up_usbuninitialize
+ * Name: arm_usbuninitialize
  ****************************************************************************/
 
-void up_usbuninitialize(void)
+void arm_usbuninitialize(void)
 {
   struct dm320_usbdev_s *priv = &g_usbdev;
 

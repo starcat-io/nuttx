@@ -41,8 +41,8 @@
 
 #include <stdbool.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "hardware/nrf52_memorymap.h"
 #include "hardware/nrf52_uarte.h"
@@ -135,10 +135,10 @@ static void nrf52_setbaud(uintptr_t base, const struct uart_config_s *config)
  * Name: nrf52_lowsetup
  *
  * Description:
- *   Called at the very beginning of _start. Performs low level initialization
- *   including setup of the console UART.  This UART initialization is done
- *   early so that the serial console is available for debugging very early in
- *   the boot sequence.
+ *   Called at the very beginning of _start. Performs low level
+ *   initialization including setup of the console UART.
+ *   This UART initialization is done early so that the serial console is
+ *   available for debugging very early in the boot sequence.
  *
  ****************************************************************************/
 
@@ -163,7 +163,8 @@ void nrf52_lowsetup(void)
  ****************************************************************************/
 
 #ifdef HAVE_UART_DEVICE
-void nrf52_usart_configure(uintptr_t base, const struct uart_config_s *config)
+void nrf52_usart_configure(uintptr_t base,
+                           const struct uart_config_s *config)
 {
   uint32_t pin    = 0;
   uint32_t port   = 0;
@@ -242,14 +243,14 @@ void nrf52_usart_disable(uintptr_t base, const struct uart_config_s *config)
 #endif
 
 /****************************************************************************
- * Name: up_lowputc
+ * Name: arm_lowputc
  *
  * Description:
  *   Output one byte on the serial console
  *
  ****************************************************************************/
 
-void up_lowputc(char ch)
+void arm_lowputc(char ch)
 {
 #ifdef HAVE_UART_CONSOLE
   putreg32(1, CONSOLE_BASE + NRF52_UART_TASKS_STARTTX_OFFSET);

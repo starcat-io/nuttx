@@ -33,14 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
-DELIM ?= $(strip /)
-
-ifeq ($(WINTOOL),y)
-INCDIROPT = -w
-endif
-
-DEPPATH = --dep-path .
+include $(TOPDIR)/Make.defs
 
 ASRCS = $(wildcard *.S)
 CSRCS = $(wildcard *.c)
@@ -50,8 +43,6 @@ COBJS = $(CSRCS:.c=$(OBJEXT))
 
 SRCS = $(ASRCS) $(CSRCS)
 OBJS = $(AOBJS) $(COBJS)
-
-VPATH = .
 
 BIN = libpass1$(LIBEXT)
 
@@ -67,7 +58,7 @@ $(COBJS): %$(OBJEXT): %.c
 $(BIN): $(OBJS)
 	$(call ARCHIVE, $@, $(OBJS))
 
-.depend: Makefile $(SRCS)
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
 	$(Q) touch $@
 

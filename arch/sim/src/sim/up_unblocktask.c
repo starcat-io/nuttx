@@ -1,7 +1,8 @@
 /****************************************************************************
  * arch/sim/src/sim/up_unblocktask.c
  *
- *   Copyright (C) 2007-2009, 2013, 2015-2016 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2007-2009, 2013, 2015-2016 Gregory Nutt.
+ *   All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,18 +82,19 @@ void up_unblock_task(FAR struct tcb_s *tcb)
 
   /* Remove the task from the blocked task list */
 
-  sched_removeblocked(tcb);
+  nxsched_remove_blocked(tcb);
 
   /* Add the task in the correct location in the prioritized
    * ready-to-run task list
    */
 
-  if (sched_addreadytorun(tcb))
+  if (nxsched_add_readytorun(tcb))
     {
       /* The currently active task has changed! */
+
       /* Update scheduler parameters */
 
-      sched_suspend_scheduler(rtcb);
+      nxsched_suspend_scheduler(rtcb);
 
       /* Copy the exception context into the TCB of the task that was
        * previously active.  if up_setjmp returns a non-zero value, then
@@ -110,8 +112,8 @@ void up_unblock_task(FAR struct tcb_s *tcb)
           sinfo("New Active Task TCB=%p\n", rtcb);
 
           /* The way that we handle signals in the simulation is kind of
-           * a kludge.  This would be unsafe in a truly multi-threaded, interrupt
-           * driven environment.
+           * a kludge.  This would be unsafe in a truly multi-threaded,
+           * interrupt driven environment.
            */
 
           if (rtcb->xcp.sigdeliver)
@@ -123,11 +125,11 @@ void up_unblock_task(FAR struct tcb_s *tcb)
 
           /* Update scheduler parameters */
 
-          sched_resume_scheduler(rtcb);
+          nxsched_resume_scheduler(rtcb);
 
           /* Then switch contexts */
 
           up_longjmp(rtcb->xcp.regs, 1);
-       }
+        }
     }
 }

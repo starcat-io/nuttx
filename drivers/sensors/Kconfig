@@ -549,6 +549,11 @@ config MPU60X0_I2C
 
 endchoice
 
+config MPU60X0_I2C_FREQ
+	int "MPU60x0 I2C Frequency"
+	depends on MPU60X0_I2C
+	default 400000
+
 config MPU60X0_EXTI
 	bool "Enable interrupts"
 	default n
@@ -852,4 +857,33 @@ config SENSORS_ADT7320
 	---help---
 		Enables support for the ADT7320 Driver
 
+config SENSORS_HDC1008
+	bool "TI HDC1008 temperature and humidity sensor"
+	default n
+	select I2C
+	---help---
+		Enable driver support for the TI HDC1008 temperature and humidity sensor.
+
+if SENSORS_HDC1008
+
+config HDC1008_I2C_ADDRESS
+  hex "HDC1008 I2C address"
+  default 0x40
+  range 0x40 0x43
+  ---help---
+    The I2C address of the HDC1008 sensor. It can be configured via straps to
+    a value between 0x40 and 0x43.
+
+config HDC1008_I2C_FREQUENCY
+	int "HDC1008 I2C frequency"
+	default 400000
+	range 1 400000
+
+config HDC1008_DEBUG
+	bool "Debug support for the HDC1008"
+	default n
+	---help---
+		Enables debug features for the HDC1008
+
+endif # SENSORS_HDC1008
 endif # SENSORS

@@ -46,9 +46,9 @@
 #include <nuttx/arch.h>
 #include <nuttx/board.h>
 #include <arch/board/board.h>
+#include <arch/chip/chip.h>
 
-#include "chip.h"
-#include "cxd56_uart.h"
+#include "cxd56_usbdev.h"
 
 #ifdef CONFIG_BOARDCTL_IOCTL
 
@@ -67,10 +67,11 @@
  *   calls.  This, however, may not be practical in many cases and will lead
  *   to "correct" but awkward implementations.
  *
- *   boardctl() is non-standard OS interface to alleviate the problem.  It
- *   basically circumvents the normal device driver ioctl interlace and allows
- *   the application to perform direct IOCTL-like calls to the board-specific
- *   logic.  It is especially useful for setting up board operational and
+ *   boardctl() is non-standard OS interface to alleviate the problem.
+ *   It basically circumvents the normal device driver ioctl interlace and
+ *   allows the application to perform direct IOCTL-like calls to the
+ *   board-specific logic.
+ *   It is especially useful for setting up board operational and
  *   test configurations.
  *
  * Input Parameters:

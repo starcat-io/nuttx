@@ -78,19 +78,9 @@
 
 /* The first three _iob entries are reserved for standard I/O */
 
-#define stdin      (&sched_getstreams()->sl_streams[0])
-#define stdout     (&sched_getstreams()->sl_streams[1])
-#define stderr     (&sched_getstreams()->sl_streams[2])
-
-/* These APIs are not implemented and/or can be synthesized from
- * supported APIs.
- */
-
-#define putc(c,s)  fputc((c),(s))
-#define putchar(c) fputc(c, stdout)
-#define getc(s)    fgetc(s)
-#define getchar()  fgetc(stdin)
-#define rewind(s)  ((void)fseek((s),0,SEEK_SET))
+#define stdin      (&nxsched_get_streams()->sl_streams[0])
+#define stdout     (&nxsched_get_streams()->sl_streams[1])
+#define stderr     (&nxsched_get_streams()->sl_streams[2])
 
 /* Path to the directory where temporary files can be created */
 
@@ -141,7 +131,7 @@ extern "C"
 
 /* Operations on streams (FILE) */
 
-void   clearerr(register FILE *stream);
+void   clearerr(FAR FILE *stream);
 int    fclose(FAR FILE *stream);
 int    fflush(FAR FILE *stream);
 int    feof(FAR FILE *stream);
@@ -149,37 +139,46 @@ int    ferror(FAR FILE *stream);
 int    fileno(FAR FILE *stream);
 int    fgetc(FAR FILE *stream);
 int    fgetpos(FAR FILE *stream, FAR fpos_t *pos);
-char  *fgets(FAR char *s, int n, FAR FILE *stream);
+FAR char *fgets(FAR char *s, int n, FAR FILE *stream);
 FAR FILE *fopen(FAR const char *path, FAR const char *type);
 int    fprintf(FAR FILE *stream, FAR const IPTR char *format, ...);
 int    fputc(int c, FAR FILE *stream);
-int    fputs(FAR const char *s, FAR FILE *stream);
+int    fputs(FAR const IPTR char *s, FAR FILE *stream);
 size_t fread(FAR void *ptr, size_t size, size_t n_items, FAR FILE *stream);
 FAR FILE *freopen(FAR const char *path, FAR const char *mode,
          FAR FILE *stream);
 int    fscanf(FAR FILE *stream, FAR const IPTR char *fmt, ...);
 int    fseek(FAR FILE *stream, long int offset, int whence);
+int    fseeko(FAR FILE *stream, off_t offset, int whence);
 int    fsetpos(FAR FILE *stream, FAR fpos_t *pos);
 long   ftell(FAR FILE *stream);
+off_t  ftello(FAR FILE *stream);
 size_t fwrite(FAR const void *ptr, size_t size, size_t n_items,
          FAR FILE *stream);
+int     getc(FAR FILE *stream);
+int     getchar(void);
 ssize_t getdelim(FAR char **lineptr, size_t *n, int delimiter,
          FAR FILE *stream);
 ssize_t getline(FAR char **lineptr, size_t *n, FAR FILE *stream);
 FAR char *gets(FAR char *s);
 FAR char *gets_s(FAR char *s, rsize_t n);
+void   rewind(FAR FILE *stream);
 void   setbuf(FAR FILE *stream, FAR char *buf);
 int    setvbuf(FAR FILE *stream, FAR char *buffer, int mode, size_t size);
 int    ungetc(int c, FAR FILE *stream);
 
-/* Operations on the stdout stream, buffers, paths, and the whole printf-family */
+/* Operations on the stdout stream, buffers, paths,
+ * and the whole printf-family
+ */
 
 void   perror(FAR const char *s);
 int    printf(FAR const IPTR char *fmt, ...);
-int    puts(FAR const char *s);
+int    putc(int c, FAR FILE *stream);
+int    putchar(int c);
+int    puts(FAR const IPTR char *s);
 int    rename(FAR const char *oldpath, FAR const char *newpath);
 int    sprintf(FAR char *buf, FAR const IPTR char *fmt, ...);
-int    asprintf (FAR char **ptr, FAR const IPTR char *fmt, ...);
+int    asprintf(FAR char **ptr, FAR const IPTR char *fmt, ...);
 int    snprintf(FAR char *buf, size_t size,
          FAR const IPTR char *fmt, ...);
 int    sscanf(FAR const char *buf, FAR const IPTR char *fmt, ...);
@@ -190,10 +189,11 @@ int    vfprintf(FAR FILE *stream, FAR const IPTR char *fmt,
          va_list ap);
 int    vfscanf(FAR FILE *stream, FAR const IPTR char *fmt, va_list ap);
 int    vprintf(FAR const IPTR char *fmt, va_list ap);
+int    vscanf(FAR const IPTR char *fmt, va_list ap);
 int    vsnprintf(FAR char *buf, size_t size, FAR const IPTR char *fmt,
          va_list ap);
 int    vsprintf(FAR char *buf, FAR const IPTR char *fmt, va_list ap);
-int    vsscanf(FAR const char *buf, FAR const char *fmt, va_list ap);
+int    vsscanf(FAR const char *buf, FAR const IPTR char *fmt, va_list ap);
 
 /* Operations on file descriptors including:
  *
@@ -208,15 +208,16 @@ int    vdprintf(int fd, FAR const IPTR char *fmt, va_list ap);
 
 /* Operations on paths */
 
+FAR FILE *tmpfile(void);
 FAR char *tmpnam(FAR char *s);
 FAR char *tempnam(FAR const char *dir, FAR const char *pfx);
 int       remove(FAR const char *path);
 
 /* Shell operations.  These are not actually implemented in the OS.  See
- * apps/system/open for implementation.
+ * apps/system/popen for implementation.
  */
 
-#if !defined(CONFIG_BUILD_KERNEL) && !defined(__KERNEL__)
+#ifndef __KERNEL__
 FILE *popen(FAR const char *command, FAR const char *mode);
 int pclose(FILE *stream);
 #endif

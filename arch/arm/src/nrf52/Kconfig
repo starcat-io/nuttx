@@ -90,6 +90,22 @@ config NRF52_UART
 	bool
 	default n
 
+config NRF52_TIMER
+	bool
+	default n
+
+config NRF52_RTC
+	bool
+	default n
+
+config NRF52_SPI_MASTER_WORKAROUND_1BYTE_TRANSFER
+	bool "SPI Master 1 Byte transfer anomaly workaround"
+	depends on NRF52_SPI_MASTER && ARCH_FAMILY_NRF52832
+	default y
+	---help---
+		Enable the workaround to fix SPI Master 1 byte transfer bug
+		which occurs in NRF52832 revision 1 and revision 2.
+
 menu "NRF52 Peripheral Selection"
 
 config NRF52_I2C0_MASTER
@@ -160,6 +176,7 @@ config NRF52_WDT
 
 config NRF52_RADIO
 	bool "RADIO"
+	depends on EXPERIMENTAL
 	default n
 
 config NRF52_NFCT
@@ -172,34 +189,42 @@ config NRF52_SAADC
 
 config NRF52_TIMER0
 	bool "TIMER0"
+	select NRF52_TIMER
 	default n
 
 config NRF52_TIMER1
 	bool "TIMER1"
+	select NRF52_TIMER
 	default n
 
 config NRF52_TIMER2
 	bool "TIMER2"
+	select NRF52_TIMER
 	default n
 
 config NRF52_TIMER3
 	bool "TIMER3"
+	select NRF52_TIMER
 	default n
 
 config NRF52_TIMER4
 	bool "TIMER4"
+	select NRF52_TIMER
 	default n
 
 config NRF52_RTC0
 	bool "RTC0"
+	select NRF52_RTC
 	default n
 
 config NRF52_RTC1
 	bool "RTC1"
+	select NRF52_RTC
 	default n
 
 config NRF52_RTC2
 	bool "RTC2"
+	select NRF52_RTC
 	default n
 
 config NRF52_I2S

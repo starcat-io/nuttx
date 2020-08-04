@@ -63,7 +63,7 @@
  *
  ****************************************************************************/
 
-static void nxmq_sndtimeout(int argc, wdparm_t pid)
+static void nxmq_sndtimeout(int argc, wdparm_t pid, ...)
 {
   FAR struct tcb_s *wtcb;
   irqstate_t flags;
@@ -78,7 +78,7 @@ static void nxmq_sndtimeout(int argc, wdparm_t pid)
    * longer be active when this watchdog goes off.
    */
 
-  wtcb = sched_gettcb((pid_t)pid);
+  wtcb = nxsched_get_tcb((pid_t)pid);
 
   /* It is also possible that an interrupt/context switch beat us to the
    * punch and already changed the task's state.
@@ -256,8 +256,7 @@ int nxmq_timedsend(mqd_t mqdes, FAR const char *msg, size_t msglen,
 
   /* Start the watchdog and begin the wait for MQ not full */
 
-  wd_start(rtcb->waitdog, ticks, (wdentry_t)nxmq_sndtimeout,
-           1, getpid());
+  wd_start(rtcb->waitdog, ticks, nxmq_sndtimeout, 1, getpid());
 
   /* And wait for the message queue to be non-empty */
 

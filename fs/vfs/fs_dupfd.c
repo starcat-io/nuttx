@@ -1,36 +1,20 @@
 /****************************************************************************
  * fs/vfs/fs_dupfd.c
  *
- *   Copyright (C) 2007-2009, 2011-2014, 2017 Gregory Nutt. All rights
- *     reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -63,8 +47,7 @@
  *
  * Description:
  *   Equivalent to the non-standard fs_dupfd() function except that it
- *   accepts a struct file instance instead of a file descriptor and does
- *   not set the errno variable.
+ *   accepts a struct file instance instead of a file descriptor.
  *
  * Returned Value:
  *   Zero (OK) is returned on success; a negated errno value is returned on
@@ -75,6 +58,7 @@
 int file_dup(FAR struct file *filep, int minfd)
 {
   int fd2;
+  int ret;
 
   /* Verify that fd is a valid, open file descriptor */
 
@@ -85,7 +69,11 @@ int file_dup(FAR struct file *filep, int minfd)
 
   /* Increment the reference count on the contained inode */
 
-  inode_addref(filep->f_inode);
+  ret = inode_addref(filep->f_inode);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Then allocate a new file descriptor for the inode */
 
@@ -100,19 +88,15 @@ int file_dup(FAR struct file *filep, int minfd)
 }
 
 /****************************************************************************
- * Name: fs_dupfd OR dup
+ * Name: fs_dupfd
  *
  * Description:
- *   Clone a file descriptor 'fd' to an arbitrary descriptor number (any value
- *   greater than or equal to 'minfd'). If socket descriptors are
- *   implemented, then this is called by dup() for the case of file
- *   descriptors.  If socket descriptors are not implemented, then this
- *   function IS dup().
+ *   Clone a file descriptor 'fd' to an arbitrary descriptor number (any
+ *   value greater than or equal to 'minfd').
  *
  * Returned Value:
- *   fs_dupfd is sometimes an OS internal function and sometimes is a direct
- *   substitute for dup().  So it must return an errno value as though it
- *   were dup().
+ *   Zero (OK) is returned on success; a negated errno value is returned on
+ *   any failure.
  *
  ****************************************************************************/
 
@@ -126,22 +110,12 @@ int fs_dupfd(int fd, int minfd)
   ret = fs_getfilep(fd, &filep);
   if (ret < 0)
     {
-      goto errout;
+      return ret;
     }
 
   DEBUGASSERT(filep != NULL);
 
   /* Let file_dup() do the real work */
 
-  ret = file_dup(filep, minfd);
-  if (ret < 0)
-    {
-      goto errout;
-    }
-
-  return ret;
-
-errout:
-  set_errno(-ret);
-  return ERROR;
+  return file_dup(filep, minfd);
 }

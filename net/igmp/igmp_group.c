@@ -2,7 +2,8 @@
  * net/igmp/igmp_group.c
  * IGMP group data structure management logic
  *
- *   Copyright (C) 2010, 2013-2014, 2016, 2018 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2010, 2013-2014, 2016, 2018 Gregory Nutt.
+ *   All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
  * The NuttX implementation of IGMP was inspired by the IGMP add-on for the
@@ -20,21 +21,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of CITEL Technologies Ltd nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. Neither the name of CITEL Technologies Ltd nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY CITEL TECHNOLOGIES AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL CITEL TECHNOLOGIES OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * ARE DISCLAIMED.  IN NO EVENT SHALL CITEL TECHNOLOGIES OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
 
@@ -77,22 +78,12 @@
 #  undef IGMP_GRPDEBUG
 #endif
 
-#ifdef CONFIG_CPP_HAVE_VARARGS
-#  ifdef IGMP_GRPDEBUG
-#    define grperr(format, ...)    nerr(format, ##__VA_ARGS__)
-#    define grpinfo(format, ...)   ninfo(format, ##__VA_ARGS__)
-#  else
-#    define grperr(x...)
-#    define grpinfo(x...)
-#  endif
+#ifdef IGMP_GRPDEBUG
+#  define grperr    nerr
+#  define grpinfo   ninfo
 #else
-#  ifdef IGMP_GRPDEBUG
-#    define grperr    nerr
-#    define grpinfo   ninfo
-#  else
-#    define grperr    (void)
-#    define grpinfo   (void)
-#  endif
+#  define grperr    _none
+#  define grpinfo   _none
 #endif
 
 /****************************************************************************
@@ -133,7 +124,7 @@ FAR struct igmp_group_s *igmp_grpalloc(FAR struct net_driver_s *dev,
        */
 
       nxsem_init(&group->sem, 0, 0);
-      nxsem_setprotocol(&group->sem, SEM_PRIO_NONE);
+      nxsem_set_protocol(&group->sem, SEM_PRIO_NONE);
 
       /* Initialize the group timer (but don't start it yet) */
 
@@ -224,7 +215,8 @@ FAR struct igmp_group_s *igmp_grpallocfind(FAR struct net_driver_s *dev,
  *
  ****************************************************************************/
 
-void igmp_grpfree(FAR struct net_driver_s *dev, FAR struct igmp_group_s *group)
+void igmp_grpfree(FAR struct net_driver_s *dev,
+                  FAR struct igmp_group_s *group)
 {
   grpinfo("Free: %p flags: %02x\n", group, group->flags);
 
@@ -246,8 +238,8 @@ void igmp_grpfree(FAR struct net_driver_s *dev, FAR struct igmp_group_s *group)
 
   /* Then release the group structure resources. */
 
-  grpinfo("Call sched_kfree()\n");
-  sched_kfree(group);
+  grpinfo("Call kmm_free()\n");
+  kmm_free(group);
 }
 
 #endif /* CONFIG_NET_IGMP */

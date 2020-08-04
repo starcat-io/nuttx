@@ -34,21 +34,22 @@
 
 WD=`test -d ${0%/*} && cd ${0%/*}; pwd`
 
-USAGE="USAGE: $0 [options] <board>:<config>"
+USAGE="USAGE: $0 [options] <board>:<config>+"
 ADVICE="Try '$0 --help' for more information"
 
 unset CONFIGS
-silent=n
+diff=0
+debug=n
 defaults=n
 prompt=y
+nocopy=n
 
 while [ ! -z "$1" ]; do
   case $1 in
   --debug )
-    set -x
+    debug=y
     ;;
   --silent )
-    silent=y
     defaults=y
     prompt=n
     ;;
@@ -57,6 +58,9 @@ while [ ! -z "$1" ]; do
     ;;
   --defaults )
     defaults=y
+    ;;
+  --nocopy )
+    nocopy=y
     ;;
   --help )
     echo "$0 is a tool for refreshing board configurations"
@@ -74,6 +78,8 @@ while [ ! -z "$1" ]; do
     echo "     prompt unless --silent"
     echo "  --defaults"
     echo "     Do not prompt for new default selections; accept all recommended default values"
+    echo "  --nocopy"
+    echo "     Do not copy defconfig from nuttx/boards/<board>/configs to nuttx/.config"
     echo "  --help"
     echo "     Show this help message and exit"
     echo "  <board>"
@@ -84,7 +90,7 @@ while [ ! -z "$1" ]; do
     exit 0
     ;;
   * )
-    CONFIGS=$1
+    CONFIGS=$*
     break
     ;;
   esac
@@ -95,6 +101,7 @@ done
 
 MYNAME=`basename $0`
 
+cd $WD
 if [ -x ./${MYNAME} ] ; then
   cd .. || { echo "ERROR: cd .. failed" ; exit 1 ; }
 fi
@@ -102,36 +109,6 @@ fi
 if [ ! -x tools/${MYNAME} ] ; then
   echo "ERROR:  This file must be executed from the top-level NuttX directory: $PWD"
   exit 1
-fi
-
-# If the cmpconfig executable does not exist, then build it
-
-CMPCONFIG_TARGET=cmpconfig
-CMPCONFIG1=tools/cmpconfig
-CMPCONFIG2=tools/cmpconfig.exe
-CMPCONFIGMAKEFILE=Makefile.host
-CMPCONFIGMAKEDIR=tools
-
-if [ -x ${CMPCONFIG1} ]; then
-  CMPCONFIG=${CMPCONFIG1}
-else
-  if [ -x ${CMPCONFIG2} ]; then
-    CMPCONFIG=${CMPCONFIG2}
-  else
-    make -C ${CMPCONFIGMAKEDIR} -f ${CMPCONFIGMAKEFILE} ${CMPCONFIG_TARGET} || \
-      { echo "ERROR: make ${CMPCONFIG1} failed" ; exit 1 ; }
-  fi
-fi
-
-if [ -x ${CMPCONFIG1} ]; then
-  CMPCONFIG=${CMPCONFIG1}
-else
-  if [ -x ${CMPCONFIG2} ]; then
-    CMPCONFIG=${CMPCONFIG2}
-  else
-    echo "ERROR: Failed to create  ${CMPCONFIG1}"
-    exit 1
-  fi
 fi
 
 # Get the board configuration
@@ -148,7 +125,7 @@ if [ "X${CONFIGS}" == "Xall" ]; then
 fi
 
 for CONFIG in ${CONFIGS}; do
-  echo "Refresh ${CONFIG}"
+  echo "  Normalize ${CONFIG}"
 
   # Set up the environment
 
@@ -192,11 +169,11 @@ for CONFIG in ${CONFIGS}; do
     exit 1
   fi
 
-  if [ -r $MAKEDEFS1 ]; then
-    MAKEDEFS=$MAKEDEFS1
+  if [ -r $MAKEDEFS2 ]; then
+    MAKEDEFS=$MAKEDEFS2
   else
-    if [ -r $MAKEDEFS2 ]; then
-      MAKEDEFS=$MAKEDEFS2
+    if [ -r $MAKEDEFS1 ]; then
+      MAKEDEFS=$MAKEDEFS1
     else
       echo "No readable Make.defs file at $MAKEDEFS1 or $MAKEDEFS2"
       exit 1
@@ -206,68 +183,93 @@ for CONFIG in ${CONFIGS}; do
   # Copy the .config and Make.defs to the toplevel directory
 
   rm -f SAVEconfig
-  if [ -e .config ]; then
-    mv .config SAVEconfig || \
-      { echo "ERROR: Failed to move .config to SAVEconfig"; exit 1; }
-  fi
-
-  cp -a $DEFCONFIG .config || \
-    { echo "ERROR: Failed to copy $DEFCONFIG to .config"; exit 1; }
-
   rm -f SAVEMake.defs
-  if [ -e Make.defs ]; then
-    mv Make.defs SAVEMake.defs || \
-      { echo "ERROR: Failed to move Make.defs to SAVEMake.defs"; exit 1; }
-  fi
 
-  cp -a $MAKEDEFS Make.defs || \
-    { echo "ERROR: Failed to copy $MAKEDEFS to Make.defs"; exit 1; }
+  if [ "X${nocopy}" != "Xy" ]; then
+    if [ -e .config ]; then
+      mv .config SAVEconfig || \
+        { echo "ERROR: Failed to move .config to SAVEconfig"; exit 1; }
+    fi
 
-  # Then run oldconfig or oldefconfig
+    cp -a $DEFCONFIG .config || \
+      { echo "ERROR: Failed to copy $DEFCONFIG to .config"; exit 1; }
 
-  if [ "X${defaults}" == "Xy" ]; then
-    make olddefconfig
-  else
-    make oldconfig
+    if [ -e Make.defs ]; then
+      mv Make.defs SAVEMake.defs || \
+        { echo "ERROR: Failed to move Make.defs to SAVEMake.defs"; exit 1; }
+    fi
+
+    cp -a $MAKEDEFS Make.defs || \
+      { echo "ERROR: Failed to copy $MAKEDEFS to Make.defs"; exit 1; }
+
+    # Then run oldconfig or oldefconfig
+
+    if [ "X${defaults}" == "Xy" ]; then
+      if [ "X${debug}" == "Xy" ]; then
+        make olddefconfig V=1
+      else
+        make olddefconfig 1>/dev/null
+      fi
+    else
+      if [ "X${debug}" == "Xy" ]; then
+        make oldconfig V=1
+      else
+        make oldconfig
+      fi
+    fi
   fi
 
   # Run savedefconfig to create the new defconfig file
 
-  make savedefconfig
+  if [ "X${debug}" == "Xy" ]; then
+    make savedefconfig V=1
+  else
+    make savedefconfig 1>/dev/null
+  fi
 
   # Show differences
 
-  # sed -i -e "s/^CONFIG_APPS_DIR/# CONFIG_APPS_DIR/g" defconfig
-  $CMPCONFIG $DEFCONFIG defconfig
+  if ! diff $DEFCONFIG defconfig; then
 
-  # Save the refreshed configuration
+    # Save the refreshed configuration
 
-  if [ "X${prompt}" == "Xy" ]; then
-    read -p "Save the new configuration (y/n)?" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]
-    then
+    if [ "X${prompt}" == "Xy" ]; then
+
+      read -p "Save the new configuration (y/n)?" -n 1 -r
+      echo
+      if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Saving the new configuration file"
+        mv defconfig $DEFCONFIG || \
+            { echo "ERROR: Failed to move defconfig to $DEFCONFIG"; exit 1; }
+        chmod 644 $DEFCONFIG
+      fi
+    else
       echo "Saving the new configuration file"
       mv defconfig $DEFCONFIG || \
           { echo "ERROR: Failed to move defconfig to $DEFCONFIG"; exit 1; }
       chmod 644 $DEFCONFIG
     fi
-  else
-    echo "Saving the new configuration file"
-    mv defconfig $DEFCONFIG || \
-        { echo "ERROR: Failed to move defconfig to $DEFCONFIG"; exit 1; }
-    chmod 644 $DEFCONFIG
+
+    diff=1
   fi
 
   # Restore any previous .config and Make.defs files
-
-  if [ -e SAVEconfig ]; then
-    mv SAVEconfig .config || \
-      { echo "ERROR: Failed to move SAVEconfig to .config"; exit 1; }
-  fi
 
   if [ -e SAVEMake.defs ]; then
     mv SAVEMake.defs Make.defs || \
       { echo "ERROR: Failed to move SAVEMake.defs to Make.defs"; exit 1; }
   fi
+
+  if [ -e SAVEconfig ]; then
+    mv SAVEconfig .config || \
+      { echo "ERROR: Failed to move SAVEconfig to .config"; exit 1; }
+
+    if [ "X${debug}" == "Xy" ]; then
+      ./tools/sethost.sh V=1
+    else
+      ./tools/sethost.sh 1>/dev/null
+    fi
+  fi
 done
+
+exit $diff

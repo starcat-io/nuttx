@@ -64,7 +64,7 @@
 #endif
 
 #include "chip.h"
-#include "up_arch.h"
+#include "arm_arch.h"
 
 #include "tiva_gpio.h"
 #include "tiva_ethernet.h"
@@ -940,7 +940,7 @@ static void tiva_txdone(struct tiva_driver_s *priv)
   /* Verify that the Tx FIFO is not in use.  The NEWTX bit initiates an
    * Ethernet transmission once the packet has been placed in the TX FIFO.
    * This bit is cleared once the transmission has been completed.  Since
-   * we get here because of of TXEMP which indicates that the packet was
+   * we get here because of TXEMP which indicates that the packet was
    * transmitted and that the TX FIFO is empty, NEWTX should always be zero
    * at this point.
    */
@@ -1747,7 +1747,7 @@ static inline int tiva_ethinitialize(int intf)
 
 
 /************************************************************************************
- * Name: up_netinitialize
+ * Name: arm_netinitialize
  *
  * Description:
  *   Initialize the first network interface.  If there are more than one interface
@@ -1757,7 +1757,7 @@ static inline int tiva_ethinitialize(int intf)
  ************************************************************************************/
 
 #if TIVA_NETHCONTROLLERS == 1 && !defined(CONFIG_NETDEV_LATEINIT)
-void up_netinitialize(void)
+void arm_netinitialize(void)
 {
   tiva_ethinitialize(0);
 }

@@ -512,7 +512,7 @@ You can also log into the NSH from the host PC like this:
     cp          free        kill        mkrd        put         usleep
     cmp         get         losetup     mh          rm          wget
     dd          help        ls          mount       rmdir       xd
-    df          hexdump     mb          mv          sh
+    df          hexdump     mb          mv          source
 
   Builtin Apps:
   nsh>
@@ -904,7 +904,7 @@ Click Shield
   click mikroBUSes.  The above discusses on the UNO shield.  I know that the
   serial ports, at least, differ on the two shields.
 
-  UPDATE: And it appears the that Mega shield is *not* compatible with the
+  UPDATE: And it appears that the Mega shield is *not* compatible with the
   SAME70-Xplained.  I am told that the SPI in mikroBUS slots does not connect
   to pins on the  SAME70-Xplained that can support the SPI communications.
   Avoid this triple mikroBUS shield!
@@ -1087,7 +1087,7 @@ Debugging
 
   This is a simple command line utility for programming ARM-based MCUs
   (currently only Atmel) though CMSIS-DAP SWD interface. It works on Linux,
-  Mac OS X and Windows.  Very useful to around especially if you have the
+  macOS and Windows.  Very useful to around especially if you have the
   following issue:
 
   Booting to FLASH or the ROM Bootloader

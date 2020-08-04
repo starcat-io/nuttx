@@ -47,6 +47,19 @@ ifeq ($(CONFIG_WINDOWS_NATIVE),y)
 export SHELL=cmd
 endif
 
+# Control build verbosity
+#
+#  V=1,2: Enable echo of commands
+#  V=2:   Enable bug/verbose options in tools and scripts
+
+ifeq ($(V),1)
+export Q :=
+else ifeq ($(V),2)
+export Q :=
+else
+export Q := @
+endif
+
 # These are configuration variables that are quoted by configuration tool
 # but which must be unquoted when used in the build system.
 
@@ -54,11 +67,60 @@ CONFIG_ARCH       := $(patsubst "%",%,$(strip $(CONFIG_ARCH)))
 CONFIG_ARCH_CHIP  := $(patsubst "%",%,$(strip $(CONFIG_ARCH_CHIP)))
 CONFIG_ARCH_BOARD := $(patsubst "%",%,$(strip $(CONFIG_ARCH_BOARD)))
 
+# Some defaults.
+# $(TOPDIR)/Make.defs can override these appropriately.
+
+MODULECC ?= $(CC)
+MODULELD ?= $(LD)
+MODULESTRIP ?= $(STRIP)
+
+# Define HOSTCC on the make command line if it differs from these defaults
+# Define HOSTCFLAGS with -g on the make command line to build debug versions
+
+HOSTOS = ${shell uname -o 2>/dev/null || uname -s 2>/dev/null || echo "Other"}
+
+ifeq ($(HOSTOS),MinGW)
+
+# In the Windows native environment, the MinGW GCC compiler is used
+
+HOSTCC ?= mingw32-gcc.exe
+HOSTCFLAGS ?= -O2 -Wall -Wstrict-prototypes -Wshadow -DCONFIG_WINDOWS_NATIVE=y
+
+else
+
+# GCC or clang is assumed in all other POSIX environments
+# (Linux, Cygwin, MSYS2, macOS).
+# strtok_r is used in some tools, but does not seem to be available in
+# the MinGW environment.
+
+HOSTCC ?= cc
+HOSTCFLAGS ?= -O2 -Wall -Wstrict-prototypes -Wshadow
+HOSTCFLAGS += -DHAVE_STRTOK_C=1
+
+ifeq ($(HOSTOS),Cygwin)
+HOSTCFLAGS += -DHOST_CYGWIN=1
+endif
+endif
+
 # Some defaults just to prohibit some bad behavior if for some reason they
 # are not defined
 
+ASMEXT ?= .S
 OBJEXT ?= .o
 LIBEXT ?= .a
+
+ifeq ($(HOSTOS),Cygwin)
+  EXEEXT ?= .exe
+endif
+
+ifeq ($(CONFIG_HOST_WINDOWS),y)
+  HOSTEXEEXT ?= .exe
+endif
+
+# This define is passed as EXTRAFLAGS for kernel-mode builds.  It is also passed
+# during PASS1 (but not PASS2) context and depend targets.
+
+KDEFINE ?= ${shell $(DEFINE) "$(CC)" __KERNEL__}
 
 # DELIM - Path segment delimiter character
 #
@@ -68,9 +130,58 @@ LIBEXT ?= .a
 #   CONFIG_WINDOWS_NATIVE - Defined for a Windows native build
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  DELIM = $(strip \)
+  DELIM ?= $(strip \)
 else
-  DELIM = $(strip /)
+  DELIM ?= $(strip /)
+endif
+
+# Process board-specific directories
+
+ifeq ($(CONFIG_ARCH_BOARD_CUSTOM),y)
+	CUSTOM_DIR = $(patsubst "%",%,$(CONFIG_ARCH_BOARD_CUSTOM_DIR))
+ifeq ($(CONFIG_ARCH_BOARD_CUSTOM_DIR_RELPATH),y)
+  BOARD_DIR ?= $(TOPDIR)$(DELIM)$(CUSTOM_DIR)
+else
+  BOARD_DIR ?= $(CUSTOM_DIR)
+endif
+else
+  BOARD_DIR ?= $(TOPDIR)$(DELIM)boards$(DELIM)$(CONFIG_ARCH)$(DELIM)$(CONFIG_ARCH_CHIP)$(DELIM)$(CONFIG_ARCH_BOARD)
+endif
+
+BOARD_COMMON_DIR ?= $(wildcard $(BOARD_DIR)$(DELIM)..$(DELIM)common)
+BOARD_DRIVERS_DIR ?= $(wildcard $(BOARD_DIR)$(DELIM)..$(DELIM)drivers)
+ifeq ($(BOARD_DRIVERS_DIR),)
+  BOARD_DRIVERS_DIR = $(TOPDIR)$(DELIM)drivers$(DELIM)dummy
+endif
+
+# DIRLINK - Create a directory link in the portable way
+
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+ifeq ($(CONFIG_WINDOWS_MKLINK),y)
+  DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)link.bat
+else
+  DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)copydir.bat
+endif
+  DIRUNLINK ?= $(TOPDIR)$(DELIM)tools$(DELIM)unlink.bat
+else
+ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
+  DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)copydir.sh
+else ifeq ($(CONFIG_WINDOWS_MSYS),y)
+  DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)copydir.sh
+else
+  DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)link.sh
+endif
+  DIRUNLINK ?= $(TOPDIR)$(DELIM)tools$(DELIM)unlink.sh
+endif
+
+# MKDEP - Create the depend rule in the portable way
+
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+  MKDEP ?= $(TOPDIR)$(DELIM)tools$(DELIM)mkdeps$(HOSTEXEEXT) --winnative
+else ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
+  MKDEP ?= $(TOPDIR)$(DELIM)tools$(DELIM)mkwindeps.sh
+else
+  MKDEP ?= $(TOPDIR)$(DELIM)tools$(DELIM)mkdeps$(HOSTEXEEXT)
 endif
 
 # INCDIR - Convert a list of directory paths to a list of compiler include
@@ -93,11 +204,14 @@ endif
 #   CONFIG_WINDOWS_NATIVE - Defined for a Windows native build
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  DEFINE = "$(TOPDIR)\tools\define.bat"
-  INCDIR = "$(TOPDIR)\tools\incdir.bat"
+  DEFINE ?= "$(TOPDIR)\tools\define.bat"
+  INCDIR ?= "$(TOPDIR)\tools\incdir.bat"
+else ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
+  DEFINE ?= "$(TOPDIR)/tools/define.sh" -w
+  INCDIR ?= "$(TOPDIR)/tools/incdir$(HOSTEXEEXT)" -w
 else
-  DEFINE = "$(TOPDIR)/tools/define.sh"
-  INCDIR = "$(TOPDIR)/tools/incdir.sh"
+  DEFINE ?= "$(TOPDIR)/tools/define.sh"
+  INCDIR ?= "$(TOPDIR)/tools/incdir$(HOSTEXEEXT)"
 endif
 
 # PREPROCESS - Default macro to run the C pre-processor
@@ -296,17 +410,17 @@ define COPYFILE
 endef
 endif
 
-# CATFILE - Cat and append a list of files
+# CATFILE - Cat a list of files
 #
 # USAGE: $(call CATFILE,dest,src1,src2,src3,...)
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
 define CATFILE
-	$(Q) type $(2) >> $1
+	$(Q) type $(2) > $1
 endef
 else
 define CATFILE
-	$(Q) cat $(2) >> $1
+	$(Q) cat $(2) > $1
 endef
 endif
 
@@ -346,7 +460,11 @@ endif
 # args: $1 - newfile:  Temporary file to test
 #       $2 - oldfile:  File to replace
 
-ifneq ($(CONFIG_WINDOWS_NATIVE),y)
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+define TESTANDREPLACEFILE
+	$(Q) move /Y $1 $2
+endef
+else
 define TESTANDREPLACEFILE
 	if [ -f $2 ]; then \
 		if cmp $1 $2; then \
@@ -359,3 +477,29 @@ define TESTANDREPLACEFILE
 	fi
 endef
 endif
+
+# Invoke make
+
+define MAKE_template
+	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)"
+
+endef
+
+define SDIR_template
+$(1)_$(2):
+	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)"
+
+endef
+
+# The default C/C++ search path
+
+ARCHINCLUDES += ${shell $(INCDIR) -s "$(CC)" $(TOPDIR)$(DELIM)include}
+
+ifeq ($(CONFIG_LIBCXX),y)
+  ARCHXXINCLUDES += ${shell $(INCDIR) -s "$(CC)" $(TOPDIR)$(DELIM)include$(DELIM)libcxx}
+else ifeq ($(CONFIG_UCLIBCXX),y)
+  ARCHXXINCLUDES += ${shell $(INCDIR) -s "$(CC)" $(TOPDIR)$(DELIM)include$(DELIM)uClibc++}
+else
+  ARCHXXINCLUDES += ${shell $(INCDIR) -s "$(CC)" $(TOPDIR)$(DELIM)include$(DELIM)cxx}
+endif
+ARCHXXINCLUDES += ${shell $(INCDIR) -s "$(CC)" $(TOPDIR)$(DELIM)include}

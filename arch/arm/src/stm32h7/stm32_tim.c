@@ -57,8 +57,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_internal.h"
-#include "up_arch.h"
+#include "arm_internal.h"
+#include "arm_arch.h"
 
 #include "stm32_rcc.h"
 #include "stm32_gpio.h"
@@ -902,6 +902,11 @@ static int stm32_tim_setchannel(FAR struct stm32_tim_dev_s *dev,
   switch (mode & STM32_TIM_CH_MODE_MASK)
     {
       case STM32_TIM_CH_DISABLED:
+        break;
+
+      case STM32_TIM_CH_OUTTOGGLE:
+        ccmr_val  = (ATIM_CCMR_MODE_OCREFTOG << ATIM_CCMR1_OC1M_SHIFT);
+        ccer_val |= ATIM_CCER_CC1E << (channel << 2);
         break;
 
       case STM32_TIM_CH_OUTPWM:

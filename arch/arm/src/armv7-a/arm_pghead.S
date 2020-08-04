@@ -48,7 +48,7 @@
 #include "mmu.h"
 
 #include "chip.h"
-#include "up_internal.h"
+#include "arm_internal.h"
 
 #ifdef CONFIG_PAGING
 
@@ -198,7 +198,7 @@
 #ifdef CONFIG_DEBUG_FEATURES
 	.macro	showprogress, code
 	mov		r0, #\code
-	bl		up_lowputc
+	bl		arm_lowputc
 	.endm
 #else
 	.macro	showprogress, code
@@ -725,7 +725,7 @@ arm_data_initialize:
 
 #ifdef CONFIG_BOOT_RUNFROMFLASH
 	/* If the .data section is in a separate, uninitialized address space,
-	 * then we will also need to copy the initial values of of the .data
+	 * then we will also need to copy the initial values of the .data
 	 * section from the .text region into that .data region.  This would
 	 * be the case if we are executing from FLASH and the .data section
 	 * lies in a different physical address region OR if we are support

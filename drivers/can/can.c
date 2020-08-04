@@ -144,7 +144,8 @@ static inline ssize_t can_rtrread(FAR struct can_dev_s *dev,
                                   FAR struct canioc_rtr_s *rtr);
 static int            can_ioctl(FAR struct file *filep, int cmd,
                                 unsigned long arg);
-static int            can_poll(FAR struct file *filep, FAR struct pollfd *fds,
+static int            can_poll(FAR struct file *filep,
+                               FAR struct pollfd *fds,
                                bool setup);
 
 /****************************************************************************
@@ -331,7 +332,7 @@ static uint8_t can_bytes2dlc(FAR struct sam_can_s *priv, uint8_t nbytes)
  *
  * Description:
  *   This function performs deferred processing from can_txready.  See the
- *   description of can_txready below for additionla information.
+ *   description of can_txready below for additional information.
  *
  ****************************************************************************/
 
@@ -388,6 +389,7 @@ static FAR struct can_reader_s *init_can_reader(FAR struct file *filep)
   reader->fifo.rx_tail  = 0;
 
   nxsem_init(&reader->fifo.rx_sem, 0, 1);
+  nxsem_set_protocol(&reader->fifo.rx_sem, SEM_PRIO_NONE);
   filep->f_priv = reader;
 
   return reader;
@@ -405,10 +407,9 @@ static int can_open(FAR struct file *filep)
 {
   FAR struct inode     *inode = filep->f_inode;
   FAR struct can_dev_s *dev   = inode->i_private;
-  uint8_t               tmp;
+  irqstate_t            flags;
+  int                   tmp;
   int                   ret;
-
-  caninfo("ocount: %d\n", dev->cd_ocount);
 
   /* If the port is the middle of closing, wait until the close is finished */
 
@@ -418,63 +419,55 @@ static int can_open(FAR struct file *filep)
       return ret;
     }
 
-  /* Increment the count of references to the device.  If this is the first
-   * time that the driver has been opened for this device, then initialize
-   * the device.
+  /* If this is the first time that the driver has been opened
+   * for this device, then perform hardware initialization.
    */
 
-  tmp = dev->cd_ocount + 1;
-  if (tmp == 0)
+  if (list_is_empty(&dev->cd_readers))
     {
-      /* More than 255 opens; uint8_t overflows to zero */
+      caninfo("ocount: %d\n", 0);
 
-      ret = -EMFILE;
+      flags = enter_critical_section();
+      ret = dev_setup(dev);
+      if (ret >= 0)
+        {
+          /* Mark the FIFOs empty */
+
+          dev->cd_xmit.tx_head  = 0;
+          dev->cd_xmit.tx_queue = 0;
+          dev->cd_xmit.tx_tail  = 0;
+
+          /* Finally, Enable the CAN RX interrupt */
+
+          dev_rxint(dev, true);
+        }
+
+      list_add_head(&dev->cd_readers,
+                    (FAR struct list_node *)init_can_reader(filep));
+
+      leave_critical_section(flags);
     }
   else
     {
-      /* Check if this is the first time that the driver has been opened. */
+      tmp = list_length(&dev->cd_readers);
+      caninfo("ocount: %d\n", tmp);
 
-      if (tmp == 1)
+      if (tmp >= 255)
         {
-          /* Yes.. perform one time hardware initialization. */
+          /* Limit to no more than 255 opens */
 
-          irqstate_t flags = enter_critical_section();
-          ret = dev_setup(dev);
-          if (ret >= 0)
-            {
-              /* Mark the FIFOs empty */
-
-              dev->cd_xmit.tx_head  = 0;
-              dev->cd_xmit.tx_queue = 0;
-              dev->cd_xmit.tx_tail  = 0;
-
-              /* Finally, Enable the CAN RX interrupt */
-
-              dev_rxint(dev, true);
-
-              /* Save the new open count only on success */
-
-              dev->cd_ocount = 1;
-
-              list_initialize(&dev->cd_readers);
-            }
-
-          leave_critical_section(flags);
-        }
-      else
-        {
-          /* Save the incremented open count */
-
-          dev->cd_ocount = tmp;
+          ret = -EMFILE;
+          goto errout;
         }
 
-    irqstate_t flags = enter_critical_section();
-    list_add_head(&dev->cd_readers,
-                  (FAR struct list_node *)init_can_reader(filep));
+      flags = enter_critical_section();
+      list_add_head(&dev->cd_readers,
+                    (FAR struct list_node *)init_can_reader(filep));
 
-    leave_critical_section(flags);
+      leave_critical_section(flags);
     }
 
+errout:
   can_givesem(&dev->cd_closesem);
   return ret;
 }
@@ -497,7 +490,9 @@ static int can_close(FAR struct file *filep)
   FAR struct list_node *tmp;
   int                   ret;
 
-  caninfo("ocount: %d\n", dev->cd_ocount);
+#ifdef  CONFIG_DEBUG_CAN_INFO
+  caninfo("ocount: %d\n", list_length(&dev->cd_readers));
+#endif
 
   ret = can_takesem(&dev->cd_closesem);
   if (ret < 0)
@@ -518,19 +513,12 @@ static int can_close(FAR struct file *filep)
 
   filep->f_priv = NULL;
 
-  /* Decrement the references to the driver.  If the reference count will
-   * decrement to 0, then uninitialize the driver.
-   */
+  /* Uninitialize the driver if there are no more readers */
 
-  if (dev->cd_ocount > 1)
+  if (!list_is_empty(&dev->cd_readers))
     {
-      dev->cd_ocount--;
       goto errout;
     }
-
-  /* There are no more references to the port */
-
-  dev->cd_ocount = 0;
 
   /* Stop accepting input */
 
@@ -572,13 +560,15 @@ errout:
 static ssize_t can_read(FAR struct file *filep, FAR char *buffer,
                         size_t buflen)
 {
-  FAR struct inode         *inode = filep->f_inode;
-  FAR struct can_dev_s     *dev = inode->i_private;
   FAR struct can_reader_s  *reader = NULL;
   FAR struct can_rxfifo_s  *fifo;
   size_t                    nread;
   irqstate_t                flags;
   int                       ret = 0;
+#ifdef CONFIG_CAN_ERRORS
+  FAR struct inode         *inode = filep->f_inode;
+  FAR struct can_dev_s     *dev = inode->i_private;
+#endif
 
   caninfo("buflen: %d\n", buflen);
 
@@ -647,10 +637,7 @@ static ssize_t can_read(FAR struct file *filep, FAR char *buffer,
 
           /* Wait for a message to be received */
 
-          DEBUGASSERT(dev->cd_nrxwaiters < 255);
-          dev->cd_nrxwaiters++;
           ret = can_takesem(&fifo->rx_sem);
-          dev->cd_nrxwaiters--;
 
           if (ret < 0)
             {
@@ -690,8 +677,8 @@ static ssize_t can_read(FAR struct file *filep, FAR char *buffer,
         }
       while (fifo->rx_head != fifo->rx_tail);
 
-      /* All on the messages have bee transferred.  Return the number of bytes
-       * that were read.
+      /* All on the messages have bee transferred.  Return the number of
+       * bytes that were read.
        */
 
       ret = nread;
@@ -833,7 +820,9 @@ static ssize_t can_write(FAR struct file *filep, FAR const char *buffer,
           nexttail = 0;
         }
 
-      /* If the XMIT FIFO becomes full, then wait for space to become available */
+      /* If the XMIT FIFO becomes full, then wait for space to become
+       * available.
+       */
 
       while (nexttail == fifo->tx_head)
         {
@@ -1021,6 +1010,7 @@ static int can_poll(FAR struct file *filep, FAR struct pollfd *fds,
   FAR struct can_reader_s *reader = NULL;
   pollevent_t eventset;
   int ndx;
+  irqstate_t flags;
   int ret;
   int i;
 
@@ -1032,6 +1022,8 @@ static int can_poll(FAR struct file *filep, FAR struct pollfd *fds,
       return -ENODEV;
     }
 #endif
+
+  flags = enter_critical_section();
 
   DEBUGASSERT(filep->f_priv != NULL);
   reader = (FAR struct can_reader_s *)filep->f_priv;
@@ -1045,7 +1037,7 @@ static int can_poll(FAR struct file *filep, FAR struct pollfd *fds,
        * will abort the operation
        */
 
-      return ret;
+      goto return_with_irqdisabled;
     }
 
   /* Are we setting up the poll?  Or tearing it down? */
@@ -1116,14 +1108,11 @@ static int can_poll(FAR struct file *filep, FAR struct pollfd *fds,
        * should, but that would be a little awkward).
        */
 
-      DEBUGASSERT(dev->cd_nrxwaiters < 255);
-      dev->cd_nrxwaiters++;
       do
         {
           ret = can_takesem(&reader->fifo.rx_sem);
         }
       while (ret < 0);
-      dev->cd_nrxwaiters--;
 
       if (reader->fifo.rx_head != reader->fifo.rx_tail)
         {
@@ -1159,6 +1148,9 @@ static int can_poll(FAR struct file *filep, FAR struct pollfd *fds,
 
 errout:
   can_givesem(&dev->cd_pollsem);
+
+return_with_irqdisabled:
+  leave_critical_section(flags);
   return ret;
 }
 
@@ -1180,9 +1172,8 @@ int can_register(FAR const char *path, FAR struct can_dev_s *dev)
 
   /* Initialize the CAN device structure */
 
-  dev->cd_ocount     = 0;
+  list_initialize(&dev->cd_readers);
   dev->cd_ntxwaiters = 0;
-  dev->cd_nrxwaiters = 0;
   dev->cd_npendrtr   = 0;
 #ifdef CONFIG_CAN_ERRORS
   dev->cd_error      = 0;
@@ -1191,6 +1182,7 @@ int can_register(FAR const char *path, FAR struct can_dev_s *dev)
   /* Initialize semaphores */
 
   nxsem_init(&dev->cd_xmit.tx_sem, 0, 1);
+  nxsem_set_protocol(&dev->cd_xmit.tx_sem, SEM_PRIO_NONE);
   nxsem_init(&dev->cd_closesem,    0, 1);
   nxsem_init(&dev->cd_pollsem,     0, 1);
 
@@ -1201,7 +1193,7 @@ int can_register(FAR const char *path, FAR struct can_dev_s *dev)
        */
 
       nxsem_init(&dev->cd_rtr[i].cr_sem, 0, 0);
-      nxsem_setprotocol(&dev->cd_rtr[i].cr_sem, SEM_PRIO_NONE);
+      nxsem_set_protocol(&dev->cd_rtr[i].cr_sem, SEM_PRIO_NONE);
       dev->cd_rtr[i].cr_msg = NULL;
     }
 
@@ -1334,13 +1326,24 @@ int can_receive(FAR struct can_dev_s *dev, FAR struct can_hdr_s *hdr,
 
           fifo->rx_tail = nexttail;
 
-          /* The increment the counting semaphore. The maximum value should be
-           * CONFIG_CAN_FIFOSIZE -- one possible count for each allocated
+          sval = 0;
+          if (nxsem_get_value(&fifo->rx_sem, &sval) < 0)
+            {
+              DEBUGASSERT(false);
+#ifdef CONFIG_CAN_ERRORS
+              /* Report unspecified error */
+
+              dev->cd_error |= CAN_ERROR5_UNSPEC;
+#endif
+              return -EINVAL;
+            }
+
+          /* Increment the counting semaphore. The maximum value should
+           * be CONFIG_CAN_FIFOSIZE -- one possible count for each allocated
            * message buffer.
            */
 
-          sval = 0;
-          if (nxsem_getvalue(&fifo->rx_sem, &sval) <= 0)
+          if (sval <= 0)
             {
               can_givesem(&fifo->rx_sem);
             }
@@ -1521,7 +1524,8 @@ int can_txdone(FAR struct can_dev_s *dev)
  *   If the CAN hardware supports a H/W FIFO, can_txdone() is not called
  *   when the transfer is complete, but rather when the transfer is queued in
  *   the H/W FIFO.  When the H/W FIFO becomes full, then dev_txready() will
- *   report false and the number of queued messages in the S/W FIFO will grow.
+ *   report false and the number of queued messages in the S/W FIFO will
+ *   grow.
  *
  *   There is no mechanism in this case to inform the upper half driver when
  *   the hardware is again available, when there is again space in the H/W

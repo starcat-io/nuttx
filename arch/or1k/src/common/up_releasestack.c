@@ -50,13 +50,6 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-/* Configuration */
-
-#undef HAVE_KERNEL_HEAP
-#if (defined(CONFIG_BUILD_PROTECTED) || defined(CONFIG_BUILD_KERNEL)) && \
-     defined(CONFIG_MM_KERNEL_HEAP)
-#  define HAVE_KERNEL_HEAP 1
-#endif
 
 /****************************************************************************
  * Public Functions
@@ -99,14 +92,14 @@ void up_release_stack(FAR struct tcb_s *dtcb, uint8_t ttype)
 
   if (dtcb->stack_alloc_ptr)
     {
-#ifdef HAVE_KERNEL_HEAP
+#ifdef CONFIG_MM_KERNEL_HEAP
       /* Use the kernel allocator if this is a kernel thread */
 
       if (ttype == TCB_FLAG_TTYPE_KERNEL)
         {
           if (kmm_heapmember(dtcb->stack_alloc_ptr))
             {
-              sched_kfree(dtcb->stack_alloc_ptr);
+              kmm_free(dtcb->stack_alloc_ptr);
             }
         }
       else
@@ -116,7 +109,7 @@ void up_release_stack(FAR struct tcb_s *dtcb, uint8_t ttype)
 
           if (umm_heapmember(dtcb->stack_alloc_ptr))
             {
-              sched_ufree(dtcb->stack_alloc_ptr);
+              kumm_free(dtcb->stack_alloc_ptr);
             }
         }
 

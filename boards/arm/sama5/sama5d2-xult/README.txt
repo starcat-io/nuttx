@@ -759,23 +759,6 @@ Configurations
      System Type -> Toolchain:
        CONFIG_ARMV7A_TOOLCHAIN_GNU_EABIW=y : GNU EABI toolchain for windows
 
-     That same configuration will work with Atmel GCC toolchain.  The only
-     change required to use the Atmel GCC toolchain is to change the PATH
-     variable so that those tools are selected instead of the CodeSourcery
-     tools.  Try 'which arm-none-eabi-gcc' to make sure that you are
-     selecting the right tool.
-
-     See also the "NOTE about Windows native toolchains" in the section call
-     "GNU Toolchain Options" above.
-
-     !!!WARNING!!! The first time that you type 'make', the system will
-     configure itself based on the settings in the .config file.  One of
-     these settings can cause a lot of confusion if you configure the build
-     in the wrong state:  If you are running on Linux, make *certain* that
-     you have CONFIG_HOST_LINUX=y *before* the first make or you will
-     create a very corrupt configuration that may not be easy to recover
-     from.
-
   4. The SAMA5Dx is running at 528MHz by default in these configurations.
 
        Board Selection -> CPU Frequency
@@ -797,8 +780,10 @@ Configurations
 
   netnsh:
 
-    This is a network enabled configuration based on the NuttShell (NSH)
-    REVISIT:  More to be provided.
+    This is a network enabled configuration based on the NuttShell (NSH).
+    The CDC-ECM driver is enabled, so you can plug a USB cable into the
+    USB-Micro port (USB-A) and the board will appear as an CDC-ECM
+    ethernet adapter.
 
   nsh:
 
@@ -969,3 +954,10 @@ Configurations
        NOTE:  If you want the RTC to preserve time over power cycles, you
        will need to install a battery in the battery holder (J12) and close
        the jumper, JP13.
+
+  sdmmcnsh:
+
+    This is a configuration based on the NuttShell (NSH). The SDMMC
+    peripheral is enabled, and can read and write to a VFAT filesystem
+    on the SD Card.
+

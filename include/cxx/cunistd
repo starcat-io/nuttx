@@ -94,10 +94,8 @@ namespace std
   using ::access;
   using ::rmdir;
   using ::unlink;
-#ifdef CONFIG_PSEUDOFS_SOFTLINKS
-  using ::link;
+  using ::symlink;
   using ::readlink;
-#endif
 
   // Execution of program files
 
@@ -122,10 +120,8 @@ namespace std
 
   // Networking
 
-#ifdef CONFIG_NET
   using ::gethostname;
   using ::sethostname;
-#endif
 }
 
 #endif // __INCLUDE_CXX_CUNISTD

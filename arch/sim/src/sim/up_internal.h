@@ -211,8 +211,8 @@
  * so that it will be ready for the next pause operation.
  */
 
-volatile spinlock_t g_cpu_wait[CONFIG_SMP_NCPUS] SP_SECTION;
-volatile spinlock_t g_cpu_paused[CONFIG_SMP_NCPUS] SP_SECTION;
+extern volatile spinlock_t g_cpu_wait[CONFIG_SMP_NCPUS] SP_SECTION;
+extern volatile spinlock_t g_cpu_paused[CONFIG_SMP_NCPUS] SP_SECTION;
 #endif
 
 /****************************************************************************
@@ -224,9 +224,16 @@ volatile spinlock_t g_cpu_paused[CONFIG_SMP_NCPUS] SP_SECTION;
 int  up_setjmp(xcpt_reg_t *jb);
 void up_longjmp(xcpt_reg_t *jb, int val) noreturn_function;
 
+/* up_hostmemory.c **********************************************************/
+
+void *host_alloc_heap(size_t sz);
+void *host_alloc_shmem(const char *name, size_t size, int master);
+void  host_free_shmem(void *mem);
+
 /* up_hosttime.c ************************************************************/
 
 uint64_t host_gettime(bool rtc);
+void host_sleep(uint64_t nsec);
 void host_sleepuntil(uint64_t nsec);
 
 /* up_simsmp.c **************************************************************/
@@ -287,8 +294,8 @@ int up_x11cmap(unsigned short first, unsigned short len,
 /* up_touchscreen.c *********************************************************/
 
 #ifdef CONFIG_SIM_TOUCHSCREEN
-int  sim_tsc_initialize(int minor);
-void sim_tsc_uninitialize(void);
+int sim_tsc_initialize(int minor);
+int sim_tsc_uninitialize(void);
 #endif
 
 /* up_eventloop.c ***********************************************************/
@@ -314,7 +321,7 @@ FAR struct ioexpander_dev_s *sim_ioexpander_initialize(void);
 
 /* up_tapdev.c **************************************************************/
 
-#if defined(CONFIG_SIM_NETDEV) && !defined(__CYGWIN__)
+#if defined(CONFIG_SIM_NETDEV_TAP) && !defined(__CYGWIN__)
 void tapdev_init(void);
 int tapdev_avail(void);
 unsigned int tapdev_read(unsigned char *buf, unsigned int buflen);
@@ -332,7 +339,7 @@ void tapdev_ifdown(void);
 
 /* up_wpcap.c ***************************************************************/
 
-#if defined(CONFIG_SIM_NETDEV) && defined(__CYGWIN__)
+#if defined(CONFIG_SIM_NETDEV_TAP) && defined(__CYGWIN__)
 void wpcap_init(void);
 unsigned int wpcap_read(unsigned char *buf, unsigned int buflen);
 void wpcap_send(unsigned char *buf, unsigned int buflen);
@@ -345,26 +352,38 @@ void wpcap_send(unsigned char *buf, unsigned int buflen);
 #  define netdev_ifdown()         {}
 #endif
 
+/* up_vpnkit.c **************************************************************/
+
+#if defined(CONFIG_SIM_NETDEV_VPNKIT)
+void vpnkit_init(void);
+int vpnkit_avail(void);
+unsigned int vpnkit_read(unsigned char *buf, unsigned int buflen);
+void vpnkit_send(unsigned char *buf, unsigned int buflen);
+void vpnkit_ifup(in_addr_t ifaddr);
+void vpnkit_ifdown(void);
+
+#  define netdev_init()           vpnkit_init()
+#  define netdev_avail()          vpnkit_avail()
+#  define netdev_read(buf,buflen) vpnkit_read(buf,buflen)
+#  define netdev_send(buf,buflen) vpnkit_send(buf,buflen)
+#  define netdev_ifup(ifaddr)     vpnkit_ifup(ifaddr)
+#  define netdev_ifdown()         vpnkit_ifdown()
+#endif
+
 /* up_netdriver.c ***********************************************************/
 
 #ifdef CONFIG_SIM_NETDEV
 int netdriver_init(void);
 void netdriver_setmacaddr(unsigned char *macaddr);
+void netdriver_setmtu(int mtu);
 void netdriver_loop(void);
 #endif
 
-#ifdef CONFIG_RPTUN
-
-/* up_shmem.c ***************************************************************/
-
-void *shmem_open(const char *name, size_t size, int master);
-void shmem_close(void *mem);
-
 /* up_rptun.c ***************************************************************/
 
+#ifdef CONFIG_RPTUN
 int up_rptun_init(void);
 void up_rptun_loop(void);
-
 #endif
 
 #ifdef CONFIG_SIM_SPIFLASH

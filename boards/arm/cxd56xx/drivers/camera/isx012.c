@@ -164,7 +164,8 @@
  * Private Types
  ****************************************************************************/
 
-enum isx012_state_e {
+enum isx012_state_e
+{
   STATE_ISX012_PRESLEEP,
   STATE_ISX012_SLEEP,
   STATE_ISX012_ACTIVE,
@@ -173,7 +174,8 @@ enum isx012_state_e {
 
 typedef enum isx012_state_e isx012_state_t;
 
-struct isx012_reg_s {
+struct isx012_reg_s
+{
   uint16_t regaddr;
   uint16_t regval;
   uint8_t  regsize;
@@ -189,7 +191,8 @@ struct isx012_conv_v4l2_to_regval_s
 
 typedef struct isx012_conv_v4l2_to_regval_s isx012_conv_v4l2_to_regval_t;
 
-struct isx012_modeparam_s {
+struct isx012_modeparam_s
+{
   uint8_t  fps;         /* use ISX012 register setting value */
   uint32_t format;      /* use V4L2 definition */
   uint16_t hsize;
@@ -202,8 +205,8 @@ typedef struct isx012_modeparam_s isx012_modeparam_t;
 
 struct isx012_param_s
 {
-  isx012_modeparam_t monitor;  /* Parameter for monitor mode */
-  isx012_modeparam_t capture;  /* Parameter for capture mode */
+  isx012_modeparam_t video;  /* Parameter for video capture mode */
+  isx012_modeparam_t still;  /* Parameter for still capture mode */
 };
 
 typedef struct isx012_param_s isx012_param_t;
@@ -256,6 +259,8 @@ static int isx012_set_supported_frminterval(uint32_t fps_index,
 static int8_t isx012_get_maximum_fps(FAR struct v4l2_frmivalenum *frmival);
 static int isx012_set_shd(FAR isx012_dev_t *priv);
 
+static bool is_movie_needed(isx012_modeparam_t *param);
+
 /* video driver HAL infterface */
 
 static int isx012_open(FAR void *video_private);
@@ -290,7 +295,8 @@ static int isx012_refresh(void);
 static isx012_dev_t   g_isx012_private;
 
 #ifndef ISX012_NOT_USE_NSTBY
-static const isx012_reg_t g_isx012_presleep[] = {
+static const isx012_reg_t g_isx012_presleep[] =
+{
   {PLL_CKSEL, 0x00, 0x01}, /* PLL_CKSEL */
   {SRCCK_DIV, 0x00, 0x01}, /* SRCCK_DIV */
   {INCK_SET,  0x17, 0x01}, /* INCK_SET */
@@ -298,7 +304,8 @@ static const isx012_reg_t g_isx012_presleep[] = {
 #define ISX012_PRESLEEP_NENTRIES ARRAY_NENTRIES(g_isx012_presleep)
 #endif
 
-static const isx012_reg_t g_isx012_def_init[] = {
+static const isx012_reg_t g_isx012_def_init[] =
+{
 #ifdef ISX012_NOT_USE_NSTBY
   {PLL_CKSEL,         0x00, 0x01},
   {SRCCK_DIV,         0x00, 0x01},
@@ -343,7 +350,8 @@ static const isx012_reg_t g_isx012_def_init[] = {
 };
 #define ISX012_RESET_NENTRIES ARRAY_NENTRIES(g_isx012_def_init)
 
-static const uint8_t g_isx012_cxc_rgb_data[CXC_RGB_DATA_UNIT_NUM][CXC_RGB_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_cxc_rgb_data[CXC_RGB_DATA_UNIT_NUM]
+                                          [CXC_RGB_DATA_UNIT_SIZE] =
 {
   {0x01, 0x43, 0xc0, 0xf0, 0x4f, 0xfc, 0x13},  /* CXC_RGB_UNIT0  */
   {0x80, 0x44, 0x20, 0x21, 0x48, 0x04, 0x0e},  /* CXC_RGB_UNIT1  */
@@ -374,7 +382,8 @@ static const uint8_t g_isx012_cxc_rgb_data[CXC_RGB_DATA_UNIT_NUM][CXC_RGB_DATA_U
   {0x84, 0x03, 0xe1, 0x40, 0x28, 0x10, 0x0a},  /* CXC_RGB_UNIT26 */
 };
 
-static const uint8_t g_isx012_cxc_grb_data[CXC_GRB_DATA_UNIT_NUM][CXC_GRB_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_cxc_grb_data[CXC_GRB_DATA_UNIT_NUM]
+                                          [CXC_GRB_DATA_UNIT_SIZE] =
 {
   {0x00, 0x3d, 0x40, 0x0f, 0xc0, 0x03, 0xf2},  /* CXC_GRB_UNIT0  */
   {0x80, 0x7c, 0x80, 0x1f, 0xd8, 0x03, 0xf0},  /* CXC_GRB_UNIT1  */
@@ -405,7 +414,8 @@ static const uint8_t g_isx012_cxc_grb_data[CXC_GRB_DATA_UNIT_NUM][CXC_GRB_DATA_U
   {0x01, 0x82, 0xa0, 0x20, 0x20, 0x08, 0x08},  /* CXC_GRB_UNIT26 */
 };
 
-static const uint8_t g_isx012_shd_rgb_data[SHD_RGB_DATA_UNIT_NUM][SHD_RGB_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_shd_rgb_data[SHD_RGB_DATA_UNIT_NUM]
+                                          [SHD_RGB_DATA_UNIT_SIZE] =
 {
   {0xf1, 0x59, 0x52, 0x7b, 0x98, 0xc4, 0x9d, 0x23, 0x29, 0x87, 0x46}, /* SHD_RGB_UNIT0  */
   {0xc6, 0x81, 0xd1, 0x70, 0x56, 0xe4, 0x9c, 0x1b, 0x6d, 0x07, 0x48}, /* SHD_RGB_UNIT1  */
@@ -433,10 +443,11 @@ static const uint8_t g_isx012_shd_rgb_data[SHD_RGB_DATA_UNIT_NUM][SHD_RGB_DATA_U
   {0xe1, 0xd1, 0x91, 0x71, 0x38, 0xc4, 0x1b, 0x0a, 0xed, 0x86, 0x42}, /* SHD_RGB_UNIT23 */
   {0xcb, 0x49, 0xd1, 0x78, 0x86, 0x74, 0x9f, 0x2d, 0xb9, 0x88, 0x51}, /* SHD_RGB_UNIT24 */
   {0x11, 0x62, 0x93, 0x7c, 0x9c, 0x94, 0x1d, 0x1b, 0x41, 0x67, 0x46}, /* SHD_RGB_UNIT25 */
-  {0xcf, 0x81, 0x91, 0x77, 0x82, 0x54, 0x9f, 0x2a, 0x21, 0xa8, 0x4d}  /* SHD_RGB_UNIT26 */
+  {0xcf, 0x81, 0x91, 0x77, 0x82, 0x54, 0x9f, 0x2a, 0x21, 0xa8, 0x4d}, /* SHD_RGB_UNIT26 */
 };
 
-static const uint8_t g_isx012_shd_grb_data[SHD_GRB_DATA_UNIT_NUM][SHD_GRB_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_shd_grb_data[SHD_GRB_DATA_UNIT_NUM]
+                                          [SHD_GRB_DATA_UNIT_SIZE] =
 {
   {0xe8, 0xa9, 0x0f, 0x78, 0xe4, 0x13, 0x9d, 0xf0, 0x04, 0xe7, 0x39}, /* SHD_GRB_UNIT0  */
   {0xbd, 0x51, 0x0e, 0x6f, 0x94, 0x63, 0x1c, 0xea, 0x4c, 0x27, 0x3c}, /* SHD_GRB_UNIT1  */
@@ -464,10 +475,11 @@ static const uint8_t g_isx012_shd_grb_data[SHD_GRB_DATA_UNIT_NUM][SHD_GRB_DATA_U
   {0xde, 0x09, 0xcf, 0x70, 0x92, 0x73, 0x9b, 0xe0, 0xcc, 0x06, 0x38}, /* SHD_GRB_UNIT23 */
   {0xc0, 0x89, 0x4e, 0x74, 0xcc, 0x13, 0x1e, 0xfc, 0x84, 0x48, 0x45}, /* SHD_GRB_UNIT24 */
   {0x06, 0x7a, 0xd0, 0x7a, 0xe6, 0x33, 0x1d, 0xef, 0x24, 0x07, 0x3b}, /* SHD_GRB_UNIT25 */
-  {0xc4, 0xb1, 0x0e, 0x74, 0xca, 0x33, 0x1e, 0xfc, 0xc4, 0x07, 0x41}  /* SHD_GRB_UNIT26 */
+  {0xc4, 0xb1, 0x0e, 0x74, 0xca, 0x33, 0x1e, 0xfc, 0xc4, 0x07, 0x41}, /* SHD_GRB_UNIT26 */
 };
 
-static const uint8_t g_isx012_shd_r1_data[SHD_R1_DATA_UNIT_NUM][SHD_R1_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_shd_r1_data[SHD_R1_DATA_UNIT_NUM]
+                                         [SHD_R1_DATA_UNIT_SIZE] =
 {
   {0x10, 0x92, 0x10, 0x82, 0xf8, 0x43, 0x1f, 0xfb, 0xf0, 0xe7, 0x40}, /* SHD_R1_UNIT0   */
   {0x07, 0x92, 0xd0, 0x82, 0xec, 0x33, 0x9e, 0xed, 0x68, 0xe7, 0x3c}, /* SHD_R1_UNIT1   */
@@ -482,10 +494,11 @@ static const uint8_t g_isx012_shd_r1_data[SHD_R1_DATA_UNIT_NUM][SHD_R1_DATA_UNIT
   {0xc7, 0x41, 0x50, 0x7c, 0x7e, 0xd3, 0x19, 0xc5, 0x48, 0x86, 0x35}, /* SHD_R1_UNIT10  */
   {0xda, 0xa9, 0xcf, 0x8c, 0x42, 0x24, 0x20, 0xf5, 0x8c, 0x67, 0x3c}, /* SHD_R1_UNIT11  */
   {0xf6, 0x89, 0xd0, 0x88, 0x90, 0x34, 0x23, 0x0b, 0x15, 0xa8, 0x3f}, /* SHD_R1_UNIT12  */
-  {0x00, 0x72, 0x10, 0x89, 0x68, 0x04, 0x69, 0x00, 0x00, 0x19, 0x26}  /* SHD_R1_UNIT13  */
+  {0x00, 0x72, 0x10, 0x89, 0x68, 0x04, 0x69, 0x00, 0x00, 0x19, 0x26}, /* SHD_R1_UNIT13  */
 };
 
-static const uint8_t g_isx012_shd_r2_data[SHD_R2_DATA_UNIT_NUM][SHD_R2_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_shd_r2_data[SHD_R2_DATA_UNIT_NUM]
+                                         [SHD_R2_DATA_UNIT_SIZE] =
 {
   {0x3a, 0xe2, 0x11, 0x8c, 0x42, 0x74, 0xa1, 0x0c, 0x89, 0x08, 0x46}, /* SHD_R2_UNIT0   */
   {0x30, 0xe2, 0xd1, 0x8c, 0x36, 0x54, 0x20, 0xfe, 0xec, 0x47, 0x41}, /* SHD_R2_UNIT1   */
@@ -500,10 +513,11 @@ static const uint8_t g_isx012_shd_r2_data[SHD_R2_DATA_UNIT_NUM][SHD_R2_DATA_UNIT
   {0xe1, 0x61, 0x91, 0x84, 0xb6, 0x43, 0x9b, 0xcf, 0x9c, 0x66, 0x38}, /* SHD_R2_UNIT10  */
   {0xf6, 0xa1, 0x50, 0x97, 0x8e, 0x34, 0x22, 0x04, 0x01, 0x08, 0x40}, /* SHD_R2_UNIT11  */
   {0x15, 0x9a, 0x51, 0x92, 0xf2, 0xd4, 0xa5, 0x1d, 0x99, 0xa8, 0x43}, /* SHD_R2_UNIT12  */
-  {0x21, 0x82, 0x91, 0x92, 0xbe, 0xf4, 0x9e, 0xf3, 0x4c, 0x87, 0x38}  /* SHD_R2_UNIT13  */
+  {0x21, 0x82, 0x91, 0x92, 0xbe, 0xf4, 0x9e, 0xf3, 0x4c, 0x87, 0x38}, /* SHD_R2_UNIT13  */
 };
 
-static const uint8_t g_isx012_shd_b2_data[SHD_B2_DATA_UNIT_NUM][SHD_B2_DATA_UNIT_SIZE] =
+static const uint8_t g_isx012_shd_b2_data[SHD_B2_DATA_UNIT_NUM]
+                                         [SHD_B2_DATA_UNIT_SIZE] =
 {
   {0xef, 0x39, 0xcf, 0x74, 0x88, 0xb3, 0x1b, 0xdf, 0x20, 0x47, 0x3b}, /* SHD_B2_UNIT0   */
   {0xdf, 0x59, 0xcf, 0x77, 0x8c, 0x43, 0x1b, 0xd7, 0xb8, 0x46, 0x37}, /* SHD_B2_UNIT1   */
@@ -518,7 +532,7 @@ static const uint8_t g_isx012_shd_b2_data[SHD_B2_DATA_UNIT_NUM][SHD_B2_DATA_UNIT
   {0x95, 0xf9, 0x0e, 0x73, 0x48, 0x63, 0x98, 0xb9, 0xd8, 0xa5, 0x30}, /* SHD_B2_UNIT10  */
   {0xa5, 0xb1, 0x8d, 0x83, 0xf4, 0xa3, 0x1d, 0xe0, 0xd0, 0x06, 0x36}, /* SHD_B2_UNIT11  */
   {0xbe, 0xa9, 0x4e, 0x79, 0x50, 0xd4, 0x20, 0xf6, 0x54, 0xa7, 0x38}, /* SHD_B2_UNIT12  */
-  {0xc5, 0x91, 0xce, 0x7a, 0xf4, 0x03, 0x44, 0x00, 0x60, 0x60, 0x00}  /* SHD_B2_UNIT13  */
+  {0xc5, 0x91, 0xce, 0x7a, 0xf4, 0x03, 0x44, 0x00, 0x60, 0x60, 0x00}, /* SHD_B2_UNIT13  */
 };
 
 static const isx012_reg_t g_isx012_shd_thresholds[] =
@@ -549,36 +563,40 @@ static const isx012_reg_t g_isx012_shd_wb[] =
 #define ISX012_SHD_WB_NENTRIES ARRAY_NENTRIES(g_isx012_shd_wb)
 
 static isx012_conv_v4l2_to_regval_t
- g_isx012_supported_colorfx[ISX012_MAX_COLOREFFECT + 1] = {
+  g_isx012_supported_colorfx[ISX012_MAX_COLOREFFECT + 1] =
+{
   {V4L2_COLORFX_NONE,         REGVAL_EFFECT_NONE},
   {V4L2_COLORFX_BW,           REGVAL_EFFECT_MONOTONE},
   {V4L2_COLORFX_SEPIA,        REGVAL_EFFECT_SEPIA},
   {V4L2_COLORFX_NEGATIVE,     REGVAL_EFFECT_NEGPOS},
   {V4L2_COLORFX_SKETCH,       REGVAL_EFFECT_SKETCH},
   {V4L2_COLORFX_SOLARIZATION, REGVAL_EFFECT_SOLARIZATION},
-  {V4L2_COLORFX_PASTEL,       REGVAL_EFFECT_PASTEL}
+  {V4L2_COLORFX_PASTEL,       REGVAL_EFFECT_PASTEL},
 };
 
 static isx012_conv_v4l2_to_regval_t
- g_isx012_supported_presetwb[ISX012_MAX_PRESETWB + 1] = {
+  g_isx012_supported_presetwb[ISX012_MAX_PRESETWB + 1] =
+{
   {V4L2_WHITE_BALANCE_AUTO,         REGVAL_AWB_ATM},
   {V4L2_WHITE_BALANCE_INCANDESCENT, REGVAL_AWB_LIGHTBULB},
   {V4L2_WHITE_BALANCE_FLUORESCENT,  REGVAL_AWB_FLUORESCENTLIGHT},
   {V4L2_WHITE_BALANCE_DAYLIGHT,     REGVAL_AWB_CLEARWEATHER},
   {V4L2_WHITE_BALANCE_CLOUDY,       REGVAL_AWB_CLOUDYWEATHER},
-  {V4L2_WHITE_BALANCE_SHADE,        REGVAL_AWB_SHADE}
+  {V4L2_WHITE_BALANCE_SHADE,        REGVAL_AWB_SHADE},
 };
 
 static isx012_conv_v4l2_to_regval_t
- g_isx012_supported_photometry[ISX012_MAX_PHOTOMETRY + 1] = {
+  g_isx012_supported_photometry[ISX012_MAX_PHOTOMETRY + 1] =
+{
   {V4L2_EXPOSURE_METERING_AVERAGE,         REGVAL_PHOTOMETRY_AVERAGE},
   {V4L2_EXPOSURE_METERING_CENTER_WEIGHTED, REGVAL_PHOTOMETRY_CENTERWEIGHT},
   {V4L2_EXPOSURE_METERING_SPOT,            REGVAL_PHOTOMETRY_SPOT},
-  {V4L2_EXPOSURE_METERING_MATRIX,          REGVAL_PHOTOMETRY_MULTIPATTERN}
+  {V4L2_EXPOSURE_METERING_MATRIX,          REGVAL_PHOTOMETRY_MULTIPATTERN},
 };
 
 static isx012_conv_v4l2_to_regval_t
-  g_isx012_supported_iso[ISX012_MAX_ISO + 1] = {
+  g_isx012_supported_iso[ISX012_MAX_ISO + 1] =
+{
   {25 * 1000,   REGVAL_ISO_25},
   {32 * 1000,   REGVAL_ISO_32},
   {40 * 1000,   REGVAL_ISO_40},
@@ -597,7 +615,7 @@ static isx012_conv_v4l2_to_regval_t
   {800 * 1000,  REGVAL_ISO_800},
   {1000 * 1000, REGVAL_ISO_1000},
   {1250 * 1000, REGVAL_ISO_1250},
-  {1600 * 1000, REGVAL_ISO_1600}
+  {1600 * 1000, REGVAL_ISO_1600},
 };
 
 static struct video_devops_s g_isx012_video_devops =
@@ -701,7 +719,8 @@ static int isx012_putreg(isx012_dev_t *priv,
 }
 
 static int isx012_putreglist(isx012_dev_t *priv,
-                             FAR const isx012_reg_t *reglist, size_t nentries)
+                             FAR const isx012_reg_t *reglist,
+                             size_t nentries)
 {
   FAR const isx012_reg_t *entry;
   int ret = OK;
@@ -716,6 +735,7 @@ static int isx012_putreglist(isx012_dev_t *priv,
           return ret;
         }
     }
+
   return ret;
 }
 
@@ -741,6 +761,7 @@ static int isx012_chk_int_state(isx012_dev_t *priv,
       nxsig_usleep(wait_time * 1000);
       time += wait_time;
     }
+
   return ERROR;
 }
 
@@ -774,6 +795,21 @@ static int isx012_replace_fmt_v4l2val_to_regval(uint32_t v4l2val,
   return OK;
 }
 
+static bool is_movie_needed(isx012_modeparam_t *param)
+{
+  bool need = true;
+
+  if (param->format == V4L2_PIX_FMT_UYVY)
+    {
+      if (param->fps >= REGVAL_FPSTYPE_30FPS)   /* This means fps <= 30 */
+        {
+          need = false;
+        }
+    }
+
+  return need;
+}
+
 static int isx012_set_mode_param(isx012_dev_t *priv,
                                  enum v4l2_buf_type type,
                                  isx012_modeparam_t *param)
@@ -791,11 +827,31 @@ static int isx012_set_mode_param(isx012_dev_t *priv,
 
   if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
     {
-      fps_regaddr      = FPSTYPE_MONI;
-      fmt_regaddr      = OUTFMT_MONI;
-      sensmode_regaddr = SENSMODE_MONI;
-      hsize_regaddr    = HSIZE_MONI;
-      vsize_regaddr    = VSIZE_MONI;
+      if (is_movie_needed(param))
+        {
+          if (priv->mode == REGVAL_MODESEL_HREL)
+            {
+              /* In Half release state,
+               * the setting which need movie mode is prohibited.
+               */
+
+              return -EPERM;
+            }
+
+          fps_regaddr      = FPSTYPE_MOVIE;
+          fmt_regaddr      = OUTFMT_MOVIE;
+          sensmode_regaddr = SENSMODE_MOVIE;
+          hsize_regaddr    = HSIZE_MOVIE;
+          vsize_regaddr    = VSIZE_MOVIE;
+        }
+      else
+        {
+          fps_regaddr      = FPSTYPE_MONI;
+          fmt_regaddr      = OUTFMT_MONI;
+          sensmode_regaddr = SENSMODE_MONI;
+          hsize_regaddr    = HSIZE_MONI;
+          vsize_regaddr    = VSIZE_MONI;
+        }
     }
   else
     {
@@ -843,19 +899,22 @@ static int isx012_set_mode_param(isx012_dev_t *priv,
         break;
     }
 
-  ret = isx012_putreg(priv, sensmode_regaddr, sensmode, sizeof(uint8_t));
+  ret = isx012_putreg(priv, sensmode_regaddr,
+                      sensmode, sizeof(uint8_t));
   if (ret < 0)
     {
       return ret;
     }
 
-  ret = isx012_putreg(priv, hsize_regaddr,    param->hsize, sizeof(uint16_t));
+  ret = isx012_putreg(priv, hsize_regaddr,
+                      param->hsize, sizeof(uint16_t));
   if (ret < 0)
     {
       return ret;
     }
 
-  ret = isx012_putreg(priv, vsize_regaddr,    param->vsize, sizeof(uint16_t));
+  ret = isx012_putreg(priv, vsize_regaddr,
+                      param->vsize, sizeof(uint16_t));
   if (ret < 0)
     {
       return ret;
@@ -863,13 +922,15 @@ static int isx012_set_mode_param(isx012_dev_t *priv,
 
   if (format == REGVAL_OUTFMT_INTERLEAVE)
     {
-      ret = isx012_putreg(priv, HSIZE_TN, param->int_hsize, sizeof(uint16_t));
+      ret = isx012_putreg(priv, HSIZE_TN,
+                          param->int_hsize, sizeof(uint16_t));
       if (ret < 0)
         {
           return ret;
         }
 
-      ret = isx012_putreg(priv, VSIZE_TN, param->int_vsize, sizeof(uint16_t));
+      ret = isx012_putreg(priv, VSIZE_TN,
+                          param->int_vsize, sizeof(uint16_t));
       if (ret < 0)
         {
           return ret;
@@ -886,13 +947,13 @@ void isx012_callback(uint8_t code, uint32_t size, uint32_t addr)
 
   if (priv->mode == REGVAL_MODESEL_CAP)
     {
-      /* ISX012 capture mode = still capture */
+      /* ISX012 capture mode => still capture */
 
       type = V4L2_BUF_TYPE_STILL_CAPTURE;
     }
   else
     {
-      /* ISX012 monitor mode or halfrelease mode = video capture */
+      /* ISX012 monitor/halfrelease/movie mode => video capture */
 
       type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     }
@@ -927,6 +988,10 @@ static int isx012_change_camera_mode(isx012_dev_t *priv, uint8_t mode)
       case REGVAL_MODESEL_MON:
       case REGVAL_MODESEL_HREL:
         format_addr = OUTFMT_MONI;
+        break;
+
+      case REGVAL_MODESEL_MOV:
+        format_addr = OUTFMT_MOVIE;
         break;
 
       case REGVAL_MODESEL_CAP:
@@ -1008,6 +1073,7 @@ static int isx012_change_camera_mode(isx012_dev_t *priv, uint8_t mode)
 /****************************************************************************
  * isx012_change_device_state
  ****************************************************************************/
+
 static int isx012_change_device_state(isx012_dev_t *priv,
                                       isx012_state_t state)
 {
@@ -1171,16 +1237,16 @@ int init_isx012(FAR struct isx012_dev_s *priv)
 
   /* monitor mode default format: YUV4:2:2 QVGA */
 
-  priv->param.monitor.fps         = REGVAL_FPSTYPE_30FPS;
-  priv->param.monitor.format      = V4L2_PIX_FMT_UYVY;
-  priv->param.monitor.hsize       = VIDEO_HSIZE_QVGA;
-  priv->param.monitor.vsize       = VIDEO_VSIZE_QVGA;
-  priv->param.monitor.int_hsize   = 0;
-  priv->param.monitor.int_vsize   = 0;
+  priv->param.video.fps         = REGVAL_FPSTYPE_30FPS;
+  priv->param.video.format      = V4L2_PIX_FMT_UYVY;
+  priv->param.video.hsize       = VIDEO_HSIZE_QVGA;
+  priv->param.video.vsize       = VIDEO_VSIZE_QVGA;
+  priv->param.video.int_hsize   = 0;
+  priv->param.video.int_vsize   = 0;
 
   ret = isx012_set_mode_param(priv,
                               V4L2_BUF_TYPE_VIDEO_CAPTURE,
-                              &priv->param.monitor);
+                              &priv->param.video);
   if (ret < 0)
     {
       board_isx012_set_reset();
@@ -1189,16 +1255,16 @@ int init_isx012(FAR struct isx012_dev_s *priv)
 
   /* capture mode default format: JPEG FULLHD */
 
-  priv->param.capture.fps         = REGVAL_FPSTYPE_15FPS;
-  priv->param.capture.format      = V4L2_PIX_FMT_JPEG;
-  priv->param.capture.hsize       = VIDEO_HSIZE_FULLHD;
-  priv->param.capture.vsize       = VIDEO_VSIZE_FULLHD;
-  priv->param.capture.int_hsize   = 0;
-  priv->param.capture.int_vsize   = 0;
+  priv->param.still.fps         = REGVAL_FPSTYPE_15FPS;
+  priv->param.still.format      = V4L2_PIX_FMT_JPEG;
+  priv->param.still.hsize       = VIDEO_HSIZE_FULLHD;
+  priv->param.still.vsize       = VIDEO_VSIZE_FULLHD;
+  priv->param.still.int_hsize   = 0;
+  priv->param.still.int_vsize   = 0;
 
   ret = isx012_set_mode_param(priv,
                               V4L2_BUF_TYPE_STILL_CAPTURE,
-                              &priv->param.capture);
+                              &priv->param.still);
   if (ret < 0)
     {
       board_isx012_set_reset();
@@ -1344,7 +1410,14 @@ static int isx012_set_buftype(enum v4l2_buf_type type)
            *                 or MONITORING -> MONITORING
            */
 
-          mode = REGVAL_MODESEL_MON;
+          if (is_movie_needed(&priv->param.video))
+            {
+              mode = REGVAL_MODESEL_MOV;
+            }
+          else
+            {
+              mode = REGVAL_MODESEL_MON;
+            }
         }
     }
   else
@@ -1377,9 +1450,17 @@ static int isx012_set_buf(uint32_t bufaddr, uint32_t bufsize)
 {
   int ret;
   FAR struct isx012_dev_s *priv = &g_isx012_private;
-  cisif_param_t cis_param = {0};
-  cisif_sarea_t sarea = {0};
   isx012_modeparam_t *mode_param = NULL;
+
+  cisif_param_t cis_param =
+    {
+       0
+    };
+
+  cisif_sarea_t sarea =
+    {
+       0
+    };
 
   sarea.strg_addr     = (uint8_t *)bufaddr;
   sarea.strg_size     = bufsize;
@@ -1392,11 +1473,11 @@ static int isx012_set_buf(uint32_t bufaddr, uint32_t bufsize)
     {
       if (priv->mode == REGVAL_MODESEL_CAP)
         {
-          mode_param = &priv->param.capture;
+          mode_param = &priv->param.still;
         }
       else
         {
-          mode_param = &priv->param.monitor;
+          mode_param = &priv->param.video;
         }
 
       switch (mode_param->format)
@@ -1462,15 +1543,6 @@ static int isx012_check_fmt(enum v4l2_buf_type buf_type,
   switch (buf_type)
     {
       case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-        if (pixel_format != V4L2_PIX_FMT_UYVY)
-          {
-            /* Unsupported format */
-
-            return -EINVAL;
-          }
-
-        break;
-
       case V4L2_BUF_TYPE_STILL_CAPTURE:
         if ((pixel_format != V4L2_PIX_FMT_JPEG) &&
             (pixel_format != V4L2_PIX_FMT_JPEG_WITH_SUBIMG) &&
@@ -1501,22 +1573,6 @@ static int isx012_get_range_of_fmt(FAR struct v4l2_fmtdesc *format)
   switch (format->type)
     {
       case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-
-        switch (format->index)
-          {
-            case 0:  /* YUV 4:2:2 */
-
-              strncpy(format->description, "YUV 4:2:2", V4L2_FMT_DSC_MAX);
-              format-> pixelformat = V4L2_PIX_FMT_UYVY;
-
-              break;
-
-            default:  /* 1, 2, ... */
-              return -EINVAL;
-          }
-
-        break;
-
       case V4L2_BUF_TYPE_STILL_CAPTURE:
         switch (format->index)
           {
@@ -1558,7 +1614,8 @@ static int isx012_get_range_of_fmt(FAR struct v4l2_fmtdesc *format)
   return OK;
 }
 
-static int isx012_get_range_of_framesize(FAR struct v4l2_frmsizeenum *frmsize)
+static int isx012_get_range_of_framesize(
+                     FAR struct v4l2_frmsizeenum *frmsize)
 {
   int ret;
 
@@ -1718,11 +1775,11 @@ static int isx012_set_format(FAR struct v4l2_format *format)
   switch (format->type)
     {
       case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-        current_param = &priv->param.monitor;
+        current_param = &priv->param.video;
         break;
 
       case V4L2_BUF_TYPE_STILL_CAPTURE:
-        current_param = &priv->param.capture;
+        current_param = &priv->param.still;
         break;
 
       default:
@@ -1996,8 +2053,8 @@ static int isx012_set_frameinterval(FAR struct v4l2_streamparm *parm)
   int                     ret;
   int8_t                  fps;
   int8_t                  max_fps;
-  uint16_t                fps_regaddr;
-  FAR isx012_modeparam_t  *modeparam;
+  isx012_modeparam_t      mode_param;
+  FAR isx012_modeparam_t  *current_param;
   struct v4l2_frmivalenum frmival;
   FAR struct isx012_dev_s *priv = &g_isx012_private;
 
@@ -2011,27 +2068,27 @@ static int isx012_set_frameinterval(FAR struct v4l2_streamparm *parm)
   switch (frmival.buf_type)
     {
       case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-        modeparam = &priv->param.monitor;
-        fps_regaddr = FPSTYPE_MONI;
+        current_param = &priv->param.video;
         break;
 
       case V4L2_BUF_TYPE_STILL_CAPTURE:
-        modeparam = &priv->param.capture;
-        fps_regaddr = FPSTYPE_CAP;
+        current_param = &priv->param.still;
         break;
 
       default:
         return -EINVAL;
     }
 
+  memcpy(&mode_param, current_param, sizeof(mode_param));
+
   /* Get maximum fps settable value in current image format */
 
-  frmival.pixel_format        = modeparam->format;
-  frmival.height              = modeparam->vsize;
-  frmival.width               = modeparam->hsize;
+  frmival.pixel_format        = mode_param.format;
+  frmival.height              = mode_param.vsize;
+  frmival.width               = mode_param.hsize;
   frmival.subimg_pixel_format = V4L2_PIX_FMT_UYVY;
-  frmival.subimg_height       = modeparam->int_vsize;
-  frmival.subimg_width        = modeparam->int_hsize;
+  frmival.subimg_height       = mode_param.int_vsize;
+  frmival.subimg_width        = mode_param.int_hsize;
   max_fps = isx012_get_maximum_fps(&frmival);
   if (max_fps < 0)
     {
@@ -2043,13 +2100,17 @@ static int isx012_set_frameinterval(FAR struct v4l2_streamparm *parm)
       return -EINVAL;
     }
 
-  ret = isx012_putreg(priv, fps_regaddr, fps, sizeof(uint8_t));
-  if (ret < 0)
+  mode_param.fps = fps;
+
+  ret = isx012_set_mode_param(priv,
+                              parm->type,
+                              &mode_param);
+  if (ret != OK)
     {
       return ret;
     }
 
-  modeparam->fps = fps;
+  memcpy(current_param, &mode_param, sizeof(mode_param));
 
   return OK;
 }
@@ -2351,6 +2412,29 @@ static int isx012_get_range_of_ctrlval(FAR struct v4l2_query_ext_ctrl *range)
 
               break;
 
+            case V4L2_CID_3A_PARAMETER:
+              range->type          = V4L2_CTRL_TYPE_U16;
+              range->minimum       = 0;
+              range->maximum       = 65535;
+              range->step          = 1;
+              range->elems         = 3;
+              strncpy(range->name,
+                      "AWB/AE parameter",
+                      sizeof(range->name));
+
+              break;
+
+            case V4L2_CID_3A_STATUS:
+              range->type          = V4L2_CTRL_TYPE_INTEGER;
+              range->minimum       = 0;
+              range->maximum       = 3;
+              range->step          = 1;
+              strncpy(range->name,
+                      "AWB/AE status",
+                      sizeof(range->name));
+
+              break;
+
             default: /* Unsupported control id */
 
               return -EINVAL;
@@ -2471,6 +2555,7 @@ static int isx012_get_ctrlval(uint16_t ctrl_class,
   FAR struct isx012_dev_s *priv = &g_isx012_private;
   int16_t    readvalue;
   uint8_t    cnt;
+  uint8_t    threea_enable;
   uint16_t   read_src;
   uint16_t   *read_dst;
   int        ret = -EINVAL;
@@ -2514,7 +2599,16 @@ static int isx012_get_ctrlval(uint16_t ctrl_class,
                                         ISX012_REG_AUTOWB,
                                         ISX012_SIZE_AUTOWB);
 
-              control->value = (~readvalue) & REGVAL_CPUEXT_BIT_AWBSTOP;
+              /* Convert to V4L2 value */
+
+              if (readvalue & REGVAL_CPUEXT_BIT_AWBSTOP)
+                {
+                  control->value = false;
+                }
+              else
+                {
+                  control->value = true;
+                }
 
               break;
 
@@ -2781,6 +2875,76 @@ static int isx012_get_ctrlval(uint16_t ctrl_class,
                 }
 
               control->value = g_isx012_supported_photometry[cnt].v4l2;
+
+              break;
+
+            case V4L2_CID_3A_PARAMETER:
+              if (control->p_u16 == NULL)
+                {
+                  return -EINVAL;
+                }
+
+              /* Get AWB parameter */
+
+              control->p_u16[0] = isx012_getreg(priv,
+                                                RATIO_R,
+                                                2);
+              control->p_u16[1] = isx012_getreg(priv,
+                                                RATIO_B,
+                                                2);
+
+              /* Get AE parameter */
+
+              control->p_u16[2] = isx012_getreg(priv,
+                                                AELEVEL,
+                                                2);
+
+              break;
+
+            case V4L2_CID_3A_STATUS:
+
+              /* Initialize returned status */
+
+              control->value = V4L2_3A_STATUS_STABLE;
+
+              /* Get AWB/AE enable or not */
+
+              threea_enable = isx012_getreg(priv,
+                                            CPUEXT,
+                                            1);
+
+              /* Check AWB */
+
+              if ((threea_enable & REGVAL_CPUEXT_BIT_AWBSTOP)
+                  != REGVAL_CPUEXT_BIT_AWBSTOP)
+                {
+                  /* Check AWB status */
+
+                  readvalue = isx012_getreg(priv,
+                                            AWBSTS,
+                                            1);
+                  if (readvalue != REGVAL_AWBSTS_STOP) /* AWB is not stopped */
+                    {
+                      control->value |= V4L2_3A_STATUS_AWB_OPERATING;
+                    }
+                }
+
+              /* Check AE */
+
+              if ((threea_enable & REGVAL_CPUEXT_BIT_AESTOP)
+                  != REGVAL_CPUEXT_BIT_AESTOP)
+                {
+                  /* Check AE status */
+
+                  readvalue = isx012_getreg(priv,
+                                            AESTS,
+                                            1);
+                  if (readvalue != REGVAL_AESTS_STOP) /* AE is not stopped */
+                    {
+                      control->value |= V4L2_3A_STATUS_AE_OPERATING;
+                    }
+                }
+              break;
 
             default: /* Unsupported control id */
 
@@ -3295,7 +3459,8 @@ static int isx012_set_ctrlval(uint16_t ctrl_class,
             case V4L2_CID_AUTO_N_PRESET_WHITE_BALANCE:
               for (cnt = 0; cnt <= ISX012_MAX_PRESETWB; cnt++)
                 {
-                  if (g_isx012_supported_presetwb[cnt].v4l2 == control->value)
+                  if (g_isx012_supported_presetwb[cnt].v4l2
+                      == control->value)
                     {
                       ret = OK;
                       break;
@@ -3338,6 +3503,39 @@ static int isx012_set_ctrlval(uint16_t ctrl_class,
                                   ISX012_REG_3ALOCK,
                                   regval,
                                   ISX012_SIZE_3ALOCK);
+
+              break;
+
+            case V4L2_CID_3A_PARAMETER:
+
+              /* AWB parameter : red */
+
+              ret = isx012_putreg(priv,
+                                  INIT_CONT_INR,
+                                  control->p_u16[0],
+                                  2);
+              ret = isx012_putreg(priv,
+                                  INIT_CONT_OUTR,
+                                  control->p_u16[0],
+                                  2);
+
+              /* AWB parameter : blue */
+
+              ret = isx012_putreg(priv,
+                                  INIT_CONT_INB,
+                                  control->p_u16[1],
+                                  2);
+              ret = isx012_putreg(priv,
+                                  INIT_CONT_OUTB,
+                                  control->p_u16[1],
+                                  2);
+
+              /* AE parameter */
+
+              ret = isx012_putreg(priv,
+                                  AE_START_LEVEL,
+                                  control->p_u16[2],
+                                  2);
 
               break;
 
@@ -3631,6 +3829,7 @@ static int isx012_set_shd(FAR isx012_dev_t *priv)
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+
 int isx012_register(FAR struct i2c_master_s *i2c)
 {
   FAR struct isx012_dev_s *priv = &g_isx012_private;

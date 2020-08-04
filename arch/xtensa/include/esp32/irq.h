@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-/* This file should never be included directed but, rather, only indirectly
+/* This file should never be included directly but, rather, only indirectly
  * through nuttx/irq.h
  */
 
@@ -53,8 +53,9 @@
 /* Interrupt Matrix
  *
  * The Interrupt Matrix embedded in the ESP32 independently allocates
- * peripheral interrupt sources to the two CPUs’ peripheral interrupts. This
- * configuration is highly flexible in order to meet many different needs.
+ * peripheral interrupt sources to the two CPUs’ peripheral interrupts.
+ * This configuration is highly flexible in order to meet many different
+ * needs.
  *
  * Features
  * - Accepts 71 peripheral interrupt sources as input.
@@ -233,9 +234,9 @@
 #define ESP32_IRQ_CPU_CPU2          (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_CPU_CPU2)
 #define ESP32_IRQ_CPU_CPU3          (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_CPU_CPU3)
 #define ESP32_IRQ_SPI0              (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_SPI0)
-#define ESP32_IRQ_SPI1              (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_SPI1
+#define ESP32_IRQ_SPI1              (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_SPI1)
 #define ESP32_IRQ_SPI2              (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_SPI2)
-#define ESP32_IRQ_SPI3              (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_SPI3
+#define ESP32_IRQ_SPI3              (XTENSA_IRQ_FIRSTPERIPH+ESP32_PERIPH_SPI3)
 
 #define ESP32_IRQ_SREG0             ESP32_IRQ_MAC
 #define ESP32_NIRQS_SREG0           32
@@ -291,9 +292,9 @@
 
 #define ESP32_NIRQ_PERIPH           ESP32_NPERIPHERALS
 
-/* Second level GPIO interrupts.  GPIO interrupts are decoded and dispatched as
- * a second level of decoding:  The first level dispatches to the GPIO interrupt
- * handler.  The second to the decoded GPIO interrupt handler.
+/* Second level GPIO interrupts.  GPIO interrupts are decoded and dispatched
+ * as a second level of decoding:  The first level dispatches to the GPIO
+ * interrupt handler.  The second to the decoded GPIO interrupt handler.
  */
 
 #ifdef CONFIG_ESP32_GPIO_IRQ

@@ -82,29 +82,6 @@ static uint32_t s_last_regs[XCPTCONTEXT_REGS];
  ****************************************************************************/
 
 /****************************************************************************
- * Name: up_getsp
- ****************************************************************************/
-
-/* I don't know if the builtin to get SP is enabled */
-
-static inline uint32_t up_getsp(void)
-{
-#if 0
-  uint32_t sp;
-
-  __asm__
-  (
-    "\tmov %0, sp\n\t"
-    : "=r"(sp)
-  );
-
-  return sp;
-#else
-  return 0;
-#endif
-}
-
-/****************************************************************************
  * Name: up_stackdump
  ****************************************************************************/
 
@@ -155,7 +132,7 @@ static inline void up_showtasks(void)
 {
   /* Dump interesting properties of each task in the crash environment */
 
-  sched_foreach(up_taskdump, NULL);
+  nxsched_foreach(up_taskdump, NULL);
 }
 #else
 #  define up_showtasks()
@@ -233,7 +210,7 @@ static int assert_tracecallback(FAR struct usbtrace_s *trace, FAR void *arg)
 static void up_dumpstate(void)
 {
   struct tcb_s *rtcb = running_task();
-  uint32_t sp = up_getsp();
+  uint32_t sp = or1k_getsp();
   uint32_t ustackbase;
   uint32_t ustacksize;
 #if CONFIG_ARCH_INTERRUPTSTACK > 3
@@ -363,8 +340,7 @@ static void up_dumpstate(void)
  * Name: _up_assert
  ****************************************************************************/
 
-static void _up_assert(int errorcode) noreturn_function;
-static void _up_assert(int errorcode)
+static void _up_assert(void)
 {
   /* Flush any buffered SYSLOG data */
 
@@ -393,7 +369,6 @@ static void _up_assert(int errorcode)
 #if CONFIG_BOARD_RESET_ON_ASSERT >= 2
       board_reset(CONFIG_BOARD_ASSERT_RESET_VALUE);
 #endif
-      exit(errorcode);
     }
 }
 
@@ -405,7 +380,7 @@ static void _up_assert(int errorcode)
  * Name: up_assert
  ****************************************************************************/
 
-void up_assert(const uint8_t *filename, int lineno)
+void up_assert(const char *filename, int lineno)
 {
 #if CONFIG_TASK_NAME_SIZE > 0 && defined(CONFIG_DEBUG_ALERT)
   struct tcb_s *rtcb = running_task();
@@ -432,8 +407,8 @@ void up_assert(const uint8_t *filename, int lineno)
   syslog_flush();
 
 #ifdef CONFIG_BOARD_CRASHDUMP
-  board_crashdump(up_getsp(), running_task(), filename, lineno);
+  board_crashdump(or1k_getsp(), running_task(), filename, lineno);
 #endif
 
-  _up_assert(EXIT_FAILURE);
+  _up_assert();
 }

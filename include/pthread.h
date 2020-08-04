@@ -207,10 +207,10 @@
  */
 
 #define pthread_setname_np(thread, name) \
-  prctl((int)PR_SET_NAME, (char*)name, (int)thread)
+  prctl((int)PR_SET_NAME_EXT, (char*)name, (int)thread)
 
 #define pthread_getname_np(thread, name) \
-  prctl((int)PR_GET_NAME, (char*)name, (int)thread)
+  prctl((int)PR_GET_NAME_EXT, (char*)name, (int)thread)
 
 /********************************************************************************
  * Public Type Definitions
@@ -344,9 +344,16 @@ typedef struct pthread_mutex_s pthread_mutex_t;
 #  define PTHREAD_MUTEX_INITIALIZER {NULL, SEM_INITIALIZER(1), -1, \
                                      __PTHREAD_MUTEX_DEFAULT_FLAGS, \
                                      PTHREAD_MUTEX_DEFAULT, 0}
+#  define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
+                                     {NULL, SEM_INITIALIZER(1), -1, \
+                                     __PTHREAD_MUTEX_DEFAULT_FLAGS, \
+                                     PTHREAD_MUTEX_RECURSIVE, 0}
 #elif defined(CONFIG_PTHREAD_MUTEX_TYPES)
 #  define PTHREAD_MUTEX_INITIALIZER {SEM_INITIALIZER(1), -1, \
                                      PTHREAD_MUTEX_DEFAULT, 0}
+#  define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
+                                     {SEM_INITIALIZER(1), -1, \
+                                     PTHREAD_MUTEX_RECURSIVE, 0}
 #elif !defined(CONFIG_PTHREAD_MUTEX_UNSAFE)
 #  define PTHREAD_MUTEX_INITIALIZER {NULL, SEM_INITIALIZER(1), -1,\
                                      __PTHREAD_MUTEX_DEFAULT_FLAGS}
@@ -438,12 +445,12 @@ int pthread_attr_init(FAR pthread_attr_t *attr);
 
 /* An attributes object can be deleted when it is no longer needed. */
 
-int pthread_attr_destroy(pthread_attr_t *attr);
+int pthread_attr_destroy(FAR pthread_attr_t *attr);
 
 /* Set or obtain the default scheduling algorithm */
 
 int pthread_attr_setschedpolicy(FAR pthread_attr_t *attr, int policy);
-int pthread_attr_getschedpolicy(FAR const pthread_attr_t *attr, int *policy);
+int pthread_attr_getschedpolicy(FAR const pthread_attr_t *attr, FAR int *policy);
 int pthread_attr_setschedparam(FAR pthread_attr_t *attr,
                                FAR const struct sched_param *param);
 int pthread_attr_getschedparam(FAR const pthread_attr_t *attr,
@@ -466,7 +473,8 @@ int pthread_attr_getaffinity_np(FAR const pthread_attr_t *attr,
 /* Set or obtain the default stack size */
 
 int pthread_attr_setstacksize(FAR pthread_attr_t *attr, size_t stacksize);
-int pthread_attr_getstacksize(FAR const pthread_attr_t *attr, size_t *stackaddr);
+int pthread_attr_getstacksize(FAR const pthread_attr_t *attr,
+                              FAR size_t *stackaddr);
 
 /* Set or obtain stack address and size attributes */
 
@@ -566,8 +574,9 @@ int pthread_mutexattr_getpshared(FAR const pthread_mutexattr_t *attr,
                                  FAR int *pshared);
 int pthread_mutexattr_setpshared(FAR pthread_mutexattr_t *attr,
                                  int pshared);
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *type);
-int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+int pthread_mutexattr_gettype(FAR const pthread_mutexattr_t *attr,
+                              FAR int *type);
+int pthread_mutexattr_settype(FAR pthread_mutexattr_t *attr, int type);
 int pthread_mutexattr_getprotocol(FAR const pthread_mutexattr_t *attr,
                                   FAR int *protocol);
 int pthread_mutexattr_setprotocol(FAR pthread_mutexattr_t *attr,
@@ -620,6 +629,11 @@ int pthread_cond_timedwait(FAR pthread_cond_t *cond,
                            FAR pthread_mutex_t *mutex,
                            FAR const struct timespec *abstime);
 
+int pthread_cond_clockwait(FAR pthread_cond_t *cond,
+                           FAR pthread_mutex_t *mutex,
+                           clockid_t clockid,
+                           FAR const struct timespec *abstime);
+
 /* Barrier attributes */
 
 int pthread_barrierattr_destroy(FAR pthread_barrierattr_t *attr);
@@ -650,9 +664,15 @@ int pthread_rwlock_init(FAR pthread_rwlock_t *rw_lock,
 int pthread_rwlock_rdlock(pthread_rwlock_t *lock);
 int pthread_rwlock_timedrdlock(FAR pthread_rwlock_t *lock,
                                FAR const struct timespec *abstime);
+int pthread_rwlock_clockrdlock(FAR pthread_rwlock_t *lock,
+                               clockid_t clockid,
+                               FAR const struct timespec *abstime);
 int pthread_rwlock_tryrdlock(FAR pthread_rwlock_t *lock);
 int pthread_rwlock_wrlock(FAR pthread_rwlock_t *lock);
 int pthread_rwlock_timedwrlock(FAR pthread_rwlock_t *lock,
+                               FAR const struct timespec *abstime);
+int pthread_rwlock_clockwrlock(FAR pthread_rwlock_t *lock,
+                               clockid_t clockid,
                                FAR const struct timespec *abstime);
 int pthread_rwlock_trywrlock(FAR pthread_rwlock_t *lock);
 int pthread_rwlock_unlock(FAR pthread_rwlock_t *lock);
@@ -682,8 +702,16 @@ int pthread_spin_unlock(FAR pthread_spinlock_t *lock);
 
 #else /* __INCLUDE_PTHREAD_H */
 
+/********************************************************************************
+ * Included Files
+ ********************************************************************************/
+
 #include <sys/types.h>
 #include <stdbool.h>
+
+/********************************************************************************
+ * Public Type Definitions
+ ********************************************************************************/
 
 /* Avoid circular dependencies by assuring that simple type definitions are
  * available in any inclusion ordering.

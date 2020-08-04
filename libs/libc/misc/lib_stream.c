@@ -1,7 +1,8 @@
 /****************************************************************************
  * libs/libc/misc/lib_stream.c
  *
- *   Copyright (C) 2007, 2011, 2013-2014, 2017 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2007, 2011, 2013-2014, 2017 Gregory Nutt.
+ *   All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,8 +52,7 @@
 
 #include "libc.h"
 
-#if (!defined(CONFIG_BUILD_PROTECTED) && !defined(CONFIG_BUILD_KERNEL)) || \
-      defined(__KERNEL__)
+#if defined(CONFIG_BUILD_FLAT) || defined(__KERNEL__)
 
 /****************************************************************************
  * Public Functions
@@ -73,8 +73,7 @@ void lib_stream_initialize(FAR struct task_group_s *group)
   FAR struct streamlist *list;
   int i;
 
-#if (defined(CONFIG_BUILD_PROTECTED) || defined(CONFIG_BUILD_KERNEL)) && \
-     defined(CONFIG_MM_KERNEL_HEAP)
+#ifdef CONFIG_MM_KERNEL_HEAP
   DEBUGASSERT(group && group->tg_streamlist);
   list = group->tg_streamlist;
 #else
@@ -89,7 +88,7 @@ void lib_stream_initialize(FAR struct task_group_s *group)
   /* Initialize each FILE structure */
 
   for (i = 0; i < CONFIG_NFILE_STREAMS; i++)
-   {
+    {
       FAR struct file_struct *stream = &list->sl_streams[i];
 
       /* Clear the IOB */
@@ -123,12 +122,9 @@ void lib_stream_initialize(FAR struct task_group_s *group)
 void lib_stream_release(FAR struct task_group_s *group)
 {
   FAR struct streamlist *list;
-#ifndef CONFIG_STDIO_DISABLE_BUFFERING
   int i;
-#endif
 
-#if (defined(CONFIG_BUILD_PROTECTED) || defined(CONFIG_BUILD_KERNEL)) && \
-     defined(CONFIG_MM_KERNEL_HEAP)
+#ifdef CONFIG_MM_KERNEL_HEAP
   DEBUGASSERT(group && group->tg_streamlist);
   list = group->tg_streamlist;
 #else
@@ -156,11 +152,7 @@ void lib_stream_release(FAR struct task_group_s *group)
       if (stream->fs_bufstart != NULL &&
           (stream->fs_flags & __FS_FLAG_UBF) == 0)
         {
-#ifndef CONFIG_BUILD_KERNEL
-          /* Release memory from the user heap */
-
-          sched_ufree(stream->fs_bufstart);
-#else
+#ifdef CONFIG_BUILD_KERNEL
           /* If the exiting group is unprivileged, then it has an address
            * environment.  Don't bother to release the memory in this case...
            * There is no point since the memory lies in the user heap which
@@ -170,14 +162,16 @@ void lib_stream_release(FAR struct task_group_s *group)
            */
 
           if ((group->tg_flags & GROUP_FLAG_PRIVILEGED) != 0)
-            {
-              sched_kfree(stream->fs_bufstart);
-            }
 #endif
+            {
+              group_free(group, stream->fs_bufstart);
+            }
         }
     }
 #endif
+
+  UNUSED(i);
 }
 
 #endif /* CONFIG_NFILE_STREAMS > 0 */
-#endif /* (!CONFIG_BUILD_PROTECTED && !CONFIG_BUILD_KERNEL) || __KERNEL__ */
+#endif /* CONFIG_BUILD_FLAT || __KERNEL__ */

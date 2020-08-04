@@ -58,7 +58,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifdef CONFIG_CXD56_DECI_KX022
+#ifdef CONFIG_SENSORS_KX022_SCU_DECI
 #  define KX022_SEQ_TYPE SEQ_TYPE_DECI
 #else
 #  define KX022_SEQ_TYPE SEQ_TYPE_NORMAL
@@ -284,8 +284,14 @@ static int kx022_seqinit(FAR struct kx022_dev_s *priv)
 
   /* Set instruction and sample data information to sequencer */
 
-  seq_setinstruction(priv->seq, g_kx022inst, itemsof(g_kx022inst));
-  seq_setsample(priv->seq, KX022_BYTESPERSAMPLE, 0, KX022_ELEMENTSIZE, false);
+  seq_setinstruction(priv->seq,
+                     g_kx022inst,
+                     itemsof(g_kx022inst));
+  seq_setsample(priv->seq,
+                KX022_BYTESPERSAMPLE,
+                0,
+                KX022_ELEMENTSIZE,
+                false);
 
   return OK;
 }

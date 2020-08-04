@@ -39,9 +39,9 @@
 #ifndef __ARCH_ARM_SRC_CXD56XX_HARDWARE_CXD5602_BACKUPMEM_H
 #define __ARCH_ARM_SRC_CXD56XX_HARDWARE_CXD5602_BACKUPMEM_H
 
-/***************************************************************************
+/****************************************************************************
  * Included Files
- ***************************************************************************/
+ ****************************************************************************/
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -60,7 +60,9 @@ typedef struct
   uint32_t chip_revision;               /* 0x04400004 ~ 0x04400007 */
   uint32_t sbl_version;                 /* 0x04400008 ~ 0x0440000b */
   uint32_t sysfw_version;               /* 0x0440000c ~ 0x0440000f */
-  uint32_t reserved_version[4];         /* 0x04400010 ~ 0x0440001f */
+  uint32_t gnssfw_version;              /* 0x04400010 ~ 0x04400013 */
+  uint32_t reserved_version[2];         /* 0x04400014 ~ 0x0440001b */
+  uint32_t fw_free_space;               /* 0x0440001c ~ 0x0440001f */
   uint32_t bootcause;                   /* 0x04400020 ~ 0x04400023 */
   uint32_t bootmask;                    /* 0x04400024 ~ 0x04400027 */
   uint32_t bootreserve;                 /* 0x04400028 ~ 0x0440002b */
@@ -70,7 +72,7 @@ typedef struct
   uint32_t irq_inv_map[4];              /* 0x04400060 ~ 0x0440006f */
   uint8_t  reserved0[0x100 - 0x70];     /* 0x04400070 ~ 0x044000ff */
   uint8_t  power_monitor_data[0x420];   /* 0x04400100 ~ 0x0440051f */
-  uint8_t  reserved1[2 * 1024 - 0x520]; /* 0x04400520 ~ 0x044007ff (2KB-0x520)*/
+  uint8_t  reserved1[2 * 1024 - 0x520]; /* 0x04400520 ~ 0x044007ff (2KB-0x520) */
   uint8_t  gnss_backup_data[24 * 1024]; /* 0x04400800 ~ 0x044067ff (24KB) */
   uint8_t  gnss_pvtlog_data[4 * 1024];  /* 0x04406800 ~ 0x044077ff (4KB) */
   uint8_t  reserved_romcode[2 * 1024];  /* 0x04407800 ~ 0x04407fff (2KB) */
@@ -82,7 +84,7 @@ typedef struct
  ****************************************************************************/
 
 /****************************************************************************
- * Public Functions
+ * Public Functions Prototypes
  ****************************************************************************/
 
 #endif /* __ARCH_ARM_SRC_CXD56XX_HARDWARE_CXD5602_BACKUPMEM_H */

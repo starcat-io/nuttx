@@ -60,10 +60,10 @@
  * low-power wake up signal.
  * Also, only SW3 can be a non-maskable interrupt.
  *
- *   Switch    GPIO Function
- *   --------- ---------------------------------------------------------------
- *   SW2       PTC6/SPI0_SOUT/PD0_EXTRG/I2S0_RX_BCLK/FB_AD9/I2S0_MCLK/LLWU_P10
- *   SW3       PTA4/FTM0_CH1/NMI_b/LLWU_P3
+ *   Switch   GPIO Function
+ *   -------- ---------------------------------------------------------------
+ *   SW2      PTC6/SPI0_SOUT/PD0_EXTRG/I2S0_RX_BCLK/FB_AD9/I2S0_MCLK/LLWU_P10
+ *   SW3      PTA4/FTM0_CH1/NMI_b/LLWU_P3
  */
 
 /****************************************************************************
@@ -81,12 +81,13 @@
  *
  ****************************************************************************/
 
-void board_button_initialize(void)
+uint32_t board_button_initialize(void)
 {
   /* Configure the two buttons as inputs */
 
   kinetis_pinconfig(GPIO_SW2);
   kinetis_pinconfig(GPIO_SW3);
+  return NUM_BUTTONS;
 }
 
 /****************************************************************************

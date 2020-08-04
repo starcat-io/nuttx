@@ -52,6 +52,7 @@
 #include "cxd56_charger.h"
 #include "cxd56_gs2200m.h"
 #include "cxd56_i2cdev.h"
+#include "cxd56_spidev.h"
 #include "cxd56_sdcard.h"
 #include "cxd56_wdt.h"
 #include "cxd56_gpioif.h"
@@ -61,12 +62,15 @@
 #include "cxd56_ak09912.h"
 #include "cxd56_apds9930.h"
 #include "cxd56_apds9960.h"
+#include "cxd56_bcm20706.h"
 #include "cxd56_bh1721fvc.h"
 #include "cxd56_bh1745nuc.h"
 #include "cxd56_bm1383glv.h"
 #include "cxd56_bm1422gmv.h"
 #include "cxd56_bmi160.h"
 #include "cxd56_bmp280.h"
+#include "cxd56_emmcdev.h"
+#include "cxd56_spisd.h"
 #include "cxd56_kx022.h"
 #include "cxd56_lt1pa01.h"
 #include "cxd56_rpr0521rs.h"
@@ -78,7 +82,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Clocking ****************************************************************/
+/* Clocking *****************************************************************/
 
 #ifdef CONFIG_CXD56_80MHz
 #  define BOARD_FCLKOUT_FREQUENCY   (80000000)
@@ -86,7 +90,7 @@
 #  define BOARD_FCLKOUT_FREQUENCY   (100000000)
 #endif
 
-/* UART clocking ***********************************************************/
+/* UART clocking ************************************************************/
 
 /* Configure all UARTs to use the XTAL input frequency */
 
@@ -94,7 +98,7 @@
 #define BOARD_UART1_BASEFREQ        BOARD_FCLKOUT_FREQUENCY
 #define BOARD_UART2_BASEFREQ        CONFIG_CXD56_XOSC_CLOCK
 
-/* LED definitions *********************************************************/
+/* LED definitions **********************************************************/
 
 #define GPIO_LED1           (PIN_I2S1_BCK)
 #define GPIO_LED2           (PIN_I2S1_LRCK)
@@ -125,11 +129,11 @@
 #define LED_ASSERTION           (BOARD_LED1_BIT | BOARD_LED2_BIT | BOARD_LED3_BIT)
 #define LED_PANIC               (BOARD_LED4_BIT)
 
-/* Buttons definitions *****************************************************/
+/* Buttons definitions ******************************************************/
 
 #define BOARD_NUM_BUTTONS   (2)
 
-/* Power Control definitions ***********************************************/
+/* Power Control definitions ************************************************/
 
 /*   For SPRESENSE board:
  *
@@ -184,7 +188,7 @@ enum board_power_device
 
   POWER_AUDIO_AVDD      = PMIC_GPO(1),
   POWER_AUDIO_MUTE      = PMIC_GPO(6),
-  POWER_IMAGE_SENSOR    = PMIC_GPO(4) | PMIC_GPO(5) | PMIC_GPO(7),
+  POWER_IMAGE_SENSOR    = PMIC_GPO(4),
 
   POWER_BTBLE           = PMIC_NONE,
   POWER_SENSOR          = PMIC_NONE,
@@ -192,17 +196,22 @@ enum board_power_device
   POWER_LTE             = PMIC_GPO(2),
 };
 
-/* CXD5247 audio control definitions ***************************************/
+/* Power Off Level definitions **********************************************/
+
+#define BOARD_POWEROFF_DEEP (0)
+#define BOARD_POWEROFF_COLD (1)
+
+/* CXD5247 audio control definitions ****************************************/
 
 #define CXD5247_XRST  PIN_SPI3_CS2_X
 #define CXD5247_AVDD  (0x01)
 #define CXD5247_DVDD  (0x02)
 
-/* LCD Display clocking ****************************************************/
+/* LCD Display clocking *****************************************************/
 
 #define ILI9340_SPI_MAXFREQUENCY    40000000
 
-/* Display device pin definitions ******************************************/
+/* Display device pin definitions *******************************************/
 
 #if defined(CONFIG_LCD_ON_MAIN_BOARD) /* Display connected to main board. */
 
@@ -234,12 +243,12 @@ enum board_power_device
 
 #endif
 
-/* Sensor device bus definitions *******************************************/
+/* Sensor device bus definitions ********************************************/
 
 #define SENSOR_I2C      0
 #define SENSOR_SPI      3
 
-/* Imager device pin definitions *******************************************/
+/* Imager device pin definitions ********************************************/
 
 #define IMAGER_RST      PIN_SDIO_DIR1_3
 #define IMAGER_SLEEP    PIN_SDIO_DIR0
@@ -254,6 +263,14 @@ enum board_power_device
  */
 
 #define BOARDIOC_USBDEV_SETNOTIFYSIG      (BOARDIOC_USER+0x0001)
+
+/* Altair modem device pin definitions **************************************/
+
+#define ALTMDM_SLAVE_REQ          PIN_SPI2_SCK
+#define ALTMDM_MASTER_REQ         PIN_RTC_IRQ_OUT
+#define ALTMDM_WAKEUP             PIN_SPI2_MOSI
+#define ALTMDM_SHUTDOWN           PIN_SPI2_MISO
+#define ALTMDM_LTE_POWER_BUTTON   PIN_AP_CLK
 
 /****************************************************************************
  * Public Types

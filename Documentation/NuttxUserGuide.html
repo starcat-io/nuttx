@@ -14,7 +14,7 @@
       <h1><big><font color="#3c34ec"><i>NuttX Operating System<p>User's Manual</i></font></big></h1>
       <p><small>by</small></p>
       <p>Gregory Nutt<p>
-      <p>Last Updated: October 16, 2019</p>
+      <p>Last Updated: May 25, 2020</p>
     </td>
   </tr>
 </table>
@@ -200,10 +200,8 @@ paragraphs.
 </p>
 <ul>
   <li><a href="#taskcreate">2.1.1 task_create</a></li>
-  <li><a href="#taskinit">2.1.2 task_init</a></li>
-  <li><a href="#taskactivate">2.1.3 task_activate</a></li>
-  <li><a href="#taskdelete">2.1.4 task_delete</a></li>
-  <li><a href="#taskrestart">2.1.5 task_restart</a></li>
+  <li><a href="#taskdelete">2.1.2 task_delete</a></li>
+  <li><a href="#taskrestart">2.1.3 task_restart</a></li>
 </ul>
 <p>
   Non-standard extensions to VxWorks-like interfaces to support POSIX <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:cancellation-points">Cancellation Points</a>.
@@ -345,127 +343,7 @@ VxWorks provides the following similar interface:
 <li>A variable number of parameters can be passed to a task (VxWorks supports ten).
 </ul>
 
-<H3><a name="taskinit">2.1.2 task_init</a></H3>
-
-<p>
-<b>Function Prototype:</b>
-<pre>
-   #include &lt;sched.h&gt;
-   int task_init(struct tcb_s *tcb, char *name, int priority, uint32_t *stack, uint32_t stack_size,
-                 maint_t entry, char * const argv[]);
-</pre>
-
-<p>
-<b>Description:</b>
-<p>
-  This function initializes a Task Control Block (TCB)
-  in preparation for starting a new thread.  It performs a subset
-  of the functionality of <code>task_create()</code> (see above).
-</P>
-<p>
-  Unlike task_create(), task_init() does not activate the task.
-  This must be done by calling task_activate().
-</P>
-<p>
-<b>Input Parameters:</b>
-  <ul>
-    <li><code>tcb</code>. Address of the new task's TCB
-    <li><code>name</code>. Name of the new task (not used)
-    <li><code>priority</code>. Priority of the new task
-    <li><code>stack</code>. Start of the pre-allocated stack
-    <li><code>stack_size</code>. size (in bytes) of the pre-allocated stack
-    <li><code>entry</code>. Entry point of a new task
-    <li><code>argv</code>. A pointer to an array of input parameters.
-       The array should be terminated with a NULL argv[] value.
-       If no parameters are required, argv may be NULL.
-  </ul>
-</p>
-<p>
-<b>Returned Value:</b>
-</p>
-<ul>
-  <li><p>OK, or ERROR if the task cannot be initialized.</P>
-  <p>This function can only failure is it is unable to assign
-    a new, unique task ID to the TCB (<a href="#ErrnoAccess"><code>errno</code></a> is not set).</P>
-</ul>
-<p>
-<b>Assumptions/Limitations:</b>
-<ul>
-<li>task_init() is provided to support internal OS functionality.  It is
-<b>not recommended</b> for normal usage.  task_create() is the preferred
-mechanism to initialize and start a new task.
-</ul>
-<p>
-<b>POSIX Compatibility:</b> This is a NON-POSIX interface.
-VxWorks provides the following similar interface:
-<pre>
-   STATUS taskInit(WIND_TCB *pTcb, char *name, int priority, int options, uint32_t *pStackBase, int stackSize,
-                   FUNCPTR entryPt, int arg1, int arg2, int arg3, int arg4, int arg5,
-                   int arg6, int arg7, int arg8, int arg9, int arg10);
-</pre>
-
-<p>
-  The NuttX task_init() differs from VxWorks' taskInit() in the
-  following ways:
-</p>
-<ul>
-<li>Interface name
-<li>Various differences in types or arguments
-<li>There is no options argument.
-<li>A variable number of parameters can be passed to a task (VxWorks supports ten).
-</ul>
-
-<H3><a name="taskactivate">2.1.3 task_activate</a></H3>
-
-<p>
-<b>Function Prototype:</b>
-<pre>
-    #include &lt;sched.h&gt;
-    int task_activate(struct tcb_s *tcb);
-</pre>
-
-<p>
-<b>Description:</b> This function activates tasks created by task_init().
-Without activation, a task is ineligible for execution by the
-scheduler.
-<p>
-<b>Input Parameters:</b>
-<ul>
-<li><code>tcb</code>. The TCB for the task for the task (same as the
-task_init argument).
-</ul>
-
-<p>
-<b>Returned Value:</b>
-<ul>
-<li>OK, or ERROR if the task cannot be activated (<a href="#ErrnoAccess"><code>errno</code></a> is not set).
-</ul>
-
-<p>
-<b>Assumptions/Limitations:</b>
-<ul>
-<li>task_activate() is provided to support internal OS functionality.  It is
-<b>not recommended</b> for normal usage.  task_create() is the preferred
-mechanism to initialize and start a new task.
-</ul>
-<p>
-<b>POSIX Compatibility:</b> This is a NON-POSIX interface.
-VxWorks provides the following similar interface:
-<pre>
-    STATUS taskActivate(int tid);
-</pre>
-
-<p>
-  The NuttX task_activate() differs from VxWorks' taskActivate() in the
-  following ways:
-</p>
-<ul>
-<li>Function name
-<li>With VxWork's taskActivate, the pid argument is supposed to be
-the pointer to the WIND_TCB cast to an integer.
-</ul>
-
-<H3><a name="taskdelete">2.1.4 task_delete</a></H3>
+<H3><a name="taskdelete">2.1.2 task_delete</a></H3>
 
 <p>
 <b>Function Prototype:</b>
@@ -534,7 +412,7 @@ STATUS taskDelete(int tid);
   <li>Deletion of self is supported, but only because <code>task_delete()</code> will re-direct processing to <code>exit()</code>.
 </ul>
 
-<H3><a name="taskrestart">2.1.5 task_restart</a></H3>
+<H3><a name="taskrestart">2.1.3 task_restart</a></H3>
 <p>
 <b>Function Prototype:</b>
 <ul><pre>
@@ -913,7 +791,7 @@ int exec(FAR const char *filename, FAR char * const *argv,
   <ul><pre>
 #include &lt;unistd.h&gt;
 #ifdef CONFIG_LIBC_EXECFUNCS
-int execv(FAR const char *path, FAR char *const argv[]);
+int execv(FAR const char *path, FAR char * const argv[]);
 #endif
 </pre></ul>
 <p>
@@ -951,7 +829,7 @@ int execv(FAR const char *path, FAR char *const argv[]);
   </li>
   <li>
      <code>CONFIG_EXECFUNCS_SYMTAB_ARRAY</code>:
-     Name of the ymbol table used by <code>execv()</code> or <code>execl()</code>.
+     Name of the symbol table used by <code>execv()</code> or <code>execl()</code>.
   </li>
   <li>
      <code>CONFIG_EXECFUNCS_NSYMBOLS_VAR</code>:
@@ -1045,11 +923,11 @@ int execl(FAR const char *path, ...);
 int posix_spawn(FAR pid_t *pid, FAR const char *path,
       FAR const posix_spawn_file_actions_t *file_actions,
       FAR const posix_spawnattr_t *attr,
-      FAR char *const argv[], FAR char *const envp[]);
+      FAR char * const argv[], FAR char * const envp[]);
 int posix_spawnp(FAR pid_t *pid, FAR const char *file,
       FAR const posix_spawn_file_actions_t *file_actions,
       FAR const posix_spawnattr_t *attr,
-      FAR char *const argv[], FAR char *const envp[]);
+      FAR char * const argv[], FAR char * const envp[]);
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -1149,7 +1027,7 @@ int posix_spawnp(FAR pid_t *pid, FAR const char *file,
     The value specified by <code>file_actions</code> or <code>attr</code> is invalid.
   </li>
   <li>
-     Any errors that might have been return if <code>vfork()</code> and <code>excec[l|v]()</code> had been called.
+     Any errors that might have been return if <code>vfork()</code> and <code>exec[l|v]()</code> had been called.
   </li>
 </ul>
 <p>
@@ -1632,7 +1510,7 @@ int posix_spawnattr_setsigmask(FAR posix_spawnattr_t *attr, FAR const sigset_t *
 int task_spawn(FAR pid_t *pid, FAR const char *name, main_t entry,
       FAR const posix_spawn_file_actions_t *file_actions,
       FAR const posix_spawnattr_t *attr,
-      FAR char *const argv[], FAR char *const envp[]);
+      FAR char * const argv[], FAR char * const envp[]);
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -1863,7 +1741,7 @@ int posix_spawn_file_actions_init(FAR posix_spawn_file_actions_t *file_actions);
   <b>Function Prototype:</b>
 <pre>
     #include &lt;sched.h&gt;
-    int sched_setparam(pid_t pid, const struct sched_param *param);
+    int sched_setparam(pid_t pid, FAR const struct sched_param *param);
 </pre>
 <p>
   <b>Description:</b>
@@ -1927,7 +1805,7 @@ int posix_spawn_file_actions_init(FAR posix_spawn_file_actions_t *file_actions);
 <b>Function Prototype:</b>
 <pre>
     #include &lt;sched.h&gt;
-    int sched_getparam (pid_t pid, struct sched_param *param);
+    int sched_getparam(pid_t pid, FAR struct sched_param *param);
 </pre>
 
 <p>
@@ -1969,7 +1847,7 @@ int sched_setscheduler (pid_t pid, int policy, const struct sched_param *param);
 </pre></ul>
 <p>
   <b>Description:</b>
-  <code>sched_setscheduler()</code>  sets both the scheduling policyand the priority for the task identified by <code>pid</code>.
+  <code>sched_setscheduler()</code>  sets both the scheduling policy and the priority for the task identified by <code>pid</code>.
   If <code>pid</code> equals zero, the scheduler of the calling thread will be set.
   The parameter <code>param</code> holds the priority of the thread under the new policy.
 </p>
@@ -2223,7 +2101,7 @@ priority of the calling task is returned.
       <b>NOTE:</b>
       Behavior of features related to <i>task group</i>s depend of NuttX configuration settings.
       See the discussion of &quot;Parent and Child Tasks,&quot; below.
-      See also the <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:nxtasking">NuttX Threading Wiki</a> page and the <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:tasksnthreads">Tasks vs. Threads FAQ</a> for additional information on tasks and threads in NuttX.
+      See also the <a href="https://cwiki.apache.org/confluence/display/NUTTX/NuttX+Tasking">NuttX Tasking</a> page and the <a href="https://cwiki.apache.org/confluence/display/NUTTX/Tasks+vs.+Threads+FAQ">Tasks vs. Threads FAQ</a> for additional information on tasks and threads in NuttX.
     </small></blockquote>
     <p>
       A <i>task group</i> terminates when the last thread within the group exits.
@@ -2438,7 +2316,7 @@ on this thread of execution.
   <b>Input Parameters:</b>
 </p>
 <ul>
-<li><code>pid</code>. The task ID of the thread to waid for</li>
+<li><code>pid</code>. The task ID of the thread to wait for</li>
 <li><code>stat_loc</code>. The location to return the exit status</li>
 <li><code>options</code>. ignored</li>
 </ul>
@@ -3308,7 +3186,7 @@ interface of the same name.
   <b>Function Prototype:</b>
 <pre>
     #include &lt;mqueue.h&gt;
-    int mq_notify(mqd_t mqdes, const struct sigevent *notification);
+    int mq_notify(mqd_t mqdes, FAR const struct sigevent *notification);
 </pre>
 </p>
 <p>
@@ -3478,7 +3356,7 @@ interface of the same name.
 <p>
   Semaphores are the preferred mechanism for gaining exclusive access to a
   resource.  sched_lock() and sched_unlock() can also be used for this purpose.
-  However, sched_lock() and sched_unlock() have other undesirable side-affects
+  However, sched_lock() and sched_unlock() have other undesirable side-effects
   in the operation of the system:  sched_lock() also prevents higher-priority
   tasks from running that do not depend upon the semaphore-managed resource
   and, as a result, can adversely affect system response times.
@@ -3565,8 +3443,8 @@ interface of the same name.
     In addition, there may be multiple threads of various priorities that
     need to wait for a count from the semaphore.
     These, the lower priority thread holding the semaphore may have to
-    be boosted numerous time and, to make things more complex, will have
-    to keep track of all of the boost priorities values in in order to
+    be boosted numerous times and, to make things more complex, will have
+    to keep track of all of the boost priorities values in order to
     correctly restore the priorities after a count has been handed out
     to the higher priority thread.
     The <code>CONFIG_SEM_NNESTPRIO</code> defines the size of an array,
@@ -3598,14 +3476,14 @@ interface of the same name.
   Semaphores (and mutexes) may be used for many different purposes.
   One typical use is for mutual exclusion and locking of resources:
   In this usage, the thread that needs exclusive access to a resources takes the semaphore to get access to the resource.
-  The same thread subsequently releases the seamphore count when it no longer needs exclusive access.
+  The same thread subsequently releases the semaphore count when it no longer needs exclusive access.
   Priority inheritance is intended just for this usage case.
 </p>
 <p>
   In a different usage case, a semaphore may to be used to signal an event:
   One thread A waits on a semaphore for an event to occur.
   When the event occurs, another thread B will post the semaphore waking the waiting thread A.
-  This is a completely different usage model; notice that in the mutual exclusion case, the same thread takes and posts the semaphore.  In the signaling case, one thread takes the seamphore and a different thread posts the samphore.  Priority inheritance should <i>never</i> be used in this signaling case.
+  This is a completely different usage model; notice that in the mutual exclusion case, the same thread takes and posts the semaphore.  In the signaling case, one thread takes the semaphore and a different thread posts the semaphore.  Priority inheritance should <i>never</i> be used in this signaling case.
   Subtle, strange behaviors may result.
 </p>
 <p>
@@ -3919,8 +3797,7 @@ interface of the same name.
 <b>Function Prototype:</b>
 <pre>
     #include &lt;semaphore.h&gt;
-    #include &lt;time.h&gt;
-    int sem_wait(sem_t *sem, const struct timespec *abstime);
+    int sem_timedwait(sem_t *sem, const struct timespec *abstime);
 </pre>
 
 <p>
@@ -3948,7 +3825,7 @@ interface of the same name.
 <li>0 (<code>OK</code>), or -1 (<code>ERROR</code>) is unsuccessful
 </ul>
 <p>
-If <code>sem_wait</code> returns -1 (<code>ERROR</code>) then the cause of the failure
+If <code>sem_timedwait</code> returns -1 (<code>ERROR</code>) then the cause of the failure
 will be indicated by the thread-specific <a href="#ErrnoAccess"><code>errno</code></a>.
 The following lists the possible values for <a href="#ErrnoAccess"><code>errno</code></a>:
 <p>
@@ -4006,7 +3883,7 @@ returns without blocking.
 <ul>
 <li>0 (<code>OK</code>) or -1 (<code>ERROR</code>) if unsuccessful
 </ul>
-If <code>sem_wait</code> returns -1 (<code>ERROR</code>) then the cause of the failure
+If <code>sem_trywait</code> returns -1 (<code>ERROR</code>) then the cause of the failure
 will be indicated by the thread-specific <a href="#ErrnoAccess"><code>errno</code></a>.
 The following lists the possible values for <a href="#ErrnoAccess"><code>errno</code></a>:
 <p>
@@ -4165,7 +4042,7 @@ Otherwise, an -1 (<code>ERROR</code>) will be returned and the <code>errno</code
 <b>Returned Value:</b>
 </p>
 <p>
-If successful, the <code>sem_getprotocol()</code> function will return zero (<code>OK</code>).
+If successful, the <code>sem_setprotocol()</code> function will return zero (<code>OK</code>).
 Otherwise, an -1 (<code>ERROR</code>) will be returned and the <code>errno</code> value will be set to indicate the nature of the error.
 </p>
 <p>
@@ -4327,11 +4204,7 @@ Otherwise, an -1 (<code>ERROR</code>) will be returned and the <code>errno</code
 <H3><a name="localtime">2.6.6 localtime</a></H3>
 <ul><pre>
 #include &lt;time.h&gt;
-#ifdef CONFIG_LIBC_LOCALTIME
-#  define localtime(c) gmtime(c)
-#else
 FAR struct tm *localtime(FAR const time_t *timep);
-#endif
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -4440,11 +4313,7 @@ FAR char *ctime(FAR const time_t *timep);
 <H3><a name="localtimer">2.6.10 localtime_r</a></H3>
 <ul><pre>
 #include &lt;time.h&gt;
-#ifdef CONFIG_LIBC_LOCALTIME
-#  define localtime_r(c,r) gmtime_r(c,r)
-#else
 FAR struct tm *localtime_r(FAR const time_t *timep, FAR struct tm *result);
-#endif
 </pre></ul>
 <p>
   <b>Description:</b>
@@ -4859,7 +4728,7 @@ interface of the same name.
 <p>
   <b>Tasks and Signals</b>.
   NuttX provides signal interfaces for tasks and pthreads.
-  Signals are used toalter the flow control of tasks by communicating asynchronous events within or between task contexts.
+  Signals are used to alter the flow control of tasks by communicating asynchronous events within or between task contexts.
   Any task or interrupt handler can post (or send) a signal to a particular task using its task ID.
   The task being signaled will execute task-specified signal handler function the next time that the task has priority.
   The signal handler is a user-supplied function that is bound to a specific signal and performs whatever actions are necessary whenever the signal is received.
@@ -4936,7 +4805,7 @@ interface of the same name.
 <blockquote><small>
   <b>NOTE:</b>
   Behavior of features related to <i>task group</i>s depend of NuttX configuration settings.
-  See the <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:nxtasking">NuttX Threading Wiki</a> page and the <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:tasksnthreads">Tasks vs. Threads FAQ</a> for additional information on tasks and threads in NuttX.
+  See also the <a href="https://cwiki.apache.org/confluence/display/NUTTX/NuttX+Tasking">NuttX Tasking</a> page and the <a href="https://cwiki.apache.org/confluence/display/NUTTX/Tasks+vs.+Threads+FAQ">Tasks vs. Threads FAQ</a> for additional information on tasks and threads in NuttX.
 </small></blockquote>
 <p>
   <b>Signaling Multi-threaded Task Groups</b>.
@@ -5750,7 +5619,7 @@ be sent.
 <blockquote><small>
   <b>NOTE:</b>
   Behavior of features related to <i>task group</i>s depend of NuttX configuration settings.
-  See the <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:nxtasking">NuttX Threading Wiki</a> page and the <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:tasksnthreads">Tasks vs. Threads FAQ</a> for additional information on tasks and threads in NuttX.
+  See also the <a href="https://cwiki.apache.org/confluence/display/NUTTX/NuttX+Tasking">NuttX Tasking</a> page and the <a href="https://cwiki.apache.org/confluence/display/NUTTX/Tasks+vs.+Threads+FAQ">Tasks vs. Threads FAQ</a> for additional information on tasks and threads in NuttX.
 </small></blockquote>
 <p>
   The following pthread interfaces are supported in some form by NuttX:
@@ -5935,7 +5804,7 @@ interface of the same name.
 <p>
 <pre>
     #include &lt;pthread.h&gt;
-    int pthread_attr_destroy(pthread_attr_t *attr);
+    int pthread_attr_destroy(FAR pthread_attr_t *attr);
 </pre>
 <p>
 <b>Description:</b>
@@ -5998,7 +5867,7 @@ interface of the same name.
 <p>
 <pre>
     #include &lt;pthread.h&gt;
-    int pthread_attr_getschedpolicy(pthread_attr_t *attr, int *policy);
+    int pthread_attr_getschedpolicy(FAR const pthread_attr_t *attr, FAR int *policy);
 </pre>
 <p>
 <b>Description:</b>
@@ -6188,7 +6057,7 @@ interface of the same name.
 <p>
 <pre>
     #include &lt;pthread.h&gt;
-    int pthread_attr_getstacksize(pthread_attr_t *attr, long *stackaddr);
+    int pthread_attr_getstacksize(FAR const pthread_attr_t *attr, FAR size_t *stackaddr);
 </pre>
 <p>
 <b>Description:</b>
@@ -6333,8 +6202,8 @@ The target thread's cancellability state, enabled, or disabled, determines when 
 When cancellability is disabled, all cancellations are held pending in the target thread until the thread re-enables cancellability.</p>
 
 <p>The target thread's cancellability state determines how the cancellation is acted on:
-Either asychronrously or deferred.
-Asynchronous cancellations we be acted upon immediately (when enabled), interrupting the thread with its processing in an abritray state.</p>
+Either asynchronously or deferred.
+Asynchronous cancellations will be acted upon immediately (when enabled), interrupting the thread with its processing in an arbitrary state.</p>
 
 <p>When cancellability is deferred, all cancellations are held pending in the target thread until the thread changes the cancellability type or a <a href="http://www.nuttx.org/doku.php?id=wiki:nxinternal:cancellation-points">Cancellation Point</a> function such as <a href="#pthreadtestcancel"><code>pthread_testcancel()</code></a> is entered.</p>
 
@@ -7155,7 +7024,7 @@ interface of the same name.
 <pre>
     #include &lt;pthread.h&gt;
 #ifdef CONFIG_PTHREAD_MUTEX_TYPES
-    int pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *type);
+    int pthread_mutexattr_gettype(FAR const pthread_mutexattr_t *attr, FAR int *type);
 #endif
 </pre>
 <p>
@@ -8575,8 +8444,8 @@ interface of the same name.
 
 <ul><pre>
   #include &lt;fcntl.h&gt;
-  int creat(const char *path, mode_t mode);
-  int open(const char *path, int oflag, ...);
+  int creat(FAR const char *path, mode_t mode);
+  int open(FAR const char *path, int oflag, ...);
   int fcntl(int fd, int cmd, ...);
 </pre></ul>
 
@@ -8599,11 +8468,7 @@ interface of the same name.
 
 <ul><pre>
   #include &lt;sys/ioctl.h&gt;
-  #ifdef CONFIG_LIBC_IOCTL_VARIADIC
   int ioctl(int fd, int req, ...);
-  #else
-  int ioctl(int fd, int req, unsigned long arg);
-  #endif
 </pre></ul>
 
 <h4><a name="drvrpollops">2.10.2.4 poll.h</a></h4>
@@ -8788,7 +8653,7 @@ ssize_t readlink(FAR const char *path, FAR char *buf, size_t bufsize);
 
 #ifdef CONFIG_LIBC_EXECFUNCS
 int     execl(FAR const char *path, ...);
-int     execv(FAR const char *path, FAR char *const argv[]);
+int     execv(FAR const char *path, FAR char * const argv[]);
 #endif
 
 /* Networking */
@@ -8800,7 +8665,7 @@ int     sethostname(FAR const char *name, size_t size);
 
 /* Other */
 
-int     getopt(int argc, FAR char *const argv[], FAR const char *optstring);
+int     getopt(int argc, FAR char * const argv[], FAR const char *optstring);
 
 </pre></ul>
 </a>
@@ -8811,27 +8676,27 @@ int     getopt(int argc, FAR char *const argv[], FAR const char *optstring);
 
 /* Operations on streams (FILE) */
 
-void   clearerr(register FILE *stream);
-int    fclose(FILE *stream);
-int    fflush(FILE *stream);
-int    feof(FILE *stream);
-int    ferror(FILE *stream);
+void   clearerr(FAR FILE *stream);
+int    fclose(FAR FILE *stream);
+int    fflush(FAR FILE *stream);
+int    feof(FAR FILE *stream);
+int    ferror(FAR FILE *stream);
 int    fileno(FAR FILE *stream);
-int    fgetc(FILE *stream);
-int    fgetpos(FILE *stream, fpos_t *pos);
-char  *fgets(char *s, int n, FILE *stream);
-FILE  *fopen(const char *path, const char *type);
-int    fprintf(FILE *stream, const char *format, ...);
-int    fputc(int c, FILE *stream);
-int    fputs(const char *s, FILE *stream);
-size_t fread(void *ptr, size_t size, size_t n_items, FILE *stream);
+int    fgetc(FAR FILE *stream);
+int    fgetpos(FAR FILE *stream, FAR fpos_t *pos);
+FAR char *fgets(FAR char *s, int n, FAR FILE *stream);
+FAR FILE *fopen(FAR const char *path, FAR const char *type);
+int    fprintf(FAR FILE *stream, FAR const char *format, ...);
+int    fputc(int c, FAR FILE *stream);
+int    fputs(FAR const char *s, FAR FILE *stream);
+size_t fread(FAR void *ptr, size_t size, size_t n_items, FAR FILE *stream);
 FAR FILE *freopen(FAR const char *path, FAR const char *mode,
          FAR FILE *stream);
-int    fseek(FILE *stream, long int offset, int whence);
-int    fsetpos(FILE *stream, fpos_t *pos);
-long   ftell(FILE *stream);
-size_t fwrite(const void *ptr, size_t size, size_t n_items, FILE *stream);
-FAR char *gets(char *s);
+int    fseek(FAR FILE *stream, long int offset, int whence);
+int    fsetpos(FAR FILE *stream, FAR fpos_t *pos);
+long   ftell(FAR FILE *stream);
+size_t fwrite(FAR const void *ptr, size_t size, size_t n_items, FAR FILE *stream);
+FAR char *gets(FAR char *s);
 FAR char *gets_s(FAR char *s, rsize_t n);
 void   setbuf(FAR FILE *stream, FAR char *buf);
 int    setvbuf(FAR FILE *stream, FAR char *buffer, int mode, size_t size);
@@ -8839,21 +8704,21 @@ int    ungetc(int c, FAR FILE *stream);
 
 /* Operations on the stdout stream, buffers, paths, and the whole printf-family *    /
 
-int    printf(const char *format, ...);
-int    puts(const char *s);
-int    rename(const char *source, const char *target);
-int    sprintf(char *dest, const char *format, ...);
-int    asprintf (FAR char **ptr, FAR const char *fmt, ...);
-int    snprintf(FAR char *buf, size_t size, const char *format, ...);
-int    sscanf(const char *buf, const char *fmt, ...);
+int    printf(FAR const char *format, ...);
+int    puts(FAR const char *s);
+int    rename(FAR const char *source, FAR const char *target);
+int    sprintf(FAR char *dest, FAR const char *format, ...);
+int    asprintf(FAR char **ptr, FAR const char *fmt, ...);
+int    snprintf(FAR char *buf, size_t size, FAR const char *format, ...);
+int    sscanf(FAR const char *buf, FAR const char *fmt, ...);
 void   perror(FAR const char *s);
 
-int    vprintf(const char *s, va_list ap);
-int    vfprintf(FILE *stream, const char *s, va_list ap);
-int    vsprintf(char *buf, const char *s, va_list ap);
-int    vasprintf(FAR char **ptr, const char *fmt, va_list ap);
-int    vsnprintf(FAR char *buf, size_t size, const char *format, va_list ap);
-int    vsscanf(char *buf, const char *s, va_list ap);
+int    vprintf(FAR const char *s, va_list ap);
+int    vfprintf(FAR FILE *stream, FAR const char *s, va_list ap);
+int    vsprintf(FAR char *buf, FAR const char *s, va_list ap);
+int    vasprintf(FAR char **ptr, FAR const char *fmt, va_list ap);
+int    vsnprintf(FAR char *buf, size_t size, FAR const char *format, va_list ap);
+int    vsscanf(FAR char *buf, FAR const char *s, va_list ap);
 
 /* Operations on file descriptors including:
  *
@@ -8876,7 +8741,7 @@ int       remove(FAR const char *path);
 
 int mkdir(FAR const char *pathname, mode_t mode);
 int mkfifo(FAR const char *pathname, mode_t mode);
-int stat(const char *path, FAR struct stat *buf);
+int stat(FAR const char *path, FAR struct stat *buf);
 int fstat(int fd, FAR struct stat *buf);
 
 #include &lt;sys/statfs.h&gt;
@@ -8906,10 +8771,10 @@ int aio_error(FAR const struct aiocb *aiocbp);
 int aio_fsync(int, FAR struct aiocb *aiocbp);
 int aio_read(FAR struct aiocb *aiocbp);
 ssize_t aio_return(FAR struct aiocb *aiocbp);
-int aio_suspend(FAR const struct aiocb *const list[], int nent,
+int aio_suspend(FAR const struct aiocb * const list[], int nent,
                 FAR const struct timespec *timeout);
 int aio_write(FAR struct aiocb *aiocbp);
-int lio_listio(int mode, FAR struct aiocb *const list[], int nent,
+int lio_listio(int mode, FAR struct aiocb * const list[], int nent,
                FAR struct sigevent *sig);
 </pre></ul>
 
@@ -9874,7 +9739,7 @@ int getsockopt(int sockfd, int level, int option, void *value, socklen_t *value_
   the size of the option value is greater than <code>value_len</code>, the value
   stored in the object pointed to by the <code>value</code> argument will be silently
   truncated. Otherwise, the length pointed to by the <code>value_len</code> argument
-  will be modified to indicate the actual length of the<code>value</code>.
+  will be modified to indicate the actual length of the <code>value</code>.
 </p>
 <p>
   The <code>level</code> argument specifies the protocol level of the option. To
@@ -10300,13 +10165,13 @@ OS resources. These hidden structures include:
 <p>
 <ul><pre>
 #include &lt;errno.h&gt;
-#define errno *get_errno_ptr()
-int *get_errno_ptr(void);
+#define errno *__errno()
+int *__errno(void);
 </pre></ul>
 <p>
   <b>Description</b>:
-  <code>get_errno_ptr()</code> returns a pointer to the thread-specific <code>errno</code> value.
-  Note that the symbol <code>errno</code> is defined to be <code>get_errno_ptr()</code> so that the usual
+  <code>__errno()</code> returns a pointer to the thread-specific <code>errno</code> value.
+  Note that the symbol <code>errno</code> is defined to be <code>__errno()</code> so that the usual
   access by referencing the symbol <code>errno</code> will work as expected.
 </p>
 <p>
@@ -10696,15 +10561,13 @@ notify a task when a message is available on a queue.
   <li><a href="#standardio">stdio.h</a></li>
   <li><a href="#drvselectops">sys/select.h</a></li>
   <li><a href="#drvrioctlops">sys/ioctl.h</a></li>
-  <li><a href="#taskactivate">task_activate</a></li>
   <li><a href="#Task_Control">Task Control Interfaces</a>
   <li><a href="#taskcreate">task_create</a></li>
   <li><a href="#taskdelete">task_delete</a></li>
-  <li><a href="#taskinit">task_init</a></li>
   <li><a href="#taskrestart">task_restart</a></li>
   <li><a href="#Task_Schedule">Task Scheduling Interfaces</a>
   <li><a href="#tasksetcancelstate">task_setcancelstate</a></li>
-  <li><a href="#tasksetcanceltype>task_setcanceltype</a></li>
+  <li><a href="#tasksetcanceltype">task_setcanceltype</a></li>
   <li><a href="#task_spawn">task_spawn</a></li>
   <li><a href="#task_spawnattr_getstacksize">task_spawnattr_getstacksize</a></li>
   <li><a href="#task_spawnattr_setstacksize">task_spawnattr_setstacksize</a></li>

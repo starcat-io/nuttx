@@ -45,8 +45,8 @@
 #include <nuttx/arch.h>
 #include <arch/board/board.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "nrf52_clockconfig.h"
 
@@ -63,7 +63,7 @@
  *   clocking using the settings in board.h.  This function also performs
  *   other low-level chip as necessary.
  *
- *****************************************************************************/
+ ****************************************************************************/
 
 void nrf52_clockconfig()
 {

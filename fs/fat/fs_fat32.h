@@ -1,36 +1,20 @@
 /****************************************************************************
  * fs/fat/fs_fat32.h
  *
- *   Copyright (C) 2007-2009, 2011, 2017-2018 Gregory Nutt. All rights
- *     reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
@@ -133,9 +117,13 @@
 /****************************************************************************
  * These offsets describes the partition tables in the MBR
  */
-                               /* 446@0: Generally unused and zero; but may
-                                * include IDM Boot Manager menu entry at 8@394 */
-#define PART_ENTRY(n)     (446+((n) << 4)) /* n = 0,1,2,3 */
+
+/* 446@0: Generally unused and zero; but may
+ * include IDM Boot Manager menu entry at 8@394
+ */
+
+#define PART_ENTRY(n)     (446 + ((n) << 4)) /* n = 0,1,2,3 */
+
 #define PART_ENTRY1        446 /* 16@446: Partition table, first entry */
 #define PART_ENTRY2        462 /* 16@462: Partition table, second entry */
 #define PART_ENTRY3        478 /* 16@478: Partition table, third entry */
@@ -281,8 +269,7 @@
 
 #define CLUS_NDXMASK(f)     ((f)->fs_fatsecperclus - 1)
 
-/****************************************************************************
- * The FAT "long" file name (LFN) directory entry */
+/* The FAT "long" file name (LFN) directory entry */
 
 #ifdef CONFIG_FAT_LFN
 
@@ -334,8 +321,7 @@
 # define LDDIR_LFNATTR     0x0f
 #endif
 
-/****************************************************************************
- * File system types */
+/* File system types */
 
 #define FSTYPE_FAT12         0
 #define FSTYPE_FAT16         1
@@ -375,8 +361,8 @@
  * between FAT12, 16, and 32.
  */
 
-/* FAT12: For M$, the calculation is ((1 << 12) - 19).  But we will follow the
- * Linux tradition of allowing slightly more clusters for FAT12.
+/* FAT12: For M$, the calculation is ((1 << 12) - 19).  But we will follow
+ * the Linux tradition of allowing slightly more clusters for FAT12.
  */
 
 #define FAT_MAXCLUST12 ((1 << 12) - 16)
@@ -389,17 +375,16 @@
 #define FAT_MAXCLUST16 (((uint32_t)1 << 16) - 16)
 
 /* FAT32: M$ reserves the MS 4 bits of a FAT32 FAT entry so only 18 bits are
- * available.  For M$, the calculation is ((1 << 28) - 19). (The uint32_t cast
- * is needed for architectures where int is only 16 bits).  M$ also claims
- * that the minimum size is 65,527.
+ * available.  For M$, the calculation is ((1 << 28) - 19). (The uint32_t
+ * cast is needed for architectures where int is only 16 bits).  M$ also
+ * claims that the minimum size is 65,527.
  */
 
 #define FAT_MINCLUST32  65524
 /* #define FAT_MINCLUST32  (FAT_MAXCLUST16 + 1) */
 #define FAT_MAXCLUST32  (((uint32_t)1 << 28) - 16)
 
-/****************************************************************************
- * Access to data in raw sector data */
+/* Access to data in raw sector data */
 
 #define UBYTE_VAL(p,o)            (((uint8_t*)(p))[o])
 #define UBYTE_PTR(p,o)            &UBYTE_VAL(p,o)
@@ -867,9 +852,9 @@
  * Public Types
  ****************************************************************************/
 
-/* This structure represents the overall mountpoint state.  An instance of this
- * structure is retained as inode private data on each mountpoint that is
- * mounted with a fat32 filesystem.
+/* This structure represents the overall mountpoint state.  An instance of
+ * this structure is retained as inode private data on each mountpoint that
+ * is mounted with a fat32 filesystem.
  */
 
 struct fat_file_s;
@@ -879,7 +864,7 @@ struct fat_mountpt_s
   struct fat_file_s *fs_head;      /* A list to all files opened on this mountpoint */
 
   sem_t    fs_sem;                 /* Used to assume thread-safe access */
-  off_t    fs_hwsectorsize;        /* HW: Sector size reported by block driver*/
+  off_t    fs_hwsectorsize;        /* HW: Sector size reported by block driver */
   off_t    fs_hwnsectors;          /* HW: The number of sectors reported by the hardware */
   off_t    fs_fatbase;             /* Logical block of start of filesystem (past resd sectors) */
   off_t    fs_rootbase;            /* MBR: Cluster no. of 1st cluster of root dir */
@@ -899,8 +884,8 @@ struct fat_mountpt_s
   uint8_t  fs_type;                /* FSTYPE_FAT12, FSTYPE_FAT16, or FSTYPE_FAT32 */
   uint8_t  fs_fatnumfats;          /* MBR: Number of FATs (probably 2) */
   uint8_t  fs_fatsecperclus;       /* MBR: Sectors per allocation unit: 2**n, n=0..7 */
-  uint8_t *fs_buffer;              /* This is an allocated buffer to hold one sector
-                                    * from the device */
+  uint8_t *fs_buffer;              /* This is an allocated buffer to hold one
+                                    * sector from the device */
 };
 
 /* This structure represents on open file under the mountpoint.  An instance
@@ -958,6 +943,14 @@ struct fat_dirseq_s
 #endif
 };
 
+#ifdef CONFIG_FAT_LFN
+#  ifdef CONFIG_FAT_LFN_UTF8
+typedef wchar_t lfnchar;
+#  else
+typedef uint8_t lfnchar;
+#  endif
+#endif
+
 /* This structure is used internally for describing directory entries */
 
 struct fat_dirinfo_s
@@ -965,7 +958,7 @@ struct fat_dirinfo_s
   /* The file/directory name */
 
 #ifdef CONFIG_FAT_LFN
-  uint8_t fd_lfname[LDIR_MAXFNAME+1]; /* Long filename with terminator */
+  lfnchar fd_lfname[LDIR_MAXFNAME + 1]; /* Long filename with terminator */
 #endif
   uint8_t fd_name[DIR_MAXFNAME];   /* Short 8.3 alias filename (no terminator) */
 
@@ -1011,7 +1004,8 @@ struct fat_dirinfo_s
 #undef EXTERN
 #if defined(__cplusplus)
 #define EXTERN extern "C"
-extern "C" {
+extern "C"
+{
 #else
 #define EXTERN extern
 #endif
@@ -1025,7 +1019,7 @@ EXTERN void   fat_putuint32(uint8_t *ptr, uint32_t value32);
 
 /* Manage the per-mount semaphore that protects access to shared resources */
 
-EXTERN void   fat_semtake(struct fat_mountpt_s *fs);
+EXTERN int    fat_semtake(struct fat_mountpt_s *fs);
 EXTERN void   fat_semgive(struct fat_mountpt_s *fs);
 
 /* Get the current time for FAT creation and write times */
@@ -1047,7 +1041,7 @@ EXTERN int    fat_hwwrite(struct fat_mountpt_s *fs, uint8_t *buffer,
 
 /* Cluster / cluster chain access helpers */
 
-EXTERN off_t  fat_cluster2sector(struct fat_mountpt_s *fs,  uint32_t cluster);
+EXTERN off_t  fat_cluster2sector(struct fat_mountpt_s *fs, uint32_t cluster);
 EXTERN off_t  fat_getcluster(struct fat_mountpt_s *fs, uint32_t clusterno);
 EXTERN int    fat_putcluster(struct fat_mountpt_s *fs, uint32_t clusterno,
                              off_t startsector);
@@ -1058,39 +1052,54 @@ EXTERN int32_t fat_extendchain(struct fat_mountpt_s *fs, uint32_t cluster);
 
 /* Help for traversing directory trees and accessing directory entries */
 
-EXTERN int    fat_nextdirentry(struct fat_mountpt_s *fs, struct fs_fatdir_s *dir);
-EXTERN int    fat_finddirentry(struct fat_mountpt_s *fs, struct fat_dirinfo_s *dirinfo,
+EXTERN int    fat_nextdirentry(struct fat_mountpt_s *fs,
+                               struct fs_fatdir_s *dir);
+EXTERN int    fat_finddirentry(struct fat_mountpt_s *fs,
+                               struct fat_dirinfo_s *dirinfo,
                                const char *path);
-EXTERN int    fat_dirnamewrite(struct fat_mountpt_s *fs, struct fat_dirinfo_s *dirinfo);
-EXTERN int    fat_dirwrite(struct fat_mountpt_s *fs, struct fat_dirinfo_s *dirinfo,
+EXTERN int    fat_dirnamewrite(struct fat_mountpt_s *fs,
+                               struct fat_dirinfo_s *dirinfo);
+EXTERN int    fat_dirwrite(struct fat_mountpt_s *fs,
+                           struct fat_dirinfo_s *dirinfo,
                            uint8_t attributes, uint32_t fattime);
-EXTERN int    fat_allocatedirentry(struct fat_mountpt_s *fs, struct fat_dirinfo_s *dirinfo);
-EXTERN int    fat_freedirentry(struct fat_mountpt_s *fs, struct fat_dirseq_s *seq);
-EXTERN int    fat_dirname2path(struct fat_mountpt_s *fs, struct fs_dirent_s *dir);
+EXTERN int    fat_allocatedirentry(struct fat_mountpt_s *fs,
+                                   struct fat_dirinfo_s *dirinfo);
+EXTERN int    fat_freedirentry(struct fat_mountpt_s *fs,
+                               struct fat_dirseq_s *seq);
+EXTERN int    fat_dirname2path(struct fat_mountpt_s *fs,
+                               struct fs_dirent_s *dir);
 
 /* File creation and removal helpers */
 
-EXTERN int    fat_dirtruncate(struct fat_mountpt_s *fs, FAR uint8_t *direntry);
+EXTERN int    fat_dirtruncate(struct fat_mountpt_s *fs,
+                              FAR uint8_t *direntry);
 EXTERN int    fat_dirshrink(struct fat_mountpt_s *fs, FAR uint8_t *direntry,
                             off_t length);
-EXTERN int    fat_dirextend(FAR struct fat_mountpt_s *fs, FAR struct fat_file_s *ff,
-                            off_t length);
-EXTERN int    fat_dircreate(struct fat_mountpt_s *fs, struct fat_dirinfo_s *dirinfo);
-EXTERN int    fat_remove(struct fat_mountpt_s *fs, const char *relpath, bool directory);
+EXTERN int    fat_dirextend(FAR struct fat_mountpt_s *fs,
+                            FAR struct fat_file_s *ff, off_t length);
+EXTERN int    fat_dircreate(struct fat_mountpt_s *fs,
+                            struct fat_dirinfo_s *dirinfo);
+EXTERN int    fat_remove(struct fat_mountpt_s *fs, const char *relpath,
+                         bool directory);
 
 /* Mountpoint and file buffer cache (for partial sector accesses) */
 
 EXTERN int    fat_fscacheflush(struct fat_mountpt_s *fs);
 EXTERN int    fat_fscacheread(struct fat_mountpt_s *fs, off_t sector);
-EXTERN int    fat_ffcacheflush(struct fat_mountpt_s *fs, struct fat_file_s *ff);
-EXTERN int    fat_ffcacheread(struct fat_mountpt_s *fs, struct fat_file_s *ff, off_t sector);
-EXTERN int    fat_ffcacheinvalidate(struct fat_mountpt_s *fs, struct fat_file_s *ff);
+EXTERN int    fat_ffcacheflush(struct fat_mountpt_s *fs,
+                               struct fat_file_s *ff);
+EXTERN int    fat_ffcacheread(struct fat_mountpt_s *fs,
+                              struct fat_file_s *ff, off_t sector);
+EXTERN int    fat_ffcacheinvalidate(struct fat_mountpt_s *fs,
+                                    struct fat_file_s *ff);
 
 /* FSINFO sector support */
 
 EXTERN int    fat_updatefsinfo(struct fat_mountpt_s *fs);
-EXTERN int    fat_nfreeclusters(struct fat_mountpt_s *fs, off_t *pfreeclusters);
-EXTERN int    fat_currentsector(struct fat_mountpt_s *fs, struct fat_file_s *ff, off_t position);
+EXTERN int    fat_nfreeclusters(struct fat_mountpt_s *fs,
+                                off_t *pfreeclusters);
+EXTERN int    fat_currentsector(struct fat_mountpt_s *fs,
+                                struct fat_file_s *ff, off_t position);
 
 #undef EXTERN
 #if defined(__cplusplus)

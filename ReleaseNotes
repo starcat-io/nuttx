@@ -2547,7 +2547,7 @@ Bugfixes include:
     * FAT.  Now returns the correct error value when it is unable to
       recognize the file system.
 
-    * Build.  MAC OS build fixes (submitted by Mike Smith)
+    * Build.  macOS build fixes (submitted by Mike Smith)
 
 And several others.  See the ChangeLog for more details.
 
@@ -9053,7 +9053,7 @@ detailed bugfix information):
         to the specific pthread and no other.
       - uint32_t callbacks: Update the type passed to watchdog timer
         handlers.  Using uint32_t is a problem for 64-bit machines because
-        it it too small to pass a pointer.  uintptr_t is a more appropriate
+        it is too small to pass a pointer.  uintptr_t is a more appropriate
         type.
       - mq_timedreceive(): move the location where the errno value is set;
         the ETIMEDOUT errno setting was being overwritten by subsequent
@@ -12528,7 +12528,7 @@ Additional new features and extended functionality:
     * Xtensa/ESP32
 
       - Xtensa ESP32:  Basic architectural support for Xtensa processors and
-        the Expressif. ESP32 added.
+        the Espressif. ESP32 added.
       - Xtensa ESP32:  Add EXPERIMENTAL hooks to support lazy Xtensa
         co-processor state restore in the future.
       - Xtensa ESP32:  Basic port is function in both single CPU and dual CPU
@@ -12540,7 +12540,7 @@ Additional new features and extended functionality:
 
     * Xtensa/ESP32 Boards:
 
-      - ESP32 Core v2:  Basic support for Expressif ESP32 Core v2 board
+      - ESP32 Core v2:  Basic support for Espressif ESP32 Core v2 board
         added.  The initial release includes an NSH and an SMP test
         configuration.
       - ESP32 Core v2:  Add configuration to support linking NuttX for
@@ -13769,10 +13769,10 @@ Additional new features and extended functionality:
       - STM32 L1:  stm32l15xxx_rcc: configure medium performance voltage
         range and zero wait-state when allowed by SYSCLK setting.  Zero
         wait-state for flash can be configured when:  (1) Range 1 and
-        SYSCLK <= 16 Mhz, (2) Range 2 and SYSCLK <= 8 Mhz, or (3) Range 3
-        and SYSCLK <= 4.2 Mhz.  Medium performance voltage range (1.5V)
-        can be configured when SYSCLK is up to 16 Mhz and PLLVCO up to
-        48 Mhz.  From Juha Niskanen.
+        SYSCLK <= 16 MHz, (2) Range 2 and SYSCLK <= 8 MHz, or (3) Range 3
+        and SYSCLK <= 4.2 MHz.  Medium performance voltage range (1.5V)
+        can be configured when SYSCLK is up to 16 MHz and PLLVCO up to
+        48 MHz.  From Juha Niskanen.
       - STM32 F0: Add basic support for STM32F0.  From Alan Carvalho de
         Assis.
       - STM32 F0:  Add basic support for STM32F07x family.
@@ -14778,7 +14778,7 @@ Additional new features and extended functionality:
 
       - STM32 L4:  Add support for the STM32L475 family.
       - STM32 L4 RCC:  Enable ADC clock source.  From Juha Niskanen.
-      - STM32:  Allow clock frequencies > 168 Mhz on stm32f427/429.  We need
+      - STM32:  Allow clock frequencies > 168 MHz on stm32f427/429.  We need
         to enable the power overdrive for this case.  This change allows the
         required bits to be set in proper sequence.  It also modifies the
         local register access operations to allow more than 16-bit registers.
@@ -15297,7 +15297,7 @@ detailed bugfix information):
         has not caused problems in the past, but seeing it set in the PC is
         unnerving.
 
-    * Expressif ESP32:
+    * Espressif ESP32:
 
       - Fix ESP32 gpio enable reg and default UART pin. Modify default UART
         pin for ESP-WROOM-32. Fix gpio enable reg.  From Sungki Kim.
@@ -15349,8 +15349,8 @@ detailed bugfix information):
     * NXP/Freescale Kinetis:
 
       - Kinetis MPU:  Disable MPU when not in protected mode.  The hardware
-        reset state of the the MPU precludes any bus masters other then DMA
-        access to memory. Unfortunately USB and SDHC have there own DMA and
+        reset state of the the MPU precludes any bus masters other than DMA
+        access to memory. Unfortunately USB and SDHC have their own DMA and
         will not have access to memory in the default reset state.  This change
         disabled the MPU if present on system startup.  From David Sidrane.
       - Kinetis MPU:  Fixed warning for kinetis_mpudisable. Missing header
@@ -15957,7 +15957,7 @@ Additional new features and extended functionality:
         drivers.  The peripheral on STM32F7 and STM32L4 are identical except
         for L4's 'wakeup from stop mode' flag and STM32F7's I2C driver is in
         more 'ready to use' state.  The I2C clock configuration is kept the
-        same as before (I2CCLK = PCLK1 80 Mhz) instead of switching to
+        same as before (I2CCLK = PCLK1 80 MHz) instead of switching to
         STM32F7 arch default that is I2CCLK=HSI. Further work would be to
         add configuration option for choosing I2C clock source instead of
         current hard-coded default.  From Jussi Kivilinna.
@@ -22578,7 +22578,7 @@ detailed bugfix information):
         Raised DEBUGASSERT in armv7-m/up_ramvec_initialize.c line: 144.
         From Mateusz Szafoni.
 
-    * Expressif ESP32 Drivers:
+    * Espressif ESP32 Drivers:
 
       - ESP32 Timer ISR:  Fix backward comparison.  From Gregory Nutt.
       - ESP32 Serial:  Fix some backward arguments.   Correct 2-stop bit
@@ -25894,7 +25894,7 @@ Additional new features and extended functionality:
       - STM32 L4+ DMA:  Add DMA support for STM32L4+ series.  From Jussi
         Kivilinna.
       - STM32 L4 Clocking:  Enable "Range 1 boost" mode if any PLL freq
-        above 80 Mhz.  From Jussi Kivilinna.
+        above 80 MHz.  From Jussi Kivilinna.
       - STM32 L4 LPTIM:  Add support for LPTIM timers on the STM32L4 as PWM
         outputs.  From Matias N.
       - STM32 H7 Progmem: Add FLASH progmem support.  From David Sidrane.
@@ -26618,3 +26618,505 @@ information):
         fixes the violation of the portable POSIX OS interface, but also
         permits use of ROM disks in PROTECTED and KERNEL modes.  From
         Gregory Nutt.
+
+NuttX-9.0.0 Release Notes
+-------------------------
+
+This is the first release of NuttX as Apache NuttX (Incubating) and represents our first major milestone as a Podling of the Apache Software Foundation's Incubator. This release is the culmination of nearly 6 months of hard work and includes several new architectures and drivers, and numerous improvements and bug fixes to the core RTOS, drivers, and networking subsystems.
+
+   * Major Changes to Core OS
+       * Bugfixes
+          - nxsem_wait_uninterruptible() now returns if the task is canceled.
+          - Fix a bug in pthread_condwait() that was improperly re-initializing the mutex.
+          - In sched_setpriority(), fix functions called inside a DEBUGASSERT that were eliminated when assertions are disable
+
+   * Compatibility Concerns
+
+        - The configuration option CONFIG_CAN_PASS_STRUCT is now removed.  Previously, it was used (at the cost of breaking standards support) to support older versions of the SDCC compiler that couldn't pass structs/unions as functions' parameters.  A newer version of the compiler has resolved the issue.
+
+   * Major Changes to Build System
+       - Add a post-build function that allows extending the build with CPU/board-specific logic.
+       - Add build tools to simplify ZDS-II tool usage.
+       - mkexport.sh: Deal with ARCHSCRIPT containing multiple files.
+       - Various nxstyle improvements.
+
+   * Architectural Support
+       * New architecture support
+           - Add support for RISCV-64
+           - Add support for x86_64 (tested on QEMU)
+           - Add support for ELF64
+           - Add a port to the NUCLEO-F429ZI board
+           - Add support for the STM32H747I-DISCO board
+           - Add Z20X board support and bootloader to upload code from the W25 flash to SRAM
+           - Add initial support for Litex with softcore CPU VexRiscV SoC
+           - Add support for the Digilent ARTY_A7 board to test the Litex port
+           - Added initial support for Sipeed Maix Bit board with Kendryte K210 processor
+           - New architectural support: ez80f92
+           - Flat address x86_64 port of Nuttx
+           - Support to run NuttX on ESP32 QEMU
+           - Initial support for Sipeed Maix Bit board with Kendryte K210 processor
+           - Add initial support for Kendryte K210 processor in SMP mode
+           - NXP S32K11x (Cortex-M0+) and S32K14x (Cortext-M4F): Add support for NXP automotive boards.
+           - XMC 4700 (Cortex-M4F)
+       * Architectures with significant improvements
+           - ESP32 loadable modules support
+           - i.MX RT: FLEXIO clock config logic.
+           - Fix the clock configuration for the i.MX RT family
+           - i.MX RT: Add ability to run from OCRAM
+           - SAMA5D27 peripheral support - USB Host working
+           - z20x: Add W25 bootloader
+           - i.MX RT: Add USB Device support
+           - STM32, STM32F7, STM32H7 add SPI DMATHRESHOLD
+           - Improve the simulator timer
+           - 64-bit modules on macOS simulator
+           - z20x: Add XTP2046 SPI support; add timer support
+           - RX65N RTC Driver added
+           - NXP Freedom K28F Board SD-Card support
+           - STM32H7: support SDRAM via FMC peripheral
+           - LM3S6965-ek: Add PROTECTED build support
+           - STM32H7: Added IWDG and WWDG, power management (sleep/stop/standby), WKUP pin configuration
+           - SAMV71:  Add read UID implementation and move flash functions to RAM
+           - i.MX RT: Fix interrupts storm (serial & I2C)
+           - Various fixes and cosmetic changes to the CxD56xx architecture
+           - Fix SiFive FE310 related code (comments, improve serial irq handling, initial int status)
+           - Implement QSPI for STM32H7
+           - Improvements for the nRF52 port: I2C, SPI, GPIO support
+           - Updates for LPC17xx/40xx serial
+           - Adds basic support for Microchip SAM E54 Xplained Pro board
+           - Adds an Ethernet driver for the SAME5x family (based on the SAMA5 GMAC driver)
+           - Add CDC ECM Ethernet over USB 2.0 High Speed (tested on SAMA5D36-Xplained board)
+           - Simulator: Reimplement simulator uart on top of serial driver framework
+           - NXP S32K1XX peripheral clock fixes
+           - Fix syscall stack alignment on armv7-m
+           - Fix flash_erase(page) when page >= 256 for STM32L4 family
+           - Add partial support for the NETLINK poll() operation.
+           - Add serial DMA support for STM32F7
+           - Add AM335x Clock Configuration
+           - Add I2C support for AM335x
+           - Add configuration to fine tune LPI2C Timeout for iMXRT
+           - Add CAN support to AM335x
+           - Add I2C support to STM32F0/L0/G0
+           - Kinetis LPC SDCard improvements
+           - Replace the busy polling with work_queue in the ethernet driver of simulator
+           - Fix Xtensa's SMP support to follow same logic from other SMP archs
+           - PIC32MZ: SPI transfers can be configured to use DMA.
+           - PIC32MZ: Implement cache operations.
+   * Driver Support
+       * New drivers
+           - New driver for the ADS7828 I2C analog to digital converter
+           - driver/ioexpander: New driver for PCA9538 I2C I/O expander
+           - New driver type for battery monitor ICs.
+           - Driver for the BQ769x0 battery monitor IC.
+           - Add Support for Quectel EC20 4G LTE Module USB CDC/ACM
+           - Add QSPI-based Winbond NOR FLASH driver
+       * Drivers with significant improvements
+           - Update all the drivers to check return value of nxsem_wait_uninterruptible().
+           - MCP9844 shutdown mode support
+           - fcntl: add O_CLOEXEC flag, add O_CLOEXEC/FD_CLOEXEC support
+           - CDC-ECM Ethernet over USB 2.0 HS
+           - smartfs improvements: Handling of duplicate sectors, support fsck to check and repair the smartfs file system, and recover SPI Flash from initial error state.
+           - Various fixes for USBDEV driver: Remove unnecessary reset logic, fix descriptor type mismatch when dual speed is enabled, fix invalid/unsupported command processing, and fix string ID calculation.
+           - Handle size zero in umm_malloc.c and umm_realloc.c, which causes a system freeze in kernel mode.
+           - Fixed compilation issue with poll fds notification.
+           - Report POLLHUP and POLLERR in 'revents' regardless the requested 'events' set.
+    * Networking
+       - Telnet:  Fix/Refine CTRL+C to work on telnet
+       - TCP:  Fix of faulty TCP sequence increments
+       - netdb:  Fix netdb to query IPv4 and IPv6 addresses regardless the server address type
+       - Netlink sockets may be set to non-blocking
+       - Improve TUN and SLIP, refine Control+C Handling in Telnet
+       - Sockets:  Add socket MSG_DONTWAIT support
+       - Network Loopback Driver: Add a configuration option to control packet size
+       - Network IOCTLs:  Add FIONBIO network IOCTL support
+       - NFS: Support IPv4 and TCP
+       - Sockets: Add IP and TCP socket options needed by iperf3
+       - Netlink: Add support for asynchronous Netlink responses
+       - TCP: Monitor TCP_POLL/TCP_NEWDATA/TCP_BACKLOG per the request like UDP counterpart
+       - TCP: Minor design improvement to TCP delayed ACKs
+       - DNS IPv4/IPv6 Dual Host Support: When IPv4/IPv6 Dual Stack is enabled, queries both types of addresses regardless of whether the DNS server is accessed via IPv4 or IPv6. As a result, getaddrinfo() may return a mixed (IPv4/IPv6) address list.
+
+    * Applications
+       * Improvements
+           - Extend netutils and netinit to work with only Netlink sockets enabled
+           - Add getprime program to check multi-thread performance
+           - Improve zmodem send performance
+           - Add simple HTS221, LSM303 and LSM6DSL examples
+           - Improve to gs2200m wiki performance
+           - Improve telnet server and enable it to listen on both IPv4 and IPv6
+           - Improve ntpclient logic
+           - Improve wapi to save configuration to file system
+           - Improve wapi to skip associate if ssid is invalid
+           - Improve cmd_nfsmount to use IPv4 and IPv6
+           - Improve ostest for SMP and non-SMP configurations
+           - Improve UDP to avoid using standard symbols
+           - Improve dhcpd to include configurable timeout and retry count
+        * Bugfixes
+           - Correct format when printing ARP tablet entries
+           - Ensure /bin/ping and ping work at the same time
+           - Correct backward conditional logic in dhcpd_leaseexpired()
+           - Fix several problems on ftpd
+           - Fix dhcpd issue reported on Issue #17
+           - Fix sendmail example to run on a local SMTP server
+           - Fix buffer overflow on netlib
+           - Fix compile errors in loopback mode of the tcpblaster
+           - Fix stack corruption in ELF task test
+           - Fix errors in NoBlockRecv and BlockRecv tests of usrsocktest
+           - Fix ipforward IP Header issue for IPv4
+           - Fix wrongly swapped parity options of CU program
+           - Fix slcd to avoid using priv->fd before initializing it
+           - Fix (tcp, udp)blaster to build on macOS
+           - Correct the buffer type of base64 program
+
+NuttX-9.1.0 Release Notes -------------------------
+
+  * Major Changes to Core OS:
+      * New Features:
+        - PR-977 PR-987 PR-998 PR-995 PR-997 PR-1007 Thread Local Storage (TLS)
+          is now a required feature and used by all architectures
+          There is detailed information on the implementation and how this
+          impacts errno specifically in the Wiki article: Userspace errno and
+          TLS
+        - PR-957 PR-947 PR-963 PR-969 Provide nx_ versions of many functions
+          that are used internally to avoid disrupting errno in userspace
+        - PR-965 PR-980 PR-984 ioctl is now always in the variadic form.
+          Syscalls in KERNEL builds are also more efficient with this as well now.
+          Previously the ioctl prototype was normally defined as:
+
+          int ioctl(int fd, int cmd, unsigned long arg);
+
+          unless the CONFIG_LIBC_IOCTL_VARIADIC was enabled in which case it was
+
+          int ioctl(int fd, int cmd, ...); This form is now the form defined by
+          opengroup and is also inline with Linux.  Prior to this change there
+          were issues with making ioctl calls on 64-bit arch since the
+          implementation assumed that (void *) would be of size long.  There is
+          more discussion of this issue in the GitHub issue ticket here:
+
+          https://github.com/apache/incubator-nuttx/issues/959
+
+        - PR-962 PR-964 Add new interface sched_get_stackinfo that simplifies
+          interfaces for things like TLS
+          There are some security imposed rules for using this interface
+              Any thread may query its own stack, A kernel thread may query the
+              stack of any other thread Application threads, however, may query
+              only the stacks of threads within the same task group, i.e., the
+              main thread and any of the child pthreads created with the main
+              thread as a parent or grandparent or great-grandparent.
+
+        - PR-1104 Internal function fs_fsopen() no longer affects errno -
+        - PR-1123 Move task_init() and task_activate() to be internal functions -
+        - PR-1140 Add nxtask_uninit() interface
+          This function will undo all operations on a TCB performed by
+          task_init() and release the TCB by calling kmm_free(). This is
+          intended primarily to support error recovery operations after a
+          successful call to task_init() such was when a subsequent call to
+          task_activate fails.
+        - PR-1134 Add typedef for max_align_t
+        - PR-1141 Handle custom stack allocations
+          sched_releasetcb() will normally free the stack allocated for a task.
+          However, a task with a custom, user-managed stack may be created using
+          nxtask_init() followed by nxtask_activate(). If such a custom stack is
+          used then it must not be freed in this manner or a crash will most
+          likely result.
+
+          This change adds a flag call TCB_FLAG_CUSTOM_STACK that may be passed
+          in the the pre-allocated TCB to nxtask_init(). This flag is not used
+          internally anywhere in the OS except that if set, it will prevent
+          sched_releasetcb() from attempting to free that custom stack.
+
+        * Bug Fixes:
+          - Many private architecture interfaces were using 'up_' instead of the
+            arch name 'arm_'
+            This fix is carried over many PRs such as PR-924.  Many files also
+            carried this same error in naming convention and were converted as
+            well.
+
+          - PR-1018 PR-1017 PR-1021 PR-1022 PR-1057 PR-1060 PR-1194 Clean up
+            internal APIs that were not using the properly naming conventions -
+          - PR-857 Wrong value for it_interval field in timespec returned by
+            timer_gettime - PR-902 SMP: On task creation do not clone
+            uninitialized descriptors
+            In SMP mode, there is a possibility that a pthread executing one CPU
+            may create a new task while a pthread on another CPU has allocated
+            the socket but not yet initialized it. This commit updates the
+            socket clone test to assure that the socket is both allocated and
+            initialized before it is cloned.
+          - PR-911 Use OS signal functions internally to not reset errno that
+            applications are using
+          - PR-925 sys/stat.h Change the xtime fields to align with POSIX
+            standard. Starting from Issue 7 of the POSIX standard the fields
+            st_atime, st_mtime and st_ctime have a type of strcut timespec instead
+            of time_t.
+          - PR-939 openamp: Update to 2020.04.0 - PR-953 lib_vsprintf: Fix issue
+            where stack would become corrupt on x86_64
+            This function requires traversing the VA_LIST twice.  For some
+            architectures like x86 and x86_64 this needs to be cloned first.
+
+  * Major Changes to the Build System:
+    Parts of the build system have been refactored to reduce duplication and
+    simplify Makefile and Make.defs files across many directories. These changes
+    are particularly beneficial for boards.
+
+    Please note that if you develop your own custom boards, you may need to make
+    some modifications to keep your board's build scripts up-to-date with the
+    rest of NuttX and avoid a broken or defective build. For details, see
+    Compatibility Concerns, Changes to Build System, in these release notes.
+
+      * New Features:
+        - PR-894 openamp and libmetal can now be downloaded and configured by
+          build system - PR-941 Remove 'u' prefix from userspace library in FLAT
+          Build so it is the same for all build types - PR-1044 ARM: Remove
+          support for old redundant gcc toolchains
+
+          This removes support for the Codesourcery, Atollic, DevKitArm,
+          Raisonance, and CodeRed toolchains. Not only are these tools old and
+          no longer used but they are all equivalent to the standard ARM EABI
+          toolchains. Retaining specific support was not meaningful (and they
+          are still supported, but now just as generic EABI toolchains).
+        - PR-1148 PR-1149 Improve build time especially on non-Linux platforms
+          by providing a C version of incdir.sh
+
+      * Bug Fixes:
+        Many small changes to resolve dependency resolution issues that would
+        sometimes appear during parallel builds.  Parallel builds should be much
+        more reliable now and bugs filed against any issues found.
+
+        - PR-1000 Fix broken support of ZDS-II Toolchain with MSYS
+
+  * Architectural Support:
+      * New Architecture Support:
+        - PR-879 ARMv8-M support - PR-1051 STM32G474 support
+
+        - Initial architectural support for the STM32G474 family of
+          microcontrollers. In terms of peripherals, currently there is basic
+          support for the RCC and UART, allowing NuttX to boot to a functional
+          NSH prompt on this family. Other peripherals on the SoC are not yet
+          supported and/or not tested yet. Contributions to enable other
+          peripherals are welcome. This adds support for these variants:
+
+            STM32G474C STM32G474M STM32G474R STM32G474Q STM32G474V
+
+      * Architectures With Significant Improvements:
+        - PR-745 The full line of STM32H7 chips are now defined
+          This adds support for these variants:
+
+              STM32H743AG STM32H743AI STM32H743BG STM32H743BI STM32H743IG
+              STM32H743II STM32H743VG STM32H743VI STM32H743XG STM32H743XI
+              STM32H743ZG STM32H753AI STM32H753BI STM32H753VI STM32H753XI
+              STM32H753ZI
+
+        - PR-811 i486: Fix corruption of esp register on full context restore
+          This resolves a long standing issue with running the x86 port under
+          QEMU where it would crash shortly after boot.
+
+        - PR-837 rx65n: Add crashdump support using standby RAM - PR-862
+          STM32L4: Expose LPTIM timers - PR-868 STM32L4: Extend clock options and
+          power regulation for based on clock settings
+            Interface to select the core regulator voltage according to clock
+            frequency range Usage of this interface during clock configuration
+            according to chosen clock frequency Option to choose a different
+            system clock than the main PLL (there is HSI, MSI, HSE and LSE
+            available to use) Option to not enable the main PLL which allows for
+            reduced power usage when setting one of the above options as system
+            clock, to do this you should define STM32L4_BOARD_NOPLL on your
+            board header.
+        - PR-960 STM32: Add support for ADC features EXTSEL and JEXTSEL
+        - PR-1041 STM32H7: Improve IDMA transfer and cache handling
+          This resolves an issue where the sdmmc driver crashes at boot when
+          using writeback cache.
+
+          This also simplifies the sdmmc driver when the IDMA is in use. There
+          is no need to mix IDMA and interrupt based transfers; instead, when
+          making unaligned data tranfers, just make IDMA into an internal
+          aligned buffer and then copy the data. This method also enables
+          multiblock transfers, and transfers from/to data buffers which are not
+          aligned on cache boundary.
+        - PR-1042 STM32H7: Resolve multiple limitations and bugs with progmem
+          especailly for partial memory writes
+        - PR-1045 STM32H7: This gives possibility to send arbitrary number of
+          bytes from memory to peripheral using DMA also when using write-back
+          cache
+            It was not possible to DMA to/from AXI sram if
+            CONFIG_STM32H7_DMACAPABLE=y When doing TX DMA (e.g. in SPI driver in
+            simplex-tx mode), it should not be necessary to align the data
+            buffers to the cache line.
+        - PR-1103 STM32H7: Resolve clocking and pin configurations bugs that
+          could cause SDMMC and ETH to fail in some configurations
+        - PR-1104 STM32H7: Use UUID for Ethernet MAC.  This is inline with the
+          behaviour of STM32F7
+        - PR-1110 STM32H7: Use FDCANSEL to determin FDCAN clock source if
+          possible - PR-1165 STM32H7: SPI transaction appears to be completed
+          before the data has actually been flushed
+          TX DMA completes before the data has been actually sent out from the
+          SPI fifo. This is expected, but the exchange should actually wait for
+          spi tx to finish instead of dma to the fifo to finish. This replaces
+          the dma completion event with the SPI TXC event for detecting end of
+          transmission.
+
+        - PR-1203 PR-1204 STM32H7: Enable support for BDMA and enable it for
+          SPI6
+        - PR-905 x86_64: Resolve linking issue when building with gcc 7 and 9.
+        - PR-904 x86_64: Resolve compiler aliasing warnings and RNG
+          pointer cast bug - PR-944 x86_64: Change entrypoint to standard
+          location 1M
+        - PR-971 x86_64: Fix bug in rng implementation using intrinsics
+        - PR-973 x86_64: Fix crash on boot when XSAVE and SSE/AVX is enabled
+        - PR-974 x86_64: Add support booting NuttX as a Jailhouse Cell
+        - PR-919 sim: Add host mmap and perror to allow use of LIBC_MODLIB
+          and BINFMT_LOADABLE
+        - PR-1198 sim: Use correct errno sign with hostfs interface
+        - PR-932 z16: Updated toolchain to ZDS-II 5.2.2
+        - PR-970 K210: Add PLL support
+        - PR-988 K210: Resolve occasional lock in early boot caused by waiting
+          forserial driver to initialize
+        - PR-1205 K210: Add basic GPIOHS support - PR-1112 tiva: Add up_idle
+          support - PR-1116 NRF52832: Work around chip eratta for SPI Master 1
+          Byte transfer anomaly - PR-1130 imxrt: Resolve WFI issue by setting
+          the low power mode to remain in run mode
+        - PR-1197 cxd56: Fix locking issue in Spresense audio driver causes by
+          using semaphore in DMA buffer handling code
+        - PR-1221 Add INTx_C macro defintion
+
+  * Driver Support:
+      * Bug Fixes:
+        - PR-1206 PR-1207 PR-1210 ioctl function should retun ENOTTY when the
+          command is not recognized.
+
+      * New Driver Support:
+        - PR-795 PR-1001 Initial NuttX audio driver supporting the Spresense
+          CXD56
+        - PR-975 Support for HDC1008 temperature and humidity sensor
+        - PR-1201 Support for the CS4344 stereo audio DAC
+        - PR-1145 Support for the FTDI FT232R USB to Serial converter
+        - PR-1052 gs2200m: Add max payload size to prevent crashing when
+          sending large packets
+        - PR-1090 gs2200m: Fix possible packet queue count overflow seen during
+          streaming - PR-1127 gs2200m: Resolve possible buffer overrun in packet
+          parsing - PR-1167 pty: Return correct number of bytes when
+          CONFIG_SERIAL_TERMIOS and OPOST|ONLCR are enabled
+
+      * Drivers With Significant Improvements:
+        - PR-887 PR-888 rptun: Add control for independent control of rx and tx
+          buffer size
+        - PR-917 gs2200m: Receive performance improvement for TCP/UDP
+        - PR-1032 gs2200m: Add SPI-DMA support to spresense
+        - PR-1046 gs2200m: Add getsockname() support
+        - PR-1094 PR-1163 gs2200m: Add flow control support to prevent memory
+          starvation in changing network environments
+        - PR-1101 gs2200m: Add WPA2-PSK AP mode support, this is now the default
+          instead of WEP
+        - PR-1115 SPI slave: Improve interface
+          Enable enqueue and receive full buffers of data with single call, to
+          avoid call overhead when sending / receiving large amounts of data.
+          Enable the slave device to leave received data in the controller
+          receive buffers and retrieve it from there by polling
+        - PR-1196 Audio: Add support for using ap_buffer_info without
+          CONFIG_AUDIO_DRIVER_SPECIFIC_BUFFERS and return ENOTTY if provided ioctl
+          is not supported
+        - PR-1222 audio/cxd56: Add audio buffering feature.
+
+  * Board Support:
+      * Significant Improvements:
+
+        - PR-1200 The boards_button_initialize and boards_userled_initialize
+          functions now return the number of buttons and leds, thus their
+          prototypes have changed from:
+            void board_button_initialize(void)
+            void board_userled_initialize(void)
+
+            to
+
+            uint32_t board_button_initialize(void)
+            uint32_t board_userled_initialize(void).
+
+      * New Board Support:
+        - PR-1051 ST Micro B-G474E-DPOW1 Discovery Kit
+          Initial support for the ST Micro B-G474E-DPOW1 Discovery Kit with
+          STM32G474RE MCU. Currently there is basic support for booting NuttX to
+          a functional NSH prompt. Other peripherals on the board are not yet
+          supported or not tested yet. Contributions to enable other peripherals
+          are welcome. The NSH prompt can be accessed from a host computer via a
+          Virtual COM Port over the same Micro-USB Type B connection used for
+          programming/debugging.
+        - PR-1211  STM32F411-Minimum board (a.k.a. BlackPill)
+          Initial support for the BlackPill board which is a low cost STM32F411
+          board.  The current support boots NuttX to a functional NSH prompt.
+
+      * Boards With Significant Improvements:
+        - PR-949 qemu-intel64: Add nsh configuration for testing QEMU
+          virtualization
+        - PR-966 qemu-i486: Fix issue where console would not accept input
+          because of wrong IRQ number
+        - PR-993 stm32h747i-disco: Add support for FMC SDRAM - PR-1029 maix-bit:
+          Add knsh configuration for testing Kernel mode under QEMU virtualization
+        - PR-1056 stm32h747i-disco: Add support for FAT and SD Card via SDMMC
+        - PR-1070 PR-1086 spresense: Add ftpd/ftpc and nxplayer to wifi and rndis
+          configurations
+        - PR-1084 imxrt1060-evk: Add dns client and renew command to netnsh
+          configuration
+        - PR-1113 lm3s6965ek: Use proper sysclock for QEMU
+          configuration
+        - PR-1229 Add support for the inboard joystick
+        - PR-1232 Architectural re-organization to the initialization of the
+          video stream driver to comply with other NuttX drivers
+
+  * File System:
+      * Bug Fixes:
+        - PR-918 tmpfs: Calling statfs could cause files to be removed
+          recursively - PR-1142 NFS: Use of uint64_t causes issues with gaps in
+          data since it must be on a 8 byte boundary
+        - PR-1143 Report correct stats for proxied block and MTD drivers
+
+      * Significant Improvements:
+        - PR-793 Allow use of genromfs to geneate ROMFS
+        - PR-851 Upgrade littlefs to v2.2.1
+        - PR-1154 FATFS: Do not rewrite the root directory if it has not been
+          changed.
+        - PR-1120 PR-1118 Fill in file size for mtd and block inode
+
+  * Networking:
+    - PR-807 Netlink: Broadcast link status changes to userspace via
+      RTNLGRP_LINK
+    - PR-892 Netdb: Multiple DNS Servers
+      Adds capability to add multiple nameservers on run-time even when not
+      using resolv.conf and reset the list of nameservers back to default
+      setting (no nameserver at all or single predefined nameserver in Kconfig).
+      This is useful for applications that change their cellular network
+      frequently.
+    - PR-1015 tcp/conn: Request ARP before 3-way handshake
+
+  * Applications:
+      * Improvements:
+        - PR-185 PR-828 nshlib
+          Add the source command. Avoid use of sh where it is not needed since
+          it pollutes the parent environment including the working directory and
+          variables.
+
+        - PR-236 littlevgl: Add additional config mappings to the library
+        - PR-264 nxplayer: Add max host and filename for http url
+        - PR-260 nshlib: Add wget buffer size control with
+          CONFIG_NSH_WGET_BUFF_SIZE
+        - PR-243 dhcpd: Add ability for daemon to be cancelled
+        - PR-238 Remove use the set_errno this is now properly handled by the
+          libc and OS
+        - PR-233 hdc1008: Add example application for this driver
+
+      * Bug Fixes:
+        - PR-282 netlib: Fix pathlen computation for netlib_parseurl and
+          netlib_parsehttpurl
+        - PR-281 webclient: Check return value of netlib_parseurl correctly
+        - PR-278 webclient: Handle http/https redirection correctly
+        - PR-277 webclient: Limit the number of http redirects
+        - PR-198 webclient: Use getaddrinfo() to get IPv4 address on
+          dual stack systems
+        - PR-268 ftpd: Fix EPSV mode for IPv4
+        - PR-258 nsh: Always try FILE_APPS even if the command is builtin,
+          this is a regression introduced in 9.0.0
+        - PR-257 gs2200m: Handle packets over 1500 Bytes, previously would
+          overflow buffer
+        - PR-221 gs2200m: Server sockets were not properly being released by
+          the daemon when close was called
+        - PR-248 dhcpd: Correct option header check length
+        - PR-176 cu: Handle NULL character correctly
+        - PR-287 PR-290 examples: Update nxflat and thttpd Makefile's to fix
+          a build breakage.

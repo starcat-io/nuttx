@@ -63,8 +63,8 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "hardware/lpc54_pinmux.h"
 #include "hardware/lpc54_syscon.h"
@@ -1213,7 +1213,7 @@ struct i2c_master_s *lpc54_i2cbus_initialize(int port)
    * priority inheritance enabled.
    */
 
-  nxsem_setprotocol(&priv->waitsem, SEM_PRIO_NONE);
+  nxsem_set_protocol(&priv->waitsem, SEM_PRIO_NONE);
 #endif
 
   /* Allocate a watchdog timer */

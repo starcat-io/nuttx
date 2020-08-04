@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-/* This file should never be included directed but, rather, only indirectly
+/* This file should never be included directly but, rather, only indirectly
  * through nuttx/arch.h
  */
 
@@ -53,6 +53,23 @@
 /****************************************************************************
  * Inline functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: xtensa_getsp
+ ****************************************************************************/
+
+static inline uint32_t xtensa_getsp(void)
+{
+  register uint32_t sp;
+
+  __asm__ __volatile__
+  (
+    "mov %0, sp\n"
+    : "=r" (sp)
+  );
+
+  return sp;
+}
 
 /****************************************************************************
  * Public Types

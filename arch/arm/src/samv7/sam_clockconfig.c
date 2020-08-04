@@ -45,8 +45,8 @@
 #include <nuttx/arch.h>
 #include <arch/board/board.h>
 
-#include "up_arch.h"
-#include "up_internal.h"
+#include "arm_arch.h"
+#include "arm_internal.h"
 
 #include "sam_clockconfig.h"
 #include "hardware/sam_pmc.h"
@@ -266,13 +266,13 @@ static inline void sam_pmcsetup(void)
 
   if ((getreg32(SAM_PMC_MCKR) & PMC_MCKR_PLLADIV2) != 0)
     {
-      /* Divider = 480 Mhz / 2 / 48 Mhz = 5 */
+      /* Divider = 480 MHz / 2 / 48 MHz = 5 */
 
       regval |=  PMC_USB_USBDIV(4);
     }
   else
     {
-      /* Divider = 480 Mhz / 1 / 48 Mhz = 10 */
+      /* Divider = 480 MHz / 1 / 48 MHz = 10 */
 
       regval |=  PMC_USB_USBDIV(9);
     }

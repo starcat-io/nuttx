@@ -48,7 +48,7 @@
 #include <arch/board/board.h>
 
 #include "chip.h"
-#include "up_arch.h"
+#include "mips_arch.h"
 
 #include "pic32mx.h"
 #include "ubw32.h"
@@ -111,13 +111,13 @@ static const uint8_t g_buttoncn[NUM_BUTTONS] =
  *
  * Description:
  *   board_button_initialize() must be called to initialize button resources.
- *   After that, board_buttons() may be called to collect the current state of
- *   all buttons or board_button_irq() may be called to register button
+ *   After that, board_buttons() may be called to collect the current state
+ *   of all buttons or board_button_irq() may be called to register button
  *   interrupt handlers.
  *
  ****************************************************************************/
 
-void board_button_initialize(void)
+uint32_t board_button_initialize(void)
 {
   int i;
 
@@ -127,6 +127,8 @@ void board_button_initialize(void)
     {
       pic32mx_configgpio(g_buttonset[i]);
     }
+
+  return NUM_BUTTONS;
 }
 
 /****************************************************************************
@@ -156,18 +158,18 @@ uint32_t board_buttons(void)
  *
  * Description:
  *   board_button_initialize() must be called to initialize button resources.
- *   After that, board_buttons() may be called to collect the current state of
- *   all buttons or board_button_irq() may be called to register button
+ *   After that, board_buttons() may be called to collect the current state
+ *   of all buttons or board_button_irq() may be called to register button
  *   interrupt handlers.
  *
  *   After board_button_initialize() has been called, board_buttons() may be
  *   called to collect the state of all buttons.  board_buttons() returns an
  *   32-bit bit set with each bit associated with a button.
- *   See the BUTTON_*_BIT  definitions in board.h for the meaning of each bit.
+ *   See the BUTTON_*_BIT definitions in board.h for the meaning of each bit.
  *
  *   board_button_irq() may be called to register an interrupt handler that
- *   will be called when a button is depressed or released.  The ID value is a
- *   button enumeration value that uniquely identifies a button resource.
+ *   will be called when a button is depressed or released.  The ID value is
+ *   a button enumeration value that uniquely identifies a button resource.
  *   See the BUTTON_* definitions in board.h for the meaning of enumeration
  *   value.
  *

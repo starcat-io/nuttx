@@ -110,7 +110,7 @@ config USEC_PER_TICK
 		If SCHED_TICKLESS is selected, then there are no system timer
 		interrupts.  In this case, USEC_PER_TICK does not control any timer
 		rates.  Rather, it only determines the resolution of time reported
-		by clock_systimer() and the resolution of times that can be set for
+		by clock_systime_ticks() and the resolution of times that can be set for
 		certain delays including watchdog timers and delayed work.  In this
 		case there is a trade-off:  It is better to have the USEC_PER_TICK as
 		low as possible for higher timing resolution.  However, the time
@@ -329,7 +329,7 @@ config SMP_NCPUS
 
 config SMP_IDLETHREAD_STACKSIZE
 	int "CPU IDLE stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
 		Each CPU will have its own IDLE task.  System initialization occurs
 		on CPU0 and uses CONFIG_IDLETHREAD_STACKSIZE which will probably be
@@ -341,8 +341,8 @@ endif # SMP
 choice
 	prompt "Initialization Task"
 	default INIT_ENTRYPOINT if !BUILD_KERNEL
-	default INIT_FILEPATH if BUILD_KERNEL && !BINFMT_DISABLE
-	default INIT_NONE if BUILD_KERNEL && BINFMT_DISABLE
+	default INIT_FILEPATH if !BINFMT_DISABLE
+	default INIT_NONE if BINFMT_DISABLE
 
 config INIT_NONE
 	bool "None"
@@ -388,7 +388,7 @@ config INIT_SYMTAB
 	string "Symbol table"
 	default "NULL" if !EXECFUNCS_HAVE_SYMTAB
 	default EXECFUNCS_SYMTAB_ARRAY if EXECFUNCS_HAVE_SYMTAB
-	depends on !BUILD_PROTECTED && !BUILD_KERNEL
+	depends on BUILD_FLAT
 	---help---
 		The name of other global array that holds the exported symbol table.
 		The special string "NULL" may be provided if there is no symbol
@@ -402,7 +402,7 @@ config INIT_NEXPORTS
 	string "Symbol table size"
 	default "0" if !EXECFUNCS_HAVE_SYMTAB
 	default EXECFUNCS_NSYMBOLS_VAR if EXECFUNCS_HAVE_SYMTAB
-	depends on !BUILD_PROTECTED && !BUILD_KERNEL
+	depends on BUILD_FLAT
 	---help---
 		The size of the symbol table.  NOTE that is is logically a numeric
 		value but is represent by a string.  That allows you to put
@@ -616,18 +616,6 @@ config SCHED_WAITPID
 		compliant) and will enable the waitid() and wait() interfaces as
 		well.
 
-config SCHED_EXIT_KILL_CHILDREN
-	bool "Enable kill all children when exit"
-	default n
-	depends on SCHED_HAVE_PARENT && SCHED_CHILD_STATUS
-	---help---
-		When a task exits, all of its child threads will be killed.
-
-		Caution:  This selection should not be used unless you are certain
-		of what you are doing.  Uninformed of this option can often lead to
-		memory leaks since, for example, memory allocations held by threads
-		are not automatically freed!
-
 config SCHED_USER_IDENTITY
 	bool "Support per-task User Identity"
 	default n
@@ -642,17 +630,7 @@ config SCHED_USER_IDENTITY
 endmenu # Tasks and Scheduling
 
 menu "Pthread Options"
-
-config NPTHREAD_KEYS
-	int "Maximum number of pthread keys"
-	default 4 if !DISABLE_PTHREAD
-	default 0 if DISABLE_PTHREAD
-	range 0 32
-	---help---
-		The number of items of thread-specific data that can be retained.
-		The value zero disables support for pthread-specific data.
-
-if !DISABLE_PTHREAD
+	depends on !DISABLE_PTHREAD
 
 config PTHREAD_MUTEX_TYPES
 	bool "Enable mutex types"
@@ -731,8 +709,6 @@ config CANCELLATION_POINTS
 		Enable POSIX cancellation points for pthread_cancel().  If selected,
 		cancellation points will also used with the () task_delete() API even if
 		pthreads are not enabled.
-
-endif # !DISABLE_PTHREAD
 
 endmenu # Pthread Options
 
@@ -862,7 +838,7 @@ config CPULOAD_ONESHOT
 		oneshot timer must be configured by board specific logic which must
 		then call:
 
-			void sched_oneshot_extclk(FAR struct oneshot_lowerhalf_s *lower);
+			void nxsched_oneshot_extclk(FAR struct oneshot_lowerhalf_s *lower);
 
 		To start the CPU load measurement. See include/nuttx/clock.h
 
@@ -880,7 +856,7 @@ config CPULOAD_PERIOD
 		period timer must be configured by board specific logic which must
 		then call:
 
-			void sched_period_extclk(FAR struct timer_lowerhalf_s *lower);
+			void nxsched_period_extclk(FAR struct timer_lowerhalf_s *lower);
 
 		To start the CPU load measurement. See include/nuttx/clock.h
 
@@ -996,6 +972,26 @@ config SCHED_INSTRUMENTATION_SPINLOCKS
 			void sched_note_spinunlock(FAR struct tcb_s *tcb, bool state);
 			void sched_note_spinabort(FAR struct tcb_s *tcb, bool state);
 
+config SCHED_INSTRUMENTATION_SYSCALL
+	bool "System call monitor hooks"
+	default n
+	depends on ARCH_HAVE_SYSCALL_HOOKS
+	---help---
+		Enables additional hooks for entry and exit from system call.
+		Board-specific logic must provide this additional logic.
+
+			void sched_note_syscall_enter(int nr, int argc, ...);
+			void sched_note_syscall_leave(int nr, uintptr_t result);
+
+config SCHED_INSTRUMENTATION_IRQHANDLER
+	bool "Interrupt handler monitor hooks"
+	default n
+	---help---
+		Enables additional hooks for interrupt handler. Board-specific logic
+		must provide this additional logic.
+
+			void sched_note_irqhandler(int irq, FAR void *handler, bool enter);
+
 config SCHED_INSTRUMENTATION_BUFFER
 	bool "Buffer instrumentation data in memory"
 	default n
@@ -1030,7 +1026,7 @@ config SCHED_NOTE_BUFSIZE
 		bytes).
 
 config SCHED_NOTE_GET
-	bool "Callable interface to get instrumentatin data"
+	bool "Callable interface to get instrumentation data"
 	default n
 	depends on !SCHED_INSTRUMENTATION_CSECTION && (!SCHED_INSTRUMENTATION_SPINLOCK || !SMP)
 	---help---
@@ -1138,7 +1134,7 @@ menuconfig PRIORITY_INHERITANCE
 			int ret = sem_setprotocol(&sem, SEM_PRIO_NONE);
 
 		From applications, the functionally equivalent OS internal interface,
-		nxsem_setprotocol(), should be used within the OS
+		nxsem_set_protocol(), should be used within the OS
 
 		And for individual pthread mutexes by setting the protocol attribute
 		before initializing the mutex:
@@ -1272,7 +1268,7 @@ if BOARD_LATE_INITIALIZE
 
 config BOARD_INITTHREAD_STACKSIZE
 	int "Board initialization thread stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
 		The size of the stack to allocate when starting the board
 		initialization thread.
@@ -1572,6 +1568,7 @@ config MODULE
 	bool "Enable loadable OS modules"
 	default n
 	select LIBC_MODLIB
+	select ARCH_USE_MODULE_TEXT if ARCH_HAVE_MODULE_TEXT
 	---help---
 		Enable support for loadable OS modules.  Default: n
 
@@ -1655,7 +1652,7 @@ config SCHED_HPWORKPRIORITY
 
 config SCHED_HPWORKSTACKSIZE
 	int "High priority worker thread stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
 		The stack size allocated for the worker thread.  Default: 2K.
 
@@ -1754,7 +1751,7 @@ config SCHED_LPWORKPRIOMAX
 
 config SCHED_LPWORKSTACKSIZE
 	int "Low priority worker thread stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
 		The stack size allocated for the lower priority worker thread.  Default: 2K.
 
@@ -1774,7 +1771,7 @@ config IDLETHREAD_STACKSIZE
 
 config USERMAIN_STACKSIZE
 	int "Main thread stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
 		The size of the stack to allocate for the user initialization thread
 		that is started as soon as the OS completes its initialization.
@@ -1787,7 +1784,7 @@ config PTHREAD_STACK_MIN
 
 config PTHREAD_STACK_DEFAULT
 	int "Default pthread stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 	---help---
 		Default pthread stack size
 
