@@ -640,16 +640,21 @@ concise summary of the available Jupiter Nano configurations:
 
 ## Networking
 
-   Jupiter Nano has support for Ethernet over USB using CDC-ECM 
-   protocol. (All the SAMA5D27C boards do, actually.) They use
-   an Ethernet USB Gadget. Using the netnsh or sdmmc-net-nsh
-   configurations, NuttX will boot with the IP address of 
-   10.0.0.2, with its gateway set to 10.0.0.1. The 
-   tools/netusb.sh script can set up a Linux computer with
-   IP tables NAT rules and proper routes to allow the NuttX
-   computer to access the Internet.
+   Jupiter Nano has support for Ethernet over USB using CDC-ECM protocol. (All the 
+   SAMA5D27C boards do, actually.) They use an Ethernet USB Gadget. Using the netnsh 
+   or sdmmcnsh configurations, with the latest apps/ tree, you can add the following 
+   lines to the end of teh apps/nshlib/rcS.template file, and NuttX will boot with the 
+   IP address of 10.0.0.2, with its gateway set to 10.0.0.1 and start telnetd so you 
+   can log in over the network: 
+   
+    ifconfig eth0 10.0.0.2
+    ifup eth0
+    telnetd
+   
+   The tools/netusb.sh script can set up a Linux computer with IP tables NAT rules 
+   and proper routes to allow the NuttX computer to access the Internet.
 
-   This is a high performance link and can transfer 30MB/s
-   of data to or from a host computer.
+   This is a high performance link and can transfer 30MB/s of data to or from a host 
+   computer.
 
 
