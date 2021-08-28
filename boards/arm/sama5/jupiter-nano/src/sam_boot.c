@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/sam_boot.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_boot.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -28,7 +28,7 @@
 
 #include <nuttx/board.h>
 
-#include "jupiter-nano.h"
+#include "sama5d2-xult.h"
 
 /****************************************************************************
  * Pre-processor Definitions

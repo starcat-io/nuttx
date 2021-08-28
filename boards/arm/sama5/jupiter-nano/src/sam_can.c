@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/sam_can.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_can.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -34,7 +34,7 @@
 #include "arm_arch.h"
 
 #include "sam_can.h"
-#include "jupiter-nano.h"
+#include "sama5d2-xult.h"
 
 #ifdef CONFIG_CAN
 

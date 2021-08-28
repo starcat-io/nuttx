@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/sam_sdmmc.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_sdmmc.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -18,19 +18,36 @@
  *
  ****************************************************************************/
 
-/*
+/* The SAMA5D2-XULT provides a built-in 4GB eMMC (SDMMC0), and one SD
+ * full-size memory card slot at J19 (SDMMC1).
+ *
+ * SDMMC0: There is a Micron 4Gx8 eMMC managed NAND Flash (MTFC4GLDEA-0M WT)
+ * connected to SDMMC0.
+ *
+ *   PA1   SDMMC0_CMD
+ *   PA2   SDMMC0_DAT0
+ *   PA3   SDMMC0_DAT1
+ *   PA4   SDMMC0_DAT2
+ *   PA5   SDMMC0_DAT3
+ *   PA6   SDMMC0_DAT4
+ *   PA7   SDMMC0_DAT5
+ *   PA8   SDMMC0_DAT6
+ *   PA9   SDMMC0_DAT7
+ *   PA0   SDMMC0_CK
+ *   PA10  SDMMC0_RSTN
+ *
  * SDMMC1: The full size SD card slot connects via SDMMC1.  The card detect
  * discrete is available on PA30 (pulled high).  The write protect discrete
  * is tied to ground and not available to software.  The slot only supports
  * 4-bit wide transfer mode.
  *
- *   PA30  SDMMC1_CD - always pulled low
+ *   PA30  SDMMC1_CD
  *   PA18  SDMMC1_DAT0
  *   PA19  SDMMC1_DAT1
  *   PA20  SDMMC1_DAT2
  *   PA21  SDMMC1_DAT3
  *   PD22  SDMMC1_CK
- *   PA28  SDMMC1_CMD
+ *   PA28  SDMMC1_CDA
  *
  */
 
@@ -55,7 +72,7 @@
 #include "sam_pio.h"
 #include "sam_sdmmc.h"
 
-#include "jupiter-nano.h"
+#include "sama5d2-xult.h"
 
 #ifdef HAVE_SDMMC
 
@@ -80,6 +97,18 @@ struct sam_sdmmc_state_s
  ****************************************************************************/
 
 /* SDMMC device state */
+
+#ifdef CONFIG_SAMA5_SDMMC0
+static int sam_sdmmc0_cardetect(int irq, void *regs, FAR void *arg);
+
+static struct sam_sdmmc_state_s g_sdmmc0 =
+{
+  .pincfg  = PIO_SDMMC0_CD,
+  .irq     = -1,
+  .slotno  = 0,
+  .handler = sam_sdmmc0_cardetect,
+};
+#endif
 
 #ifdef CONFIG_SAMA5_SDMMC1
 static int sam_sdmmc1_cardetect(int irq, void *regs, FAR void *arg);
@@ -146,6 +175,13 @@ static int sam_sdmmc_cardetect(struct sam_sdmmc_state_s *state)
   return OK;
 }
 
+#ifdef CONFIG_SAMA5_SDMMC0
+static int sam_sdmmc0_cardetect(int irq, void *regs, FAR void *arg)
+{
+  return sam_sdmmc_cardetect(&g_sdmmc0);
+}
+#endif
+
 #ifdef CONFIG_SAMA5_SDMMC1
 static int sam_sdmmc1_cardetect(int irq, void *regs, FAR void *arg)
 {
@@ -164,6 +200,18 @@ static int sam_sdmmc1_cardetect(int irq, void *regs, FAR void *arg)
 static struct sam_sdmmc_state_s *sam_sdmmc_state(int slotno)
 {
   struct sam_sdmmc_state_s *state = NULL;
+
+#ifdef CONFIG_SAMA5_SDMMC0
+#ifdef CONFIG_SAMA5_SDMMC1
+  if (slotno == 0)
+#endif
+    {
+      state = &g_sdmmc0;
+    }
+#ifdef CONFIG_SAMA5_SDMMC1
+  else
+#endif
+#endif
 
 #ifdef CONFIG_SAMA5_SDMMC1
     {

@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_i2schar.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_usbmsc.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -24,88 +24,68 @@
 
 #include <nuttx/config.h>
 
-#include <sys/types.h>
+#include <stdio.h>
+#include <syslog.h>
 #include <errno.h>
-#include <debug.h>
 
-#include <nuttx/audio/i2s.h>
+#include <nuttx/board.h>
 
-#include "sam_ssc.h"
 #include "sama5d2-xult.h"
 
-#if defined(CONFIG_AUDIO_I2SCHAR) && \
-   (defined(CONFIG_SAMA5_SSC0) || defined(CONFIG_SAMA5_SSC1))
+#ifdef CONFIG_USBMSC
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifndef CONFIG_SAMA5D3XPLAINED_SSC_PORT
-#  if defined(CONFIG_SAMA5_SSC0)
-#    define CONFIG_SAMA5D3XPLAINED_SSC_PORT 0
-#  elif defined(CONFIG_SAMA5_SSC1)
-#    define CONFIG_SAMA5D3XPLAINED_SSC_PORT 1
-#  endif
+/* Configuration ************************************************************/
+
+#ifndef HAVE_AT25
+#  error AT25 Serial FLASH not supported
 #endif
 
-#ifndef CONFIG_SAMA5D3XPLAINED_I2SCHAR_MINOR
-#  define CONFIG_SAMA5D3XPLAINED_I2SCHAR_MINOR 0
+#ifndef CONFIG_SAMA5D3XPLAINED_AT25_FTL
+#  error AT25 FTL support required (CONFIG_SAMA5D3XPLAINED_AT25_FTL)
+#  undef HAVE_AT25
 #endif
 
-/****************************************************************************
- * Private Functions
- ****************************************************************************/
+#ifndef CONFIG_SYSTEM_USBMSC_DEVMINOR1
+#  define CONFIG_SYSTEM_USBMSC_DEVMINOR1 0
+#endif
+
+#if CONFIG_SYSTEM_USBMSC_DEVMINOR1 != AT25_MINOR
+#  error Confusion in the assignment of minor device numbers
+#  undef HAVE_AT25
+#endif
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: i2schar_devinit
+ * Name: board_usbmsc_initialize
  *
  * Description:
- *   All architectures must provide the following interface in order to work
- *   with apps/examples/i2schar.
+ *   Perform architecture specific initialization as needed to establish
+ *   the mass storage device that will be exported by the USB MSC device.
  *
  ****************************************************************************/
 
-int i2schar_devinit(void)
+int board_usbmsc_initialize(int port)
 {
-  static bool initialized = false;
-  struct i2s_dev_s *i2s;
-  int ret;
+  /* Initialize the AT25 MTD driver */
 
-  /* Have we already initialized? */
-
-  if (!initialized)
+#ifdef HAVE_AT25
+  int ret = sam_at25_automount(AT25_MINOR);
+  if (ret < 0)
     {
-      /* Call sam_ssc_initialize() to get an instance of the SSC/I2S
-       * interface
-       */
-
-      i2s = sam_ssc_initialize(CONFIG_SAMA5D3XPLAINED_SSC_PORT);
-      if (!i2s)
-        {
-          _err("ERROR: Failed to get the SAMA5 SSC/I2S driver for SSC%d\n",
-              CONFIG_SAMA5D3XPLAINED_SSC_PORT);
-          return -ENODEV;
-        }
-
-      /* Register the I2S character driver at "/dev/i2schar0" */
-
-      ret = i2schar_register(i2s, CONFIG_SAMA5D3XPLAINED_I2SCHAR_MINOR);
-      if (ret < 0)
-        {
-          aerr("ERROR: i2schar_register failed: %d\n", ret);
-          return ret;
-        }
-
-      /* Now we are initialized */
-
-      initialized = true;
+      syslog(LOG_ERR, "ERROR: sam_at25_automount failed: %d\n", ret);
     }
 
-  return OK;
+  return ret;
+#else
+  return -ENODEV;
+#endif
 }
 
-#endif /* CONFIG_AUDIO_I2SCHAR && (CONFIG_SAMA5_SSC0 || CONFIG_SAMA5_SSC1) */
+#endif /* CONFIG_USBMSC */

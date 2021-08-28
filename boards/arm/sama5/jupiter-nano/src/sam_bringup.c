@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/sam_bringup.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_bringup.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -37,7 +37,7 @@
 #include <nuttx/usb/usbhost.h>
 #include <nuttx/usb/usbdev_trace.h>
 
-#include "jupiter-nano.h"
+#include "sama5d2-xult.h"
 
 #ifdef CONFIG_CDCACM
 #  include <nuttx/usb/cdcacm.h>

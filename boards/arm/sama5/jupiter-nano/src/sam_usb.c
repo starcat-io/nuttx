@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/sam_usb.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_usb.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -42,7 +42,7 @@
 #include "sam_pio.h"
 #include "sam_usbhost.h"
 #include "hardware/sam_ohci.h"
-#include "jupiter-nano.h"
+#include "sama5d2-xult.h"
 
 #if defined(CONFIG_SAMA5_UHPHS) || defined(CONFIG_SAMA5_UDPHS)
 
@@ -50,12 +50,12 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifndef CONFIG_JUPITER_NANO_USBHOST_PRIO
-#  define CONFIG_JUPITER_NANO_USBHOST_PRIO 50
+#ifndef CONFIG_SAMA5D3XPLAINED_USBHOST_PRIO
+#  define CONFIG_SAMA5D3XPLAINED_USBHOST_PRIO 50
 #endif
 
-#ifndef CONFIG_JUPITER_NANO_USBHOST_STACKSIZE
-#  define CONFIG_JUPITER_NANO_USBHOST_STACKSIZE 1024
+#ifndef CONFIG_SAMA5D3XPLAINED_USBHOST_STACKSIZE
+#  define CONFIG_SAMA5D3XPLAINED_USBHOST_STACKSIZE 1024
 #endif
 
 #ifdef HAVE_USBDEV
@@ -237,6 +237,8 @@ void weak_function sam_usbinitialize(void)
 #ifdef HAVE_USBDEV
   /* Configure Port A to support the USB device function */
 
+  sam_configpio(PIO_USBA_VBUS_SENSE); /* VBUS sense */
+
   /* TODO:  Configure an interrupt on VBUS sense */
 
 #endif
@@ -245,12 +247,19 @@ void weak_function sam_usbinitialize(void)
 #ifdef CONFIG_SAMA5_UHPHS_RHPORT1
   /* Configure Port A to support the USB OHCI/EHCI function */
 
-#ifdef PIO_USBA_VBUS_ENABLE /* Jupiter Nano has no port A VBUS enable */
+#ifdef PIO_USBA_VBUS_ENABLE /* SAMA5D3-Xplained has no port A VBUS enable */
   sam_configpio(PIO_USBA_VBUS_ENABLE); /* VBUS enable, initially OFF */
 #endif
 #endif
 
 #ifdef CONFIG_SAMA5_UHPHS_RHPORT2
+  /* Configure Port B to support the USB OHCI/EHCI function */
+
+  sam_configpio(PIO_USBB_VBUS_ENABLE); /* VBUS enable, initially OFF */
+
+  /* Configure Port B VBUS overrcurrent detection */
+
+  sam_configpio(PIO_USBB_VBUS_OVERCURRENT); /* VBUS overcurrent */
 #endif
 #endif /* HAVE_USBHOST */
 }
@@ -330,8 +339,8 @@ int sam_usbhost_initialize(void)
 
   /* Start a thread to handle device connection. */
 
-  pid = kthread_create("OHCI Monitor", CONFIG_JUPITER_NANO_USBHOST_PRIO,
-                       CONFIG_JUPITER_NANO_USBHOST_STACKSIZE,
+  pid = kthread_create("OHCI Monitor", CONFIG_SAMA5D2XULT_USBHOST_PRIO,
+                       CONFIG_SAMA5D2XULT_USBHOST_STACKSIZE,
                        (main_t)ohci_waiter, (FAR char * const *)NULL);
   if (pid < 0)
     {
@@ -352,8 +361,8 @@ int sam_usbhost_initialize(void)
 
   /* Start a thread to handle device connection. */
 
-  pid = kthread_create("EHCI Monitor", CONFIG_JUPITER_NANO_USBHOST_PRIO,
-                       CONFIG_JUPITER_NANO_USBHOST_STACKSIZE,
+  pid = kthread_create("EHCI Monitor", CONFIG_SAMA5D2XULT_USBHOST_PRIO,
+                       CONFIG_SAMA5D2XULT_USBHOST_STACKSIZE,
                        (main_t)ehci_waiter, (FAR char * const *)NULL);
   if (pid < 0)
     {
@@ -401,7 +410,7 @@ void sam_usbhost_vbusdrive(int rhport, bool enable)
       return;
 
 #elif !defined(PIO_USBA_VBUS_ENABLE)
-      /* JUPITER-NANO has no port A VBUS enable */
+      /* SAMA5D2-XULT has no port A VBUS enable */
 
       uerr("ERROR: RHPort1 has no VBUS enable\n");
       return;
@@ -415,6 +424,7 @@ void sam_usbhost_vbusdrive(int rhport, bool enable)
       uerr("ERROR: RHPort2 is not available in this configuration\n");
       return;
 #else
+      pinset = PIO_USBB_VBUS_ENABLE;
       break;
 #endif
 
