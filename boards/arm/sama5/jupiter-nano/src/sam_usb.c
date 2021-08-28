@@ -237,8 +237,6 @@ void weak_function sam_usbinitialize(void)
 #ifdef HAVE_USBDEV
   /* Configure Port A to support the USB device function */
 
-  sam_configpio(PIO_USBA_VBUS_SENSE); /* VBUS sense */
-
   /* TODO:  Configure an interrupt on VBUS sense */
 
 #endif
@@ -247,19 +245,12 @@ void weak_function sam_usbinitialize(void)
 #ifdef CONFIG_SAMA5_UHPHS_RHPORT1
   /* Configure Port A to support the USB OHCI/EHCI function */
 
-#ifdef PIO_USBA_VBUS_ENABLE /* SAMA5D3-Xplained has no port A VBUS enable */
+#ifdef PIO_USBA_VBUS_ENABLE /* Jupiter Nano has no port A VBUS enable */
   sam_configpio(PIO_USBA_VBUS_ENABLE); /* VBUS enable, initially OFF */
 #endif
 #endif
 
 #ifdef CONFIG_SAMA5_UHPHS_RHPORT2
-  /* Configure Port B to support the USB OHCI/EHCI function */
-
-  sam_configpio(PIO_USBB_VBUS_ENABLE); /* VBUS enable, initially OFF */
-
-  /* Configure Port B VBUS overrcurrent detection */
-
-  sam_configpio(PIO_USBB_VBUS_OVERCURRENT); /* VBUS overcurrent */
 #endif
 #endif /* HAVE_USBHOST */
 }
@@ -424,7 +415,6 @@ void sam_usbhost_vbusdrive(int rhport, bool enable)
       uerr("ERROR: RHPort2 is not available in this configuration\n");
       return;
 #else
-      pinset = PIO_USBB_VBUS_ENABLE;
       break;
 #endif
 
