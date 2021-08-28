@@ -626,23 +626,19 @@ concise summary of the available Jupiter Nano configurations:
        will need to install a battery in the battery holder (J12) and close
        the jumper, JP13.
 
-- sdmmcnsh:
-
-    This is a configuration based on the NuttShell (NSH). The SDMMC
-    peripheral is enabled, and can read and write to a VFAT filesystem
-    on the SD Card.
-
-    NuttX will mount the SD Card at `/mnt/mmcsd1`.
-
 - sdmmc-net-nsh:
 
-    This is a combination of the netnsh and sdmmcnsh configurations.
+    This is a configuration based on the NuttShell (NSH). Internet networking
+    and the SDMMC peripheral is enabled. NuttX can read and write to a VFAT
+    filesystem on the SD Card. 
+
+    NuttX will mount the SD Card at `/mnt/mmcsd1`.
 
 ## Networking
 
    Jupiter Nano has support for Ethernet over USB using CDC-ECM protocol. (All the 
    SAMA5D27C boards do, actually.) They use an Ethernet USB Gadget. Using the netnsh 
-   or sdmmcnsh configurations, with the latest apps/ tree, you can add the following 
+   or sdmmc-net-nsh configurations, with the latest apps/ tree, you can add the following 
    lines to the end of teh apps/nshlib/rcS.template file, and NuttX will boot with the 
    IP address of 10.0.0.2, with its gateway set to 10.0.0.1 and start telnetd so you 
    can log in over the network: 
