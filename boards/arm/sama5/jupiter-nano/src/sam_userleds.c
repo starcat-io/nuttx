@@ -79,7 +79,7 @@ void board_userled(int led, bool ledon)
 
   /* high illuminates */
 
-  sam_piowrite(ledcfg, !ledon);
+  sam_piowrite(ledcfg, ledon);
 }
 
 /****************************************************************************

@@ -35,6 +35,8 @@
 #
 ############################################################################
 
+LIBPATH ?= $(TOPDIR)$(DELIM)staging
+
 ifneq ($(RCSRCS)$(RCRAWS),)
 ETCDIR := etctmp
 ETCSRC := $(ETCDIR:%=%.c)
@@ -48,7 +50,13 @@ $(RCOBJS): $(ETCDIR)$(DELIM)%: %
 	$(call PREPROCESS, $<, $@)
 
 $(ETCSRC): $(RCRAWS) $(RCOBJS)
+	@echo "AF_ETCSRC 0"
+	@echo "$(dir)"
+	@echo "$(ETCDIR)"
+	@echo "$(RCSRCS)"
+	@echo "$(RCRAWS)"
 	$(foreach raw, $(RCRAWS), \
+	  @echo "AF_ETCSRC 1: $(raw)" \
 	  $(shell rm -rf $(ETCDIR)$(DELIM)$(raw)) \
 	  $(shell mkdir -p $(dir $(ETCDIR)$(DELIM)$(raw))) \
 	  $(shell cp -rfp $(raw) $(ETCDIR)$(DELIM)$(raw)))
