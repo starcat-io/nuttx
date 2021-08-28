@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/jupiter-nano.h
+ * boards/arm/sama5/sama5d2-xult/src/sama5d2-xult.h
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_SAMA5_JUPITER_NANO_SRC_JUPITER_NANO_H
-#define __BOARDS_ARM_SAMA5_JUPITER_NANO_SRC_JUPITER_NANO_H
+#ifndef __BOARDS_ARM_SAMA5_SAMA5D2_XULT_SRC_SAMA5D2_XULT_H
+#define __BOARDS_ARM_SAMA5_SAMA5D2_XULT_SRC_SAMA5D2_XULT_H
 
 /****************************************************************************
  * Included Files
@@ -54,7 +54,7 @@
 
 /* Can't support MMC/SD if the card interface(s) are not enable */
 
-#if !defined(CONFIG_SAMA5_SDMMC) && !defined(CONFIG_SAMA5_SDMMC1)
+#if !defined(CONFIG_SAMA5_SDMMC) && !defined(CONFIG_SAMA5_SDMMC0)
 #  undef HAVE_SDMMC
 #endif
 
@@ -72,11 +72,102 @@
 #  undef HAVE_SDMMC
 #endif
 
-/* No NAND flash */
-#undef HAVE_NAND
+/* NAND FLASH */
 
-/* no AT25 Serial EEPROM */
-#undef HAVE_AT25
+/* Can't support the NAND device if NAND flash is not configured on EBI CS3 */
+
+#ifndef CONFIG_SAMA5_EBICS3_NAND
+#  undef HAVE_NAND
+#endif
+
+/* Can't support NAND features if mountpoints are disabled or if we were not
+ * asked to mount the NAND part
+ */
+
+#if defined(CONFIG_DISABLE_MOUNTPOINT) || !defined(CONFIG_SAMA5D3XPLAINED_NAND_BLOCKMOUNT)
+#  undef HAVE_NAND
+#endif
+
+/* Can't support NAND if the MTD feature is not enabled */
+
+#if !defined(CONFIG_MTD) || !defined(CONFIG_MTD_NAND)
+#  undef HAVE_NAND
+#endif
+
+/* If we are going to mount the NAND, then they user must also have told
+ * us what to do with it by setting one of CONFIG_SAMA5D2XULT_NAND_FTL or
+ * CONFIG_SAMA5D2XULT_NAND_NXFFS.
+ */
+
+#ifndef CONFIG_MTD
+#  undef CONFIG_SAMA5D2XULT_NAND_NXFFS
+#  undef CONFIG_SAMA5D2XULT_NAND_FTL
+#endif
+
+#if !defined(CONFIG_FS_NXFFS) || !defined(CONFIG_NXFFS_NAND)
+#  undef CONFIG_SAMA5D2XULT_NAND_NXFFS
+#endif
+
+#if !defined(CONFIG_SAMA5D2XULT_NAND_FTL) && !defined(CONFIG_SAMA5D2XULT_NAND_NXFFS)
+#  undef HAVE_NAND
+#endif
+
+#if defined(CONFIG_SAMA5D2XULT_NAND_FTL) && defined(CONFIG_SAMA5D2XULT_NAND_NXFFS)
+#  warning Both CONFIG_SAMA5D2XULT_NAND_FTL and CONFIG_SAMA5D2XULT_NAND_NXFFS are set
+#  warning Ignoring CONFIG_SAMA5D2XULT_NAND_NXFFS
+#  undef CONFIG_SAMA5DXULT_NAND_NXFFS
+#endif
+
+/* AT25 Serial FLASH */
+
+/* Can't support the AT25 device if it SPI0 or AT25 support are not enabled */
+
+#if !defined(CONFIG_SAMA5_SPI0) || !defined(CONFIG_MTD_AT25)
+#  undef HAVE_AT25
+#endif
+
+/* Can't support AT25 features if mountpoints are disabled or if we were not
+ * asked to mount the AT25 part
+ */
+
+#if defined(CONFIG_DISABLE_MOUNTPOINT) || !defined(CONFIG_SAMA5D3XPLAINED_AT25_AUTOMOUNT)
+#  undef HAVE_AT25
+#endif
+
+/* If we are going to mount the AT25, then they user must also have told
+ * us what to do with it by setting one of these.
+ */
+
+#ifndef CONFIG_FS_NXFFS
+#  undef CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
+#endif
+
+#if !defined(CONFIG_SAMA5D2XULT_AT25_FTL) && !defined(CONFIG_SAMA5D2XULT_AT25_NXFFS)
+#  undef HAVE_AT25
+#endif
+
+#if defined(CONFIG_SAMA5D2XULT_AT25_FTL) && defined(CONFIG_SAMA5D2XULT_AT25_NXFFS)
+#  warning Both CONFIG_SAMA5D2XULT_AT25_FTL and CONFIG_SAMA5D2XULT_AT25_NXFFS are set
+#  warning Ignoring CONFIG_SAMA5D2XULT_AT25_NXFFS
+#  undef CONFIG_SAMA5D2XULT_AT25_NXFFS
+#endif
+
+/* Assign minor device numbers.  For example, if we also use MINOR number 0
+ * for the AT25, it should appear as /dev/mtdblock0
+ */
+
+#define _NAND_MINOR 0
+
+#ifdef HAVE_NAND
+#  define NAND_MINOR  _NAND_MINOR
+#  define _AT25_MINOR (_NAND_MINOR+1)
+#else
+#  define _AT25_MINOR _NAND_MINOR
+#endif
+
+#ifdef HAVE_AT25
+#  define AT25_MINOR  _AT25_MINOR
+#endif
 
 /* MMC/SD minor numbers:  The NSH device minor extended is extended to
  * support two devices.  If CONFIG_NSH_MMCSDMINOR is zero, these will be:
@@ -89,13 +180,25 @@
 
 #ifdef HAVE_SDMMC
 
-#if ( defined(CONFIG_SAMA5_SDMMC1) )
-#    define SDMMC1_SLOTNO 0
-#endif
+#  if ( defined(CONFIG_SAMA5_SDMMC0) && defined(CONFIG_SAMA5_SDMMC1) )
+#    define SDMMC0_SLOTNO 0
+#    define SDMMC1_SLOTNO 1
+#  else
+#    if ( defined(CONFIG_SAMA5_SDMMC0) )
+#      define SDMMC0_SLOTNO 0
+#    endif
+#    if ( defined(CONFIG_SAMA5_SDMMC1) )
+#      define SDMMC1_SLOTNO 0
+#    endif
+#  endif
 
-#define SDMMC1_MINOR  CONFIG_NSH_MMCSDMINOR
+#  ifdef CONFIG_SAMA5_SDMMC0
+#     define SDMMC0_MINOR  CONFIG_NSH_MMCSDMINOR
+#     define SDMMC1_MINOR  (CONFIG_NSH_MMCSDMINOR+1)
+#  else
+#     define SDMMC1_MINOR  CONFIG_NSH_MMCSDMINOR
+#  endif
 #else
-
 #endif
 
 /* USB Host / USB Device */
@@ -168,19 +271,43 @@
 
 /* LEDs *********************************************************************/
 
-/* There is a blue LED on board the Jupiter Nano 
+/* There is an RGB LED on board the SAMA5D2-XULT.
+ * The RED component is driven by the SDHC_CD pin (PA13) and so will not
+ * be used.
  * The LEDs are provided VDD_LED and so bringing the LED low will illuminate
  * the LED.
  *
  *   ------------------------------ ------------------- ---------------------
  *   SAMA5D2 PIO                    SIGNAL              USAGE
  *   ------------------------------ ------------------- ---------------------
- *   PA6                            STATUS_LED_PA6      Blue LED
+ *   PA13                           SDHC_CD_PA13        Red LED
+ *   PB5                            LED_GREEN_PB5       Green LED
+ *   PB0                            LED_BLUE_PB0        Blue LED
  *   ------------------------------ ------------------- ---------------------
  */
 
+#define PIO_LED_GREEN (PIO_OUTPUT | PIO_CFG_DEFAULT | PIO_OUTPUT_SET | \
+                       PIO_PORT_PIOB | PIO_PIN5)
 #define PIO_LED_BLUE  (PIO_OUTPUT | PIO_CFG_DEFAULT | PIO_OUTPUT_SET | \
-                       PIO_PORT_PIOA | PIO_PIN6)
+                       PIO_PORT_PIOB | PIO_PIN0)
+
+/* Buttons ******************************************************************/
+
+/* A single button, PB_USER (PB6), is available on the SAMA5D2-XULT
+ *
+ *  ------------------------------ ------------------- ----------------------
+ *  SAMA5D2 PIO                    SIGNAL              USAGE
+ *  ------------------------------ ------------------- ----------------------
+ *  PB6                            USER_PB_PB6         PB_USER push button
+ *  ------------------------------ ------------------- ----------------------
+ *
+ *  Closing PB_USER will bring PB6 to ground so 1) PB6 should have a weak
+ *  pull-up, and 2) when PB_USER is pressed, a low value will be senses.
+ */
+
+#define PIO_BTN_USER (PIO_INPUT | PIO_CFG_PULLUP | PIO_CFG_DEGLITCH | \
+                      PIO_INT_BOTHEDGES | PIO_PORT_PIOB | PIO_PIN6)
+#define IRQ_BTN_USER  SAM_IRQ_PB6
 
 /* SDMMC clocking
  *
@@ -208,7 +335,7 @@
 
 /* SDMMC Card Slots *********************************************************/
 
-/* The JUPITER-NANO provides a SD memory card slot:
+/* The SAMA5D2-XULT provides a SD memory card slot:
  *  a full size SD card slot (J19)
  *
  * The full size SD card slot connects via SDMMC1.  The card detect discrete
@@ -230,15 +357,65 @@
 
 /* USB Ports ****************************************************************/
 
-/* The JUPITER-NANO features two USB communication ports:
+/* The SAMA5D2-XULT features two USB communication ports:
  *
  *   1. Port A Host High Speed (EHCI) and Full Speed (OHCI) multiplexed with
- *      USB Device High Speed Micro AB connector, J2
+ *      USB Device High Speed Micro AB connector, J23
  *
  *   2. Port B Host High Speed (EHCI) and Full Speed (OHCI) standard type A
- *      connector, J7
+ *      connector, J13
  *
+ * The USB host port (only) is equipped with 500-mA high-side power
+ * switch for self-powered and bus-powered applications.
+ *
+ * The USB device port A (J6) features a VBUS insert detection function.
+ *
+ *
+ * Port A
+ *
+ *   PIO  Signal Name Function
+ *   ---- ----------- -------------------------------------------------------
+ *   PE9  VBUS_SENSE VBus detection
+ *
+ *     Note: No VBus power switch enable on port A.  I think that this limits
+ *     this port to a device port or as a host port for self-powered devices
+ *     only.
  */
+
+#define PIO_USBA_VBUS_SENSE \
+                     (PIO_INPUT | PIO_CFG_PULLUP | PIO_CFG_DEGLITCH | \
+                      PIO_INT_BOTHEDGES | PIO_PORT_PIOA | PIO_PIN31)
+#define IRQ_USBA_VBUS_SENSE \
+                     SAM_IRQ_PA31
+
+/* Port B
+ *
+ *   PIO  Signal Name Function
+ *   ---- ----------- -------------------------------------------------------
+ *   PE3  EN5V_USBB   VBus power enable via MN3 SP2526A-2E dual power
+ *                    switch.  PE3 (EN5V_USBB)connects to ENB pin of MN3.
+ *                    MN3 OUTB (5V_USBB) is provided to pin 1 of J13 USB
+ *                    A connector
+ *
+ *                    Active high for SP2526A-1; active low for SP2526A-2
+ */
+
+#define PIO_USBB_VBUS_ENABLE \
+                     (PIO_OUTPUT | PIO_CFG_DEFAULT | PIO_OUTPUT_SET | \
+                      PIO_PORT_PIOB | PIO_PIN10)
+
+/*  Ports B
+ *
+ *   PIO  Signal Name Function
+ *   ---- ----------- -------------------------------------------------------
+ *   PE5  OVCUR_USB   Over-current indication from B
+ */
+
+#define PIO_USBB_VBUS_OVERCURRENT \
+                     (PIO_INPUT | PIO_CFG_PULLUP | PIO_CFG_DEGLITCH | \
+                      PIO_INT_BOTHEDGES | PIO_PORT_PIOA | PIO_PIN29)
+#define IRQ_USBB_VBUS_OVERCURRENT \
+                     SAM_IRQ_PA29
 
 /****************************************************************************
  * Public Types
@@ -305,7 +482,7 @@ bool sam_writeprotected(int slotno);
  *
  * Description:
  *   Called from sam_usbinitialize very early in initialization to setup
- *   USB-related PIO pins for the JUPITER-NANO board.
+ *   USB-related PIO pins for the SAMA5D2-XULT board.
  *
  ****************************************************************************/
 
@@ -329,4 +506,4 @@ int sam_usbhost_initialize(void);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM__SAMA5_JUPITER_NANO_SRC_JUPITER_NANO_H */
+#endif /* __BOARDS_ARM__SAMA5SAMA5D2_XULT_SRC_SAMA5D2_XULT_H */

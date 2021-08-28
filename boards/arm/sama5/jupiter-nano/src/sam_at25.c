@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_i2schar.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_at25.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -24,36 +24,23 @@
 
 #include <nuttx/config.h>
 
-#include <sys/types.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <errno.h>
 #include <debug.h>
 
-#include <nuttx/audio/i2s.h>
+#include <nuttx/spi/spi.h>
+#include <nuttx/mtd/mtd.h>
+#include <nuttx/fs/fs.h>
+#include <nuttx/fs/nxffs.h>
 
-#include "sam_ssc.h"
+#include "sam_spi.h"
 #include "sama5d2-xult.h"
 
-#if defined(CONFIG_AUDIO_I2SCHAR) && \
-   (defined(CONFIG_SAMA5_SSC0) || defined(CONFIG_SAMA5_SSC1))
+#ifdef HAVE_AT25
 
 /****************************************************************************
  * Pre-processor Definitions
- ****************************************************************************/
-
-#ifndef CONFIG_SAMA5D3XPLAINED_SSC_PORT
-#  if defined(CONFIG_SAMA5_SSC0)
-#    define CONFIG_SAMA5D3XPLAINED_SSC_PORT 0
-#  elif defined(CONFIG_SAMA5_SSC1)
-#    define CONFIG_SAMA5D3XPLAINED_SSC_PORT 1
-#  endif
-#endif
-
-#ifndef CONFIG_SAMA5D3XPLAINED_I2SCHAR_MINOR
-#  define CONFIG_SAMA5D3XPLAINED_I2SCHAR_MINOR 0
-#endif
-
-/****************************************************************************
- * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
@@ -61,46 +48,75 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: i2schar_devinit
+ * Name: sam_at25_automount
  *
  * Description:
- *   All architectures must provide the following interface in order to work
- *   with apps/examples/i2schar.
+ *   Initialize and configure the AT25 serial FLASH
  *
  ****************************************************************************/
 
-int i2schar_devinit(void)
+int sam_at25_automount(int minor)
 {
+  FAR struct spi_dev_s *spi;
+  FAR struct mtd_dev_s *mtd;
   static bool initialized = false;
-  struct i2s_dev_s *i2s;
   int ret;
 
   /* Have we already initialized? */
 
   if (!initialized)
     {
-      /* Call sam_ssc_initialize() to get an instance of the SSC/I2S
-       * interface
-       */
+      /* No.. Get the SPI port driver */
 
-      i2s = sam_ssc_initialize(CONFIG_SAMA5D3XPLAINED_SSC_PORT);
-      if (!i2s)
+      spi = sam_spibus_initialize(AT25_PORT);
+      if (!spi)
         {
-          _err("ERROR: Failed to get the SAMA5 SSC/I2S driver for SSC%d\n",
-              CONFIG_SAMA5D3XPLAINED_SSC_PORT);
+          ferr("ERROR: Failed to initialize SPI port %d\n", AT25_PORT);
           return -ENODEV;
         }
 
-      /* Register the I2S character driver at "/dev/i2schar0" */
+      /* Now bind the SPI interface to the AT25 SPI FLASH driver */
 
-      ret = i2schar_register(i2s, CONFIG_SAMA5D3XPLAINED_I2SCHAR_MINOR);
+      mtd = at25_initialize(spi);
+      if (!mtd)
+        {
+          ferr("ERROR: Failed to bind SPI port %d to AT25 FLASH driver\n");
+          return -ENODEV;
+        }
+
+#if defined(CONFIG_SAMA5D3XPLAINED_AT25_FTL)
+
+      /* And use the FTL layer to wrap the MTD driver as a block driver */
+
+      ret = ftl_initialize(AT25_MINOR, mtd);
       if (ret < 0)
         {
-          aerr("ERROR: i2schar_register failed: %d\n", ret);
+          ferr("ERROR: Failed to initialize the FTL layer: %d\n", ret);
           return ret;
         }
 
-      /* Now we are initialized */
+#elif defined(CONFIG_SAMA5D3XPLAINED_AT25_NXFFS)
+
+      /* Initialize to provide NXFFS on the MTD interface */
+
+      ret = nxffs_initialize(mtd);
+      if (ret < 0)
+        {
+          ferr("ERROR: NXFFS initialization failed: %d\n", ret);
+          return ret;
+        }
+
+      /* Mount the file system at /mnt/at25 */
+
+      ret = nx_mount(NULL, "/mnt/at25", "nxffs", 0, NULL);
+      if (ret < 0)
+        {
+          ferr("ERROR: Failed to mount the NXFFS volume: %d\n", ret);
+          return ret;
+        }
+#endif
+
+      /* Now we are initializeed */
 
       initialized = true;
     }
@@ -108,4 +124,4 @@ int i2schar_devinit(void)
   return OK;
 }
 
-#endif /* CONFIG_AUDIO_I2SCHAR && (CONFIG_SAMA5_SSC0 || CONFIG_SAMA5_SSC1) */
+#endif /* HAVE_AT25 */

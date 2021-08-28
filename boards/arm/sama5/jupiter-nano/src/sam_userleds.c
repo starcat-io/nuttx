@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/src/sam_userleds.c
+ * boards/arm/sama5/sama5d2-xult/src/sam_userleds.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -18,13 +18,17 @@
  *
  ****************************************************************************/
 
-/* There is a blue status LED on board the Jupiter Nano.  The LED is provided
- * connected to GND so bringing the LED high will will illuminate the LED.
+/* There is an RGB LED on board the SAMA5D2-XULT.  The RED component is
+ * driven by the SDHC_CD pin (PA13) and so will not be used.  The LEDs are
+ * provided VDD_LED and so bringing the LED low will will illuminated the
+ * LED.
  *
  *   ------------------------------ ------------------- ---------------------
  *   SAMA5D2 PIO                    SIGNAL              USAGE
  *   ------------------------------ ------------------- ---------------------
- *   PA6                            STATUS_LED_PA6      Blue LED
+ *   PA13                           SDHC_CD_PA13        Red LED
+ *   PB5                            LED_GREEN_PB5       Green LED
+ *   PB0                            LED_BLUE_PB0        Blue LED
  *   ------------------------------ ------------------- ---------------------
  */
 
@@ -41,7 +45,7 @@
 #include <arch/board/board.h>
 
 #include "sam_pio.h"
-#include "jupiter-nano.h"
+#include "sama5d2-xult.h"
 
 /****************************************************************************
  * Public Functions
@@ -55,6 +59,9 @@ uint32_t board_userled_initialize(void)
 {
   /* Configure LED PIOs for output */
 
+#ifndef CONFIG_ARCH_LEDS
+  sam_configpio(PIO_LED_GREEN);
+#endif
   sam_configpio(PIO_LED_BLUE);
   return BOARD_NLEDS;
 }
@@ -68,6 +75,12 @@ void board_userled(int led, bool ledon)
   uint32_t ledcfg;
 
 #ifndef CONFIG_ARCH_LEDS
+  if (led == BOARD_GREEN)
+    {
+      ledcfg = PIO_LED_GREEN;
+    }
+  else
+#endif
   if (led == BOARD_BLUE)
     {
       ledcfg = PIO_LED_BLUE;
@@ -77,9 +90,9 @@ void board_userled(int led, bool ledon)
       return;
     }
 
-  /* high illuminates */
+  /* Low illuminates */
 
-  sam_piowrite(ledcfg, ledon);
+  sam_piowrite(ledcfg, !ledon);
 }
 
 /****************************************************************************
@@ -90,7 +103,14 @@ void board_userled_all(uint32_t ledset)
 {
   bool ledon;
 
-  /* high illuminates */
+#ifndef CONFIG_ARCH_LEDS
+  /* Low illuminates */
+
+  ledon = ((ledset & BOARD_GREEN_BIT) == 0);
+  sam_piowrite(PIO_LED_GREEN, ledon);
+#endif
+
+  /* Low illuminates */
 
   ledon = ((ledset &BOARD_BLUE_BIT) != 0);
   sam_piowrite(PIO_LED_BLUE, ledon);

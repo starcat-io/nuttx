@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/jupiter-nano/include/board_memorymap.h
+ * boards/arm/sama5/sama5d2-xult/include/board_memorymap.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_MEMORYMAP_H
-#define __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_MEMORYMAP_H
+#ifndef __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_MEMORYMAP_H
+#define __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_MEMORYMAP_H
 
 /****************************************************************************
  * Included Files
@@ -56,4 +56,4 @@ extern "C"
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_MEMORYMAP_H */
+#endif /* __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_MEMORYMAP_H */

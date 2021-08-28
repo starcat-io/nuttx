@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/sama5/jupiter-nano/src/Makefile
+# boards/arm/sama5/sama5d2-xult/src/Makefile
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -126,13 +126,6 @@ endif
 
 ifeq ($(CONFIG_BOARDCTL_RESET),y)
 CSRCS += sam_reset.c
-endif
-
-ifeq ($(CONFIG_NSH_ROMFSETC),y)
-ifneq ($(CONFIG_NSH_CUSTOMROMFS),y)
-  RCSRCS = etc/init.d/rcS
-  RCRAWS = etc/resolv.conf
-endif
 endif
 
 include $(TOPDIR)/boards/Board.mk
