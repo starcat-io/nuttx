@@ -18,7 +18,7 @@
  *
  ****************************************************************************/
 
-/* A single button, PB_USER (PB6), is available on the SAMA5D2-XULT
+/* A single button, PB_USER (PB6), is available on the Jupiter Nano
  *
  *  ------------------------------ ------------------- ----------------------
  *  SAMA5D2 PIO                    SIGNAL              USAGE

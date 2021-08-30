@@ -18,7 +18,7 @@
  *
  ****************************************************************************/
 
-/* The SAMA5D2-XULT provides a built-in 4GB eMMC (SDMMC0), and one SD
+/* The Jupiter Nano provides a built-in 4GB eMMC (SDMMC0), and one SD
  * full-size memory card slot at J19 (SDMMC1).
  *
  * SDMMC0: There is a Micron 4Gx8 eMMC managed NAND Flash (MTFC4GLDEA-0M WT)
