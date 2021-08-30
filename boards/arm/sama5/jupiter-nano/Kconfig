@@ -3,33 +3,33 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-if ARCH_BOARD_SAMA5D2_XULT
+if ARCH_BOARD_JUPITER_NANO
 
 choice
 	prompt "CPU Frequency"
-	default SAMA5D2XULT_396MHZ
+	default JUPITERNANO_498MHZ
 
-config SAMA5D2XULT_384MHZ
+config JUPITERNANO_384MHZ
 	bool "384 MHz"
 
-config SAMA5D2XULT_396MHZ
+config JUPITERNANO_396MHZ
 	bool "396 MHz"
 
-config SAMA5D2XULT_498MHZ
+config JUPITERNANO_498MHZ
 	bool "498 MHz"
 
-config SAMA5D2XULT_528MHZ
+config JUPITERNANO_528MHZ
 	bool "528 MHz"
 
 endchoice # CPU Frequency
 
-config SAMA5D2XULT_USBHOST_STACKSIZE
+config JUPITERNANO_USBHOST_STACKSIZE
 	int "USB host waiter stack size"
 	default 1536 if USBHOST_HUB
-	default 1024 if !USBHOST_HUB
+	default 2048 if !USBHOST_HUB
 	depends on USBHOST
 
-config SAMA5D2XULT_USBHOST_PRIO
+config JUPITERNANO_USBHOST_PRIO
 	int "USB host waiter task priority"
 	default 100
 	depends on USBHOST
