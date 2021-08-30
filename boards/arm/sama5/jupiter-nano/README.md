@@ -637,23 +637,63 @@ concise summary of the available Jupiter Nano configurations:
 ## Networking
 
    Jupiter Nano has support for Ethernet over USB using CDC-ECM protocol. (All the 
-   SAMA5D27C boards do, actually.) They use an Ethernet USB Gadget. Using the netnsh 
-   or sdmmc-net-nsh configurations, with the latest apps/ tree, you can add the following 
-   lines to the end of teh apps/nshlib/rcS.template file, and NuttX will boot with the 
-   IP address of 10.0.0.2, with its gateway set to 10.0.0.1 and start telnetd so you 
-   can log in over the network: 
-   
-    ifconfig eth0 10.0.0.2
-    ifup eth0
-    telnetd
-   
+   SAMA5D27C boards do, actually.) The Jupiter Nano will appear as an Ethernet USB 
+   Gadget on the Linux side. This is a high performance link and can transfer 30MB/s 
+   of data to or from a host computer.
+
+   The netnsh sdmmcnsh, or sdmmc-nsh-net-resolvconf configurations will set up the  
+   Ethernet over USB interface to be `10.0.0.2`, and set up default routing via 
+   `10.0.0.1`. The sdmmc-nsh-net-resolvconf also sets up the /etc/resolv.conf file
+   and configures NuttX to support it, which enables DNS resolution using Google's
+   open DNS servers.
+
    The tools/netusb.sh script can set up a Linux computer with IP tables NAT rules 
-   and proper routes to allow the NuttX computer to access the Internet.
+   and proper routes to allow the NuttX computer to access the Internet, setting 
+   the Linux side of the Ethernet over USB link to have the IP address of 
+   `10.0.0.1`.
 
-   This is a high performance link and can transfer 30MB/s of data to or from a host 
-   computer.
+   In the commands below, replace the interface identifier `wlp0s20f3` with the 
+   interface that you use to access the Internet.
 
-<<<<<<< HEAD
-=======
+    $./tools/netusb.sh show
+    enx020000112233: flags=4098<BROADCAST,MULTICAST>  mtu 1500
+            inet 10.0.0.1  netmask 255.255.255.0  broadcast 10.0.0.255
+            ether 02:00:00:11:22:33  txqueuelen 1000  (Ethernet)
+            RX packets 4  bytes 256 (256.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 119  bytes 15694 (15.6 KB)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 
->>>>>>> added README.md
+    $ sudo ./tools/netusb.sh wlp0s20f3 enx020000112233 on
+    default via 192.168.1.1 dev wlp0s20f3 proto dhcp metric 600 
+    169.254.0.0/16 dev br-cc496150b4da scope link metric 1000 linkdown 
+    172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
+    172.18.0.0/16 dev br-cc496150b4da proto kernel scope link src 172.18.0.1 linkdown 
+    192.168.1.0/24 dev wlp0s20f3 proto kernel scope link src 192.168.1.209 metric 600 
+
+    enx020000112233: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+            ether 02:00:00:11:22:33  txqueuelen 1000  (Ethernet)
+            RX packets 4  bytes 256 (256.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 119  bytes 15694 (15.6 KB)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+
+    default via 192.168.1.1 dev wlp0s20f3 proto dhcp metric 600 
+    10.0.0.0/24 dev enx020000112233 scope link src 10.0.0.1 
+    10.0.0.0/24 dev enx020000112233 proto kernel scope link src 10.0.0.1 metric 100 
+    10.0.0.0/8 dev enx020000112233 proto kernel scope link src 10.0.0.1 
+    10.0.0.2 dev enx020000112233 scope link src 10.0.0.1 
+    169.254.0.0/16 dev br-cc496150b4da scope link metric 1000 linkdown 
+    172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
+    172.18.0.0/16 dev br-cc496150b4da proto kernel scope link src 172.18.0.1 linkdown 
+    192.168.1.0/24 dev wlp0s20f3 proto kernel scope link src 192.168.1.209 metric 600 
+
+    PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+    64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=0.187 ms
+
+    --- 10.0.0.2 ping statistics ---
+    1 packets transmitted, 1 received, 0% packet loss, time 0ms
+    rtt min/avg/max/mdev = 0.187/0.187/0.187/0.000 ms
+
+
