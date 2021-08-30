@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_H
-#define __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_H
+#ifndef __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_H
+#define __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_H
 
 /****************************************************************************
  * Included Files
@@ -58,7 +58,7 @@
 
 #  include <arch/board/board_sdram.h>
 
-#elif defined(CONFIG_SAMA5D2XULT_384MHZ)
+#elif defined(CONFIG_JUPITERNANO_384MHZ)
 
 /* OHCI Only.
  * This is an alternative slower configuration that will produce a 48MHz
@@ -72,7 +72,7 @@
 
 #  include <arch/board/board_384mhz.h>
 
-#elif defined(CONFIG_SAMA5D2XULT_498MHZ)
+#elif defined(CONFIG_JUPITERNANO_498MHZ)
 
 /* This is the configuration results in a CPU clock of 498MHz.
  *
@@ -81,7 +81,7 @@
 
 #  include <arch/board/board_498mhz.h>
 
-#elif defined(CONFIG_SAMA5D2XULT_528MHZ)
+#elif defined(CONFIG_JUPITERNANO_528MHZ)
 
 /* This is the configuration results in a CPU clock of 528MHz.
  *
@@ -90,7 +90,7 @@
 
 #  include <arch/board/board_528mhz.h>
 
-#else /* #elif defined(CONFIG_SAMA5D2XULT_396MHZ) */
+#else /* #elif defined(CONFIG_JUPITERNANO_396MHZ) */
 
 /* This is the configuration provided in the Atmel example code.
  * This setup results in a CPU clock of 396MHz.
@@ -108,7 +108,7 @@
 
 /* LED definitions **********************************************************/
 
-/* There is an RGB LED on board the SAMA5D2-XULT.
+/* There is an RGB LED on board the Jupiter Nano.
  * The RED component is driven by the SDHC_CD pin (PA13) and so will not
  * be used.  The LEDs are provided VDD_LED and so bringing the LED low will
  * will illuminated the LED.
@@ -174,7 +174,7 @@
 
 /* Button definitions *******************************************************/
 
-/* A single button, PB_USER (PB6), is available on the SAMA5D2-XULT
+/* A single button, PB_USER (PB6), is available on the Jupiter Nano
  *
  *  ------------------------------ ------------------- ----------------------
  *  SAMA5D2 PIO                    SIGNAL              USAGE
@@ -329,4 +329,4 @@
   .endm
 #endif /* __ASSEMBLY__ */
 
-#endif /* __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_H */
+#endif /* __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_H */

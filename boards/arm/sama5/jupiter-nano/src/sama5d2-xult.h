@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_SAMA5_SAMA5D2_XULT_SRC_SAMA5D2_XULT_H
-#define __BOARDS_ARM_SAMA5_SAMA5D2_XULT_SRC_SAMA5D2_XULT_H
+#ifndef __BOARDS_ARM_SAMA5_JUPITER_NANO_SRC_JUPITER_NANO_H
+#define __BOARDS_ARM_SAMA5_JUPITER_NANO_SRC_JUPITER_NANO_H
 
 /****************************************************************************
  * Included Files
@@ -95,27 +95,27 @@
 #endif
 
 /* If we are going to mount the NAND, then they user must also have told
- * us what to do with it by setting one of CONFIG_SAMA5D2XULT_NAND_FTL or
- * CONFIG_SAMA5D2XULT_NAND_NXFFS.
+ * us what to do with it by setting one of CONFIG_JUPITERNANO_NAND_FTL or
+ * CONFIG_JUPITERNANO_NAND_NXFFS.
  */
 
 #ifndef CONFIG_MTD
-#  undef CONFIG_SAMA5D2XULT_NAND_NXFFS
-#  undef CONFIG_SAMA5D2XULT_NAND_FTL
+#  undef CONFIG_JUPITERNANO_NAND_NXFFS
+#  undef CONFIG_JUPITERNANO_NAND_FTL
 #endif
 
 #if !defined(CONFIG_FS_NXFFS) || !defined(CONFIG_NXFFS_NAND)
-#  undef CONFIG_SAMA5D2XULT_NAND_NXFFS
+#  undef CONFIG_JUPITERNANO_NAND_NXFFS
 #endif
 
-#if !defined(CONFIG_SAMA5D2XULT_NAND_FTL) && !defined(CONFIG_SAMA5D2XULT_NAND_NXFFS)
+#if !defined(CONFIG_JUPITERNANO_NAND_FTL) && !defined(CONFIG_JUPITERNANO_NAND_NXFFS)
 #  undef HAVE_NAND
 #endif
 
-#if defined(CONFIG_SAMA5D2XULT_NAND_FTL) && defined(CONFIG_SAMA5D2XULT_NAND_NXFFS)
-#  warning Both CONFIG_SAMA5D2XULT_NAND_FTL and CONFIG_SAMA5D2XULT_NAND_NXFFS are set
-#  warning Ignoring CONFIG_SAMA5D2XULT_NAND_NXFFS
-#  undef CONFIG_SAMA5DXULT_NAND_NXFFS
+#if defined(CONFIG_JUPITERNANO_NAND_FTL) && defined(CONFIG_JUPITERNANO_NAND_NXFFS)
+#  warning Both CONFIG_JUPITERNANO_NAND_FTL and CONFIG_JUPITERNANO_NAND_NXFFS are set
+#  warning Ignoring CONFIG_JUPITERNANO_NAND_NXFFS
+#  undef CONFIG_JUPITER_NANO_NAND_NXFFS
 #endif
 
 /* AT25 Serial FLASH */
@@ -142,14 +142,14 @@
 #  undef CONFIG_SAMA5D3XPLAINED_AT25_NXFFS
 #endif
 
-#if !defined(CONFIG_SAMA5D2XULT_AT25_FTL) && !defined(CONFIG_SAMA5D2XULT_AT25_NXFFS)
+#if !defined(CONFIG_JUPITERNANO_AT25_FTL) && !defined(CONFIG_JUPITERNANO_AT25_NXFFS)
 #  undef HAVE_AT25
 #endif
 
-#if defined(CONFIG_SAMA5D2XULT_AT25_FTL) && defined(CONFIG_SAMA5D2XULT_AT25_NXFFS)
-#  warning Both CONFIG_SAMA5D2XULT_AT25_FTL and CONFIG_SAMA5D2XULT_AT25_NXFFS are set
-#  warning Ignoring CONFIG_SAMA5D2XULT_AT25_NXFFS
-#  undef CONFIG_SAMA5D2XULT_AT25_NXFFS
+#if defined(CONFIG_JUPITERNANO_AT25_FTL) && defined(CONFIG_JUPITERNANO_AT25_NXFFS)
+#  warning Both CONFIG_JUPITERNANO_AT25_FTL and CONFIG_JUPITERNANO_AT25_NXFFS are set
+#  warning Ignoring CONFIG_JUPITERNANO_AT25_NXFFS
+#  undef CONFIG_JUPITERNANO_AT25_NXFFS
 #endif
 
 /* Assign minor device numbers.  For example, if we also use MINOR number 0
@@ -271,7 +271,7 @@
 
 /* LEDs *********************************************************************/
 
-/* There is an RGB LED on board the SAMA5D2-XULT.
+/* There is an RGB LED on board the Jupiter Nano.
  * The RED component is driven by the SDHC_CD pin (PA13) and so will not
  * be used.
  * The LEDs are provided VDD_LED and so bringing the LED low will illuminate
@@ -293,7 +293,7 @@
 
 /* Buttons ******************************************************************/
 
-/* A single button, PB_USER (PB6), is available on the SAMA5D2-XULT
+/* A single button, PB_USER (PB6), is available on the Jupiter Nano
  *
  *  ------------------------------ ------------------- ----------------------
  *  SAMA5D2 PIO                    SIGNAL              USAGE
@@ -335,7 +335,7 @@
 
 /* SDMMC Card Slots *********************************************************/
 
-/* The SAMA5D2-XULT provides a SD memory card slot:
+/* The Jupiter Nano provides a SD memory card slot:
  *  a full size SD card slot (J19)
  *
  * The full size SD card slot connects via SDMMC1.  The card detect discrete
@@ -357,7 +357,7 @@
 
 /* USB Ports ****************************************************************/
 
-/* The SAMA5D2-XULT features two USB communication ports:
+/* The Jupiter Nano features two USB communication ports:
  *
  *   1. Port A Host High Speed (EHCI) and Full Speed (OHCI) multiplexed with
  *      USB Device High Speed Micro AB connector, J23
@@ -482,7 +482,7 @@ bool sam_writeprotected(int slotno);
  *
  * Description:
  *   Called from sam_usbinitialize very early in initialization to setup
- *   USB-related PIO pins for the SAMA5D2-XULT board.
+ *   USB-related PIO pins for the Jupiter Nano board.
  *
  ****************************************************************************/
 
@@ -506,4 +506,4 @@ int sam_usbhost_initialize(void);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM__SAMA5SAMA5D2_XULT_SRC_SAMA5D2_XULT_H */
+#endif /* __BOARDS_ARM__SAMA5JUPITER_NANO_SRC_JUPITER_NANO_H */

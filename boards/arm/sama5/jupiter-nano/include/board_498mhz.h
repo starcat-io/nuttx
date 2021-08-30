@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_498MHZ_H
-#define __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_498MHZ_H
+#ifndef __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_498MHZ_H
+#define __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_498MHZ_H
 
 /****************************************************************************
  * Included Files
@@ -203,4 +203,4 @@ extern "C"
 #endif
 
 #endif /* !__ASSEMBLY__ */
-#endif  /* __BOARDS_ARM_SAMA5_SAMA5D2_XULT_INCLUDE_BOARD_498MHZ_H */
+#endif  /* __BOARDS_ARM_SAMA5_JUPITER_NANO_INCLUDE_BOARD_498MHZ_H */

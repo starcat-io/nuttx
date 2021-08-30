@@ -339,8 +339,8 @@ int sam_usbhost_initialize(void)
 
   /* Start a thread to handle device connection. */
 
-  pid = kthread_create("OHCI Monitor", CONFIG_SAMA5D2XULT_USBHOST_PRIO,
-                       CONFIG_SAMA5D2XULT_USBHOST_STACKSIZE,
+  pid = kthread_create("OHCI Monitor", CONFIG_JUPITERNANO_USBHOST_PRIO,
+                       CONFIG_JUPITERNANO_USBHOST_STACKSIZE,
                        (main_t)ohci_waiter, (FAR char * const *)NULL);
   if (pid < 0)
     {
@@ -361,8 +361,8 @@ int sam_usbhost_initialize(void)
 
   /* Start a thread to handle device connection. */
 
-  pid = kthread_create("EHCI Monitor", CONFIG_SAMA5D2XULT_USBHOST_PRIO,
-                       CONFIG_SAMA5D2XULT_USBHOST_STACKSIZE,
+  pid = kthread_create("EHCI Monitor", CONFIG_JUPITERNANO_USBHOST_PRIO,
+                       CONFIG_JUPITERNANO_USBHOST_STACKSIZE,
                        (main_t)ehci_waiter, (FAR char * const *)NULL);
   if (pid < 0)
     {
@@ -410,7 +410,7 @@ void sam_usbhost_vbusdrive(int rhport, bool enable)
       return;
 
 #elif !defined(PIO_USBA_VBUS_ENABLE)
-      /* SAMA5D2-XULT has no port A VBUS enable */
+      /* Jupiter Nano has no port A VBUS enable */
 
       uerr("ERROR: RHPort1 has no VBUS enable\n");
       return;
