@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_usbmsc.c
+ * boards/arm/sama5/jupiter_nano/src/sam_usbmsc.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -30,7 +30,7 @@
 
 #include <nuttx/board.h>
 
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 #ifdef CONFIG_USBMSC
 

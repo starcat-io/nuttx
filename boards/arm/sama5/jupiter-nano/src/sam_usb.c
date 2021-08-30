@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_usb.c
+ * boards/arm/sama5/jupiter_nano/src/sam_usb.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -42,7 +42,7 @@
 #include "sam_pio.h"
 #include "sam_usbhost.h"
 #include "hardware/sam_ohci.h"
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 #if defined(CONFIG_SAMA5_UHPHS) || defined(CONFIG_SAMA5_UDPHS)
 
