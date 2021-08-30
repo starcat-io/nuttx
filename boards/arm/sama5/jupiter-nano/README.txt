@@ -652,4 +652,3 @@ concise summary of the available Jupiter Nano configurations:
    This is a high performance link and can transfer 30MB/s
    of data to or from a host computer.
 
-
