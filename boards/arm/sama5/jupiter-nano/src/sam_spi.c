@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_spi.c
+ * boards/arm/sama5/jupiter_nano/src/sam_spi.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -36,7 +36,7 @@
 #include "chip.h"
 #include "sam_pio.h"
 #include "sam_spi.h"
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 #if defined(CONFIG_SAMA5_SPI0) || defined(CONFIG_SAMA5_SPI1)
 

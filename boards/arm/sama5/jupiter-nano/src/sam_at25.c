@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_at25.c
+ * boards/arm/sama5/jupiter_nano/src/sam_at25.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -35,7 +35,7 @@
 #include <nuttx/fs/nxffs.h>
 
 #include "sam_spi.h"
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 #ifdef HAVE_AT25
 

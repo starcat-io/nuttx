@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_pwm.c
+ * boards/arm/sama5/jupiter_nano/src/sam_pwm.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -34,7 +34,7 @@
 #include <arch/board/board.h>
 
 #include "sam_pwm.h"
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 /****************************************************************************
  * Pre-processor Definitions

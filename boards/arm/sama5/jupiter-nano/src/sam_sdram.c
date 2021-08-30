@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_sdram.c
+ * boards/arm/sama5/jupiter_nano/src/sam_sdram.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -34,7 +34,7 @@
 #include "hardware/sam_sfr.h"
 #include "hardware/sam_mpddrc.h"
 
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 /* This file requires:
  *

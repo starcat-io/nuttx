@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/sama5/sama5d2-xult/src/sam_ethernet.c
+ * boards/arm/sama5/jupiter_nano/src/sam_ethernet.c
  *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -43,7 +43,7 @@
 #include "sam_pio.h"
 #include "sam_ethernet.h"
 
-#include "sama5d2-xult.h"
+#include "jupiter-nano.h"
 
 #ifdef HAVE_NETWORK
 
