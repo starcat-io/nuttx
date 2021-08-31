@@ -90,7 +90,7 @@ void board_userled_all(uint32_t ledset)
 {
   bool ledon;
 
-  /* Low illuminates */
+  /* High illuminates */
 
   ledon = ((ledset &BOARD_BLUE_BIT) != 0);
   sam_piowrite(PIO_LED_BLUE, !ledon);
