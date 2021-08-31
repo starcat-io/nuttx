@@ -18,25 +18,23 @@
  *
  ****************************************************************************/
 
-/* There is an RGB LED on board the Jupiter Nano.  The RED component is
- * driven by the SDHC_CD pin (PA13) and so will not be used.  The LEDs are
- * provided VDD_LED and so bringing the LED low will will illuminated the
- * LED.
+/* There is a blue status LED on board the Jupiter Nano. It is driven
+ * driven by pin PA6. The LED is connected to ground so bringing the LED high
+ * will illuminate the LED.
  *
  *   ------------------------------ ------------------- ---------------------
  *   SAMA5D2 PIO                    SIGNAL              USAGE
  *   ------------------------------ ------------------- ---------------------
- *   PA13                           SDHC_CD_PA13        Red LED
- *   PB5                            LED_GREEN_PB5       Green LED
- *   PB0                            LED_BLUE_PB0        Blue LED
+ *   PA6                            STATUS_LED          Blue LED
  *   ------------------------------ ------------------- ---------------------
  *
- * These LEDs are not used by the board port unless CONFIG_ARCH_LEDS is
+ *
+ * This LED is not used by the board port unless CONFIG_ARCH_LEDS is
  * defined.  In that case, the usage by the board port is defined in
  * include/board.h and src/sam_leds.c. The LEDs are used to encode OS-related
- * events as follows.  Note that only the GREEN LED is used in this case
+ * events as follows.  Note that only the blue LED is used. 
  *
- *   SYMBOL              Meaning                 Green LED
+ *   SYMBOL              Meaning                 Blue LED
  *   ------------------- ----------------------- ---------
  *   LED_STARTED         NuttX has been started  OFF
  *   LED_HEAPALLOCATE    Heap has been allocated OFF
@@ -47,7 +45,7 @@
  *   LED_ASSERTION       An assertion failed     N/C
  *   LED_PANIC           The system has crashed  FLASH
  *
- * Thus if the Green LED is statically on, NuttX has successfully  booted
+ * Thus if the Blue LED is statically on, NuttX has successfully  booted
  * and is, apparently, running normally.  If LED is flashing at
  * approximately 2Hz, then a fatal error has been detected and the system
  * has halted.
@@ -84,7 +82,7 @@ void board_autoled_initialize(void)
 {
   /* Configure LED PIOs for output */
 
-  sam_configpio(PIO_LED_GREEN);
+  sam_configpio(PIO_LED_BLUE);
 }
 
 /****************************************************************************
@@ -97,14 +95,14 @@ void board_autoled_on(int led)
     {
       default:
       case 0:  /* LED_STARTED, LED_HEAPALLOCATE, LED_IRQSENABLED */
-        break; /* Leave Green LED off */
+        break; /* Leave blue LED off */
 
       case 1:   /* LED_STACKCREATED */
       case 3:   /* LED_PANIC */
         {
-          /* Green LED is ON (Low illuminates) */
+          /* blue LED is ON (high illuminates) */
 
-          sam_piowrite(PIO_LED_GREEN, false);
+          sam_piowrite(PIO_LED_BLUE, true);
         }
         break;
 
@@ -131,9 +129,9 @@ void board_autoled_off(int led)
 
       case 3:  /* LED_PANIC */
         {
-          /* Power LED is OFF (Low illuminates) */
+          /* LED is OFF (high illuminates) */
 
-          sam_piowrite(PIO_LED_GREEN, true);
+          sam_piowrite(PIO_LED_BLUE, false);
         }
         break;
     }

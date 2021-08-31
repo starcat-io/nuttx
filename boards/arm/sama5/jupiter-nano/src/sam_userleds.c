@@ -18,17 +18,14 @@
  *
  ****************************************************************************/
 
-/* There is an RGB LED on board the Jupiter Nano.  The RED component is
- * driven by the SDHC_CD pin (PA13) and so will not be used.  The LEDs are
- * provided VDD_LED and so bringing the LED low will will illuminated the
- * LED.
+/* There is a blue status LED on board the Jupiter Nano. It is driven 
+ * driven by pin PA6. The LED is connected to ground so bringing the LED high
+ * will illuminate the LED.
  *
  *   ------------------------------ ------------------- ---------------------
  *   SAMA5D2 PIO                    SIGNAL              USAGE
  *   ------------------------------ ------------------- ---------------------
- *   PA13                           SDHC_CD_PA13        Red LED
- *   PB5                            LED_GREEN_PB5       Green LED
- *   PB0                            LED_BLUE_PB0        Blue LED
+ *   PA6                            STATUS_LED          Blue LED
  *   ------------------------------ ------------------- ---------------------
  */
 
@@ -59,9 +56,6 @@ uint32_t board_userled_initialize(void)
 {
   /* Configure LED PIOs for output */
 
-#ifndef CONFIG_ARCH_LEDS
-  sam_configpio(PIO_LED_GREEN);
-#endif
   sam_configpio(PIO_LED_BLUE);
   return BOARD_NLEDS;
 }
@@ -74,13 +68,6 @@ void board_userled(int led, bool ledon)
 {
   uint32_t ledcfg;
 
-#ifndef CONFIG_ARCH_LEDS
-  if (led == BOARD_GREEN)
-    {
-      ledcfg = PIO_LED_GREEN;
-    }
-  else
-#endif
   if (led == BOARD_BLUE)
     {
       ledcfg = PIO_LED_BLUE;
@@ -90,9 +77,9 @@ void board_userled(int led, bool ledon)
       return;
     }
 
-  /* Low illuminates */
+  /* High illuminates */
 
-  sam_piowrite(ledcfg, !ledon);
+  sam_piowrite(ledcfg, ledon);
 }
 
 /****************************************************************************
@@ -103,15 +90,8 @@ void board_userled_all(uint32_t ledset)
 {
   bool ledon;
 
-#ifndef CONFIG_ARCH_LEDS
-  /* Low illuminates */
-
-  ledon = ((ledset & BOARD_GREEN_BIT) == 0);
-  sam_piowrite(PIO_LED_GREEN, ledon);
-#endif
-
   /* Low illuminates */
 
   ledon = ((ledset &BOARD_BLUE_BIT) != 0);
-  sam_piowrite(PIO_LED_BLUE, ledon);
+  sam_piowrite(PIO_LED_BLUE, !ledon);
 }

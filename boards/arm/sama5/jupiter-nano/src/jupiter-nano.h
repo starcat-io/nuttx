@@ -271,43 +271,24 @@
 
 /* LEDs *********************************************************************/
 
-/* There is an RGB LED on board the Jupiter Nano.
- * The RED component is driven by the SDHC_CD pin (PA13) and so will not
- * be used.
- * The LEDs are provided VDD_LED and so bringing the LED low will illuminate
- * the LED.
+/* There is a blue status LED on board the Jupiter Nano. It is driven
+ * driven by pin PA6. The LED is connected to ground so bringing the LED high
+ * will illuminate the LED.
  *
  *   ------------------------------ ------------------- ---------------------
  *   SAMA5D2 PIO                    SIGNAL              USAGE
  *   ------------------------------ ------------------- ---------------------
- *   PA13                           SDHC_CD_PA13        Red LED
- *   PB5                            LED_GREEN_PB5       Green LED
- *   PB0                            LED_BLUE_PB0        Blue LED
+ *   PA6                            STATUS_LED          Blue LED
  *   ------------------------------ ------------------- ---------------------
+ *
  */
 
-#define PIO_LED_GREEN (PIO_OUTPUT | PIO_CFG_DEFAULT | PIO_OUTPUT_SET | \
-                       PIO_PORT_PIOB | PIO_PIN5)
 #define PIO_LED_BLUE  (PIO_OUTPUT | PIO_CFG_DEFAULT | PIO_OUTPUT_SET | \
-                       PIO_PORT_PIOB | PIO_PIN0)
+                       PIO_PORT_PIOA | PIO_PIN6)
 
 /* Buttons ******************************************************************/
 
-/* A single button, PB_USER (PB6), is available on the Jupiter Nano
- *
- *  ------------------------------ ------------------- ----------------------
- *  SAMA5D2 PIO                    SIGNAL              USAGE
- *  ------------------------------ ------------------- ----------------------
- *  PB6                            USER_PB_PB6         PB_USER push button
- *  ------------------------------ ------------------- ----------------------
- *
- *  Closing PB_USER will bring PB6 to ground so 1) PB6 should have a weak
- *  pull-up, and 2) when PB_USER is pressed, a low value will be senses.
- */
-
-#define PIO_BTN_USER (PIO_INPUT | PIO_CFG_PULLUP | PIO_CFG_DEGLITCH | \
-                      PIO_INT_BOTHEDGES | PIO_PORT_PIOB | PIO_PIN6)
-#define IRQ_BTN_USER  SAM_IRQ_PB6
+/* There are no user-accessible buttons on the Jupiter Nano. */
 
 /* SDMMC clocking
  *

@@ -108,17 +108,15 @@
 
 /* LED definitions **********************************************************/
 
-/* There is an RGB LED on board the Jupiter Nano.
- * The RED component is driven by the SDHC_CD pin (PA13) and so will not
- * be used.  The LEDs are provided VDD_LED and so bringing the LED low will
- * will illuminated the LED.
+/* There is a blue LED on board the Jupiter Nano.
+ * The blue component is driven by pin PA6.
+ * The LED is connected to ground, so bringing the LED high will
+ * will illuminate the LED.
  *
  *   ------------------------------ ------------------- ---------------------
  *   SAMA5D2 PIO                    SIGNAL              USAGE
  *   ------------------------------ ------------------- ---------------------
- *   PA13                           SDHC_CD_PA13        Red LED
- *   PB5                            LED_GREEN_PB5       Green LED
- *   PB0                            LED_BLUE_PB0        Blue LED
+ *   PA6                            STATUS_LED_PA6      Blue LED
  *   ------------------------------ ------------------- ---------------------
  */
 
@@ -126,13 +124,10 @@
 
 /* LED index values for use with board_userled() */
 
-#define BOARD_GREEN       0
-#define BOARD_BLUE        1
-#define BOARD_NLEDS       2
+#define BOARD_BLUE        0
 
 /* LED bits for use with board_userled_all() */
 
-#define BOARD_GREEN_BIT  (1 << BOARD_GREEN)
 #define BOARD_BLUE_BIT   (1 << BOARD_BLUE)
 
 #else
@@ -166,30 +161,12 @@
 #define LED_PANIC         3  /* The system has crashed     Flash     */
 #undef  LED_IDLE             /* MCU is is sleep mode       Not used  */
 
-/* Thus if the Green LED is statically on, NuttX has successfully  booted
+/* Thus if the blue LED is statically on, NuttX has successfully  booted
  * and is, apparently, running normally.
  * If LED is flashing at approximately 2Hz, then a fatal error has been
  * detected and the system has halted.
  */
 
-/* Button definitions *******************************************************/
-
-/* A single button, PB_USER (PB6), is available on the Jupiter Nano
- *
- *  ------------------------------ ------------------- ----------------------
- *  SAMA5D2 PIO                    SIGNAL              USAGE
- *  ------------------------------ ------------------- ----------------------
- *  PB6                            USER_PB_PB6         PB_USER push button
- *  ------------------------------ ------------------- ----------------------
- *
- *  Closing PB_USER will bring PB6 to ground so 1) PB6 should have a weak
- * pull-up, and 2) when PB_USER is pressed, a low value will be senses.
- */
-
-#define BUTTON_USER       0
-#define NUM_BUTTONS       1
-
-#define BUTTON_USER_BIT   (1 << BUTTON_USER)
 
 /* Pin disambiguation *******************************************************/
 
