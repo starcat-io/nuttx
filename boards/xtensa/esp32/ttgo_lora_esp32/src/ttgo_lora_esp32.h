@@ -35,6 +35,17 @@
 
 /* TTGO-LoRa-SX1276-ESP32 GPIOs *********************************************/
 
+/* OLED SSD1306 */
+
+#define HAVE_SSD1306 1
+
+#if !defined(CONFIG_ESP32_I2C) || !defined(CONFIG_ESP32_I2C0) || \
+    !defined(CONFIG_LCD_SSD1306_I2C)
+#  undef HAVE_SSD1306
+#endif
+
+#define GPIO_SSD1306_RST 16
+
 /* BOOT Button */
 
 #define BUTTON_BOOT  0
@@ -109,24 +120,6 @@ int esp32_mmcsd_initialize(int minor);
  ****************************************************************************/
 
 int esp32_spiflash_init(void);
-
-/****************************************************************************
- * Name: esp32_spiflash_encrypt_test
- *
- * Description:
- *   Test ESP32 SPI Flash driver read/write with encryption.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   None.
- *
- ****************************************************************************/
-
-#ifdef CONFIG_ESP32_SPIFLASH_ENCRYPTION_TEST
-void esp32_spiflash_encrypt_test(void);
-#endif
 
 /****************************************************************************
  * Name: esp32_gpio_init

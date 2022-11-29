@@ -41,6 +41,7 @@
 #include <nuttx/arch.h>
 #include <nuttx/fs/ioctl.h>
 #include <nuttx/serial/serial.h>
+#include <nuttx/spinlock.h>
 
 #include <arch/board/board.h>
 
@@ -245,6 +246,10 @@ struct esp32_config_s
   uint8_t  dma_chan;            /* DMA instance 0-1 */
   sem_t *  dma_sem;             /* DMA semaphore */
 #endif
+#ifdef HAVE_RS485
+  uint8_t  rs485_dir_gpio;      /* UART RS-485 DIR GPIO pin cfg */
+  bool     rs485_dir_polarity;  /* UART RS-485 DIR TXEN polarity */
+#endif
 };
 
 /* Current state of the UART */
@@ -268,6 +273,7 @@ struct esp32_dev_s
 #ifdef CONFIG_SERIAL_OFLOWCONTROL
   bool oflow;                          /* Output flow control (CTS) enabled */
 #endif
+  spinlock_t lock;
 };
 
 /****************************************************************************
@@ -278,7 +284,7 @@ static int  esp32_setup(struct uart_dev_s *dev);
 static void esp32_shutdown(struct uart_dev_s *dev);
 static int  esp32_attach(struct uart_dev_s *dev);
 static void esp32_detach(struct uart_dev_s *dev);
-static int  esp32_interrupt(int cpuint, void *context, FAR void *arg);
+static int  esp32_interrupt(int cpuint, void *context, void *arg);
 static int  esp32_ioctl(struct file *filep, int cmd, unsigned long arg);
 static int  esp32_receive(struct uart_dev_s *dev, unsigned int *status);
 static void esp32_rxint(struct uart_dev_s *dev, bool enable);
@@ -298,7 +304,7 @@ static void dma_config(uint8_t dma_chan);
 static void dma_attach(uint8_t dma_chan);
 static inline void dma_enable_int(uint8_t dma_chan);
 static inline void dma_disable_int(uint8_t dma_chan);
-static int esp32_interrupt_dma(int cpuint, void *context, FAR void *arg);
+static int esp32_interrupt_dma(int cpuint, void *context, void *arg);
 #endif
 
 /****************************************************************************
@@ -376,6 +382,14 @@ static const struct esp32_config_s g_uart0config =
 #else
   .dma_sem        = &g_dma1_sem,
 #endif
+#endif
+#endif
+#ifdef CONFIG_ESP32_UART0_RS485
+  .rs485_dir_gpio = CONFIG_ESP32_UART0_RS485_DIR_PIN,
+#if (CONFIG_ESP32_UART0_RS485_DIR_POLARITY == 0)
+  .rs485_dir_polarity = false,
+#else
+  .rs485_dir_polarity = true,
 #endif
 #endif
 };
@@ -457,6 +471,14 @@ static const struct esp32_config_s g_uart1config =
 #endif
 #endif
 #endif
+#ifdef CONFIG_ESP32_UART1_RS485
+  .rs485_dir_gpio = CONFIG_ESP32_UART1_RS485_DIR_PIN,
+#if (CONFIG_ESP32_UART1_RS485_DIR_POLARITY == 0)
+  .rs485_dir_polarity = false,
+#else
+  .rs485_dir_polarity = true,
+#endif
+#endif
 };
 
 static struct esp32_dev_s g_uart1priv =
@@ -534,6 +556,14 @@ static const struct esp32_config_s g_uart2config =
 #else
   .dma_sem        = &g_dma1_sem,
 #endif
+#endif
+#endif
+#ifdef CONFIG_ESP32_UART2_RS485
+  .rs485_dir_gpio = CONFIG_ESP32_UART2_RS485_DIR_PIN,
+#if (CONFIG_ESP32_UART2_RS485_DIR_POLARITY == 0)
+  .rs485_dir_polarity = false,
+#else
+  .rs485_dir_polarity = true,
 #endif
 #endif
 };
@@ -816,7 +846,7 @@ static void esp32_disableallints(struct esp32_dev_s *priv, uint32_t *intena)
 
   /* The following must be atomic */
 
-  flags = enter_critical_section();
+  flags = spin_lock_irqsave(&priv->lock);
 
   if (intena)
     {
@@ -828,7 +858,7 @@ static void esp32_disableallints(struct esp32_dev_s *priv, uint32_t *intena)
   /* Disable all interrupts */
 
   putreg32(0, UART_INT_ENA_REG(priv->config->id));
-  leave_critical_section(flags);
+  spin_unlock_irqrestore(&priv->lock, flags);
 }
 
 /****************************************************************************
@@ -953,7 +983,7 @@ static int esp32_setup(struct uart_dev_s *dev)
       modifyreg32(UART_CONF1_REG(priv->config->id), 0, regval);
     }
 
-#endif 
+#endif
 
 #endif
   return OK;
@@ -1176,7 +1206,7 @@ static void dma_attach(uint8_t dma_chan)
  *
  ****************************************************************************/
 
-static int esp32_interrupt_dma(int irq, void *context, FAR void *arg)
+static int esp32_interrupt_dma(int irq, void *context, void *arg)
 {
   uint32_t value;
   uint32_t status;
@@ -1313,7 +1343,7 @@ static void dma_config(uint8_t dma_chan)
  *
  ****************************************************************************/
 
-static int esp32_interrupt(int cpuint, void *context, FAR void *arg)
+static int esp32_interrupt(int cpuint, void *context, void *arg)
 {
   struct uart_dev_s *dev = (struct uart_dev_s *)arg;
   struct esp32_dev_s *priv;
@@ -1343,8 +1373,25 @@ static int esp32_interrupt(int cpuint, void *context, FAR void *arg)
 
       regval = (UART_RXFIFO_FULL_INT_CLR | UART_FRM_ERR_INT_CLR |
                 UART_RXFIFO_TOUT_INT_CLR | UART_TX_DONE_INT_CLR |
-                UART_TXFIFO_EMPTY_INT_CLR);
+                UART_TXFIFO_EMPTY_INT_CLR | UART_TX_BRK_IDLE_DONE_INT_CLR);
       putreg32(regval, UART_INT_CLR_REG(priv->config->id));
+
+#ifdef HAVE_RS485
+      if ((enabled & UART_TX_BRK_IDLE_DONE_INT_ENA) != 0 &&
+          (status & UART_TX_DONE_INT_ST) != 0)
+        {
+          /* If al bytes were transmited, then we can disable the RS485
+           * transmit (TX/nTX) pin.
+           */
+
+          nfifo = REG_MASK(status, UART_TXFIFO_CNT);
+          if (nfifo == 0)
+            {
+              esp32_gpiowrite(priv->config->rs485_dir_gpio,
+                              !priv->config->rs485_dir_polarity);
+            }
+        }
+#endif
 
       /* Are Rx interrupts enabled?  The upper layer may hold off Rx input
        * by disabling the Rx interrupts if there is no place to saved the
@@ -1425,7 +1472,7 @@ static int esp32_ioctl(struct file *filep, int cmd, unsigned long arg)
     case TCGETS:
       {
         struct termios  *termiosp = (struct termios *)arg;
-        struct esp32_dev_s *priv    = (struct esp32_dev_s *)dev->priv;
+        struct esp32_dev_s *priv  = (struct esp32_dev_s *)dev->priv;
 
         if (!termiosp)
           {
@@ -1485,7 +1532,7 @@ static int esp32_ioctl(struct file *filep, int cmd, unsigned long arg)
     case TCSETS:
       {
         struct termios  *termiosp = (struct termios *)arg;
-        struct esp32_dev_s *priv    = (struct esp32_dev_s *)dev->priv;
+        struct esp32_dev_s *priv  = (struct esp32_dev_s *)dev->priv;
         uint32_t baud;
         uint32_t intena;
         uint8_t parity;
@@ -1641,7 +1688,7 @@ static void esp32_rxint(struct uart_dev_s *dev, bool enable)
   irqstate_t flags;
   int regval;
 
-  flags = enter_critical_section();
+  flags = spin_lock_irqsave(&priv->lock);
 
   if (enable)
     {
@@ -1666,7 +1713,7 @@ static void esp32_rxint(struct uart_dev_s *dev, bool enable)
       putreg32(regval, UART_INT_ENA_REG(priv->config->id));
     }
 
-  leave_critical_section(flags);
+  spin_unlock_irqrestore(&priv->lock, flags);
 }
 
 /****************************************************************************
@@ -1695,6 +1742,14 @@ static void esp32_send(struct uart_dev_s *dev, int ch)
 {
   struct esp32_dev_s *priv = (struct esp32_dev_s *)dev->priv;
 
+#ifdef HAVE_RS485
+  if (priv->config->rs485_dir_gpio != 0)
+    {
+      esp32_gpiowrite(priv->config->rs485_dir_gpio,
+                      priv->config->rs485_dir_polarity);
+    }
+#endif
+
   putreg32((uint32_t)ch, AHB_UART_FIFO_REG(priv->config->id));
 }
 
@@ -1714,10 +1769,22 @@ static void esp32_txint(struct uart_dev_s *dev, bool enable)
   if (priv->txdma == false)
     {
 #endif
-      flags = enter_critical_section();
+      flags = spin_lock_irqsave(&priv->lock);
 
       if (enable)
         {
+          /* After all bytes physically transmitted in the RS485 bus
+           * the TX_BRK_IDLE will indicate we can disable the TX pin.
+           */
+
+    #ifdef HAVE_RS485
+          if (priv->config->rs485_dir_gpio != 0)
+            {
+              modifyreg32(UART_INT_ENA_REG(priv->config->id),
+                          0, UART_TX_BRK_IDLE_DONE_INT_ENA);
+            }
+    #endif
+
           /* Set to receive an interrupt when the TX holding register
            * is empty.
            */
@@ -1726,10 +1793,12 @@ static void esp32_txint(struct uart_dev_s *dev, bool enable)
           modifyreg32(UART_INT_ENA_REG(priv->config->id),
                       0, (UART_TX_DONE_INT_ENA | UART_TXFIFO_EMPTY_INT_ENA));
 
+    #else
           /* Fake a TX interrupt here by just calling uart_xmitchars() with
            * interrupts disabled (note this may recurse).
            */
 
+          spin_unlock_irqrestore(&priv->lock, flags);
           uart_xmitchars(dev);
     #endif
         }
@@ -1741,7 +1810,7 @@ static void esp32_txint(struct uart_dev_s *dev, bool enable)
                       (UART_TX_DONE_INT_ENA | UART_TXFIFO_EMPTY_INT_ENA), 0);
         }
 
-      leave_critical_section(flags);
+      spin_unlock_irqrestore(&priv->lock, flags);
 #ifdef CONFIG_SERIAL_TXDMA
     }
 #endif
@@ -1823,6 +1892,17 @@ static void esp32_config_pins(struct esp32_dev_s *priv)
     {
       esp32_configgpio(priv->config->ctspin, INPUT_FUNCTION_3);
       esp32_gpio_matrix_in(priv->config->ctspin, priv->config->ctssig, 0);
+    }
+#endif
+
+#ifdef HAVE_RS485
+  if (priv->config->rs485_dir_gpio != 0)
+    {
+      esp32_configgpio(priv->config->rs485_dir_gpio, OUTPUT_FUNCTION_3);
+      esp32_gpio_matrix_out(priv->config->rs485_dir_gpio,
+                            SIG_GPIO_OUT_IDX, 0, 0);
+      esp32_gpiowrite(priv->config->rs485_dir_gpio,
+                      !priv->config->rs485_dir_polarity);
     }
 #endif
 }

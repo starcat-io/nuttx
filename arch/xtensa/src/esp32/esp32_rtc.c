@@ -29,7 +29,8 @@
 #include <nuttx/arch.h>
 #include <nuttx/spinlock.h>
 
-#include "esp32_rtc.h"
+#include "clock/clock.h"
+
 #include "esp32_clockconfig.h"
 #include "esp32_rt_timer.h"
 
@@ -39,6 +40,8 @@
 
 #include "xtensa.h"
 #include "xtensa_attr.h"
+
+#include "esp32_rtc.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -154,13 +157,11 @@
   .fe_pd = (val), \
 }
 
-#ifdef CONFIG_RTC_DRIVER
 /* The magic data for the struct esp32_rtc_backup_s that is in RTC slow
  * memory.
  */
 
-#  define MAGIC_RTC_SAVE (UINT64_C(0x11223344556677))
-#endif
+#define MAGIC_RTC_SAVE UINT64_C(0x11223344556677)
 
 /* RTC Memory & Store Register usage */
 
@@ -199,7 +200,7 @@ struct esp32_rtc_sleep_config_s
   uint32_t rtc_fastmem_pd_en : 1;      /* power down RTC fast memory */
   uint32_t rtc_slowmem_pd_en : 1;      /* power down RTC slow memory */
   uint32_t rtc_peri_pd_en : 1;         /* power down RTC peripherals */
-  uint32_t wifi_pd_en : 1;             /* power down WiFi */
+  uint32_t wifi_pd_en : 1;             /* power down Wi-Fi */
   uint32_t rom_mem_pd_en : 1;          /* power down main RAM and ROM */
   uint32_t deep_slp : 1;               /* power down digital domain */
   uint32_t wdt_flashboot_mod_en : 1;   /* enable WDT flashboot mode */
@@ -220,19 +221,17 @@ struct esp32_rtc_sleep_pd_config_s
   uint32_t rtc_pd : 1;    /* Set to 1 to power down RTC memories in sleep */
   uint32_t cpu_pd : 1;    /* Set to 1 to power down digital memories and CPU in sleep */
   uint32_t i2s_pd : 1;    /* Set to 1 to power down I2S in sleep */
-  uint32_t bb_pd : 1;     /* Set to 1 to power down WiFi in sleep */
-  uint32_t nrx_pd : 1;    /* Set to 1 to power down WiFi in sleep */
-  uint32_t fe_pd : 1;     /* Set to 1 to power down WiFi in sleep */
+  uint32_t bb_pd : 1;     /* Set to 1 to power down Wi-Fi in sleep */
+  uint32_t nrx_pd : 1;    /* Set to 1 to power down Wi-Fi in sleep */
+  uint32_t fe_pd : 1;     /* Set to 1 to power down Wi-Fi in sleep */
 };
-
-#ifdef CONFIG_RTC_DRIVER
 
 #ifdef CONFIG_RTC_ALARM
 struct alm_cbinfo_s
 {
   struct rt_timer_s *alarm_hdl;  /* Timer id point to here */
   volatile alm_callback_t ac_cb; /* Client callback function */
-  volatile FAR void *ac_arg;     /* Argument to pass with the callback function */
+  volatile void *ac_arg;         /* Argument to pass with the callback function */
   uint64_t deadline_us;
   uint8_t index;
 };
@@ -244,8 +243,6 @@ struct esp32_rtc_backup_s
   int64_t  offset;              /* Offset time from RTC HW value */
   int64_t  reserved0;
 };
-
-#endif
 
 /****************************************************************************
  * Private Function Prototypes
@@ -265,8 +262,8 @@ static void esp32_rtc_clk_32k_enable(int ac, int res, int bias);
 static void IRAM_ATTR esp32_rtc_clk_8m_enable(bool clk_8m_en, bool d256_en);
 static uint32_t IRAM_ATTR esp32_rtc_clk_slow_freq_get_hz(void);
 
-#ifdef CONFIG_RTC_DRIVER
-static void IRAM_ATTR esp32_rt_cb_handler(FAR void *arg);
+#ifdef CONFIG_RTC_ALARM
+static void IRAM_ATTR esp32_rt_cb_handler(void *arg);
 #endif
 
 /****************************************************************************
@@ -283,8 +280,6 @@ static struct esp32_rtc_priv_s esp32_rtc_priv =
   .rtc_dboost_fpd = 1
 };
 
-#ifdef CONFIG_RTC_DRIVER
-
 /* Callback to use when the alarm expires */
 
 #ifdef CONFIG_RTC_ALARM
@@ -298,15 +293,11 @@ static RTC_DATA_ATTR struct esp32_rtc_backup_s rtc_saved_data;
 static struct esp32_rtc_backup_s *g_rtc_save;
 static bool g_rt_timer_enabled = false;
 
-#endif
-
 /****************************************************************************
  * Public Data
  ****************************************************************************/
 
-#ifdef CONFIG_RTC_DRIVER
 volatile bool g_rtc_enabled = false;
-#endif
 
 /****************************************************************************
  * Private Functions
@@ -744,7 +735,7 @@ static void esp32_select_rtc_slow_clk(enum esp32_slow_clk_sel_e slow_clk)
   putreg32((uint32_t)cal_val, RTC_SLOW_CLK_CAL_REG);
 }
 
-#ifdef CONFIG_RTC_DRIVER
+#ifdef CONFIG_RTC_ALARM
 
 /****************************************************************************
  * Name: esp32_rt_cb_handler
@@ -760,11 +751,11 @@ static void esp32_select_rtc_slow_clk(enum esp32_slow_clk_sel_e slow_clk)
  *
  ****************************************************************************/
 
-static void IRAM_ATTR esp32_rt_cb_handler(FAR void *arg)
+static void IRAM_ATTR esp32_rt_cb_handler(void *arg)
 {
-  FAR struct alm_cbinfo_s *cbinfo = (struct alm_cbinfo_s *)arg;
+  struct alm_cbinfo_s *cbinfo = (struct alm_cbinfo_s *)arg;
   alm_callback_t cb;
-  FAR void *cb_arg;
+  void *cb_arg;
   int alminfo_id;
 
   DEBUGASSERT(cbinfo != NULL);
@@ -777,7 +768,7 @@ static void IRAM_ATTR esp32_rt_cb_handler(FAR void *arg)
       /* Alarm callback */
 
       cb = cbinfo->ac_cb;
-      cb_arg = (FAR void *)cbinfo->ac_arg;
+      cb_arg = (void *)cbinfo->ac_arg;
       cbinfo->ac_cb  = NULL;
       cbinfo->ac_arg = NULL;
       cbinfo->deadline_us = 0;
@@ -785,7 +776,7 @@ static void IRAM_ATTR esp32_rt_cb_handler(FAR void *arg)
     }
 }
 
-#endif /* CONFIG_RTC_DRIVER */
+#endif /* CONFIG_RTC_ALARM */
 
 /****************************************************************************
  * Public Functions
@@ -1545,7 +1536,7 @@ int IRAM_ATTR esp_rtc_clk_get_cpu_freq(void)
             }
           else
             {
-              DEBUGASSERT(0);
+              DEBUGPANIC();
             }
         }
         break;
@@ -1558,7 +1549,7 @@ int IRAM_ATTR esp_rtc_clk_get_cpu_freq(void)
 
       case RTC_CNTL_SOC_CLK_SEL_APLL:
         default:
-          DEBUGASSERT(0);
+          DEBUGPANIC();
     }
 
   return freq_mhz;
@@ -1881,8 +1872,6 @@ uint64_t IRAM_ATTR esp32_rtc_get_boot_time(void)
         + (((uint64_t)getreg32(RTC_BOOT_TIME_HIGH_REG)) << 32);
 }
 
-#ifdef CONFIG_RTC_DRIVER
-
 /****************************************************************************
  * Name: up_rtc_time
  *
@@ -1957,7 +1946,7 @@ time_t up_rtc_time(void)
  *
  ****************************************************************************/
 
-int up_rtc_settime(FAR const struct timespec *ts)
+int up_rtc_settime(const struct timespec *ts)
 {
   irqstate_t flags;
   uint64_t now_us;
@@ -2052,7 +2041,7 @@ int up_rtc_initialize(void)
  ****************************************************************************/
 
 #ifdef CONFIG_RTC_HIRES
-int up_rtc_gettime(FAR struct timespec *tp)
+int up_rtc_gettime(struct timespec *tp)
 {
   irqstate_t flags;
   uint64_t time_us;
@@ -2066,8 +2055,7 @@ int up_rtc_gettime(FAR struct timespec *tp)
     }
   else
     {
-      time_us = = esp32_rtc_get_time_us() +
-                    esp32_rtc_get_boot_time();
+      time_us = esp32_rtc_get_time_us() + esp32_rtc_get_boot_time();
     }
 
   tp->tv_sec  = time_us / USEC_PER_SEC;
@@ -2095,10 +2083,10 @@ int up_rtc_gettime(FAR struct timespec *tp)
  *
  ****************************************************************************/
 
-int up_rtc_setalarm(FAR struct alm_setalarm_s *alminfo)
+int up_rtc_setalarm(struct alm_setalarm_s *alminfo)
 {
   struct rt_timer_args_s rt_timer_args;
-  FAR struct alm_cbinfo_s *cbinfo;
+  struct alm_cbinfo_s *cbinfo;
   irqstate_t flags;
   int ret = -EBUSY;
   int id;
@@ -2170,7 +2158,7 @@ int up_rtc_setalarm(FAR struct alm_setalarm_s *alminfo)
 
 int up_rtc_cancelalarm(enum alm_id_e alarmid)
 {
-  FAR struct alm_cbinfo_s *cbinfo;
+  struct alm_cbinfo_s *cbinfo;
   irqstate_t flags;
   int ret = -ENODATA;
 
@@ -2217,10 +2205,10 @@ int up_rtc_cancelalarm(enum alm_id_e alarmid)
  *
  ****************************************************************************/
 
-int up_rtc_rdalarm(FAR struct timespec *tp, uint32_t alarmid)
+int up_rtc_rdalarm(struct timespec *tp, uint32_t alarmid)
 {
   irqstate_t flags;
-  FAR struct alm_cbinfo_s *cbinfo;
+  struct alm_cbinfo_s *cbinfo;
   DEBUGASSERT(tp != NULL);
   DEBUGASSERT((RTC_ALARM0 <= alarmid) &&
               (alarmid < RTC_ALARM_LAST));
@@ -2269,5 +2257,3 @@ int up_rtc_timer_init(void)
 
   return OK;
 }
-
-#endif /* CONFIG_RTC_DRIVER */

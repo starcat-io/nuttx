@@ -138,7 +138,7 @@ static int inline local_stream_connect(FAR struct local_conn_s *client,
 
   /* Add ourself to the list of waiting connections and notify the server. */
 
-  dq_addlast(&client->lc_node, &server->u.server.lc_waiters);
+  dq_addlast(&client->u.client.lc_waiter, &server->u.server.lc_waiters);
   local_event_pollnotify(server, POLLIN);
 
   if (nxsem_get_value(&server->lc_waitsem, &sval) >= 0 && sval < 1)
@@ -177,6 +177,8 @@ static int inline local_stream_connect(FAR struct local_conn_s *client,
     }
 
   DEBUGASSERT(client->lc_infile.f_inode != NULL);
+
+  nxsem_post(&client->lc_donesem);
 
   if (!nonblock)
     {
@@ -267,12 +269,12 @@ int psock_local_connect(FAR struct socket *psock,
   net_lock();
   while ((conn = local_nextconn(conn)) != NULL)
     {
-      /* Anything in the listener list should be a stream socket in the
-       * listening state
-       */
+      /* Slef found, continue */
 
-      DEBUGASSERT(conn->lc_state == LOCAL_STATE_LISTENING &&
-                  conn->lc_proto == SOCK_STREAM);
+      if (conn == psock->s_conn)
+        {
+          continue;
+        }
 
       /* Handle according to the server connection type */
 
@@ -289,7 +291,13 @@ int psock_local_connect(FAR struct socket *psock,
 
         case LOCAL_TYPE_PATHNAME:  /* lc_path holds a null terminated string */
           {
-            if (strncmp(conn->lc_path, unaddr->sun_path, UNIX_PATH_MAX - 1)
+            /* Anything in the listener list should be a stream socket in the
+             * listening state
+             */
+
+            if (conn->lc_state == LOCAL_STATE_LISTENING &&
+                conn->lc_proto == SOCK_STREAM &&
+                strncmp(conn->lc_path, unaddr->sun_path, UNIX_PATH_MAX - 1)
                 == 0)
               {
                 int ret = OK;
@@ -313,7 +321,7 @@ int psock_local_connect(FAR struct socket *psock,
                   {
                     ret =
                       local_stream_connect(client, conn,
-                                           _SS_ISNONBLOCK(psock->s_flags));
+                        _SS_ISNONBLOCK(client->lc_conn.s_flags));
                   }
 
                 net_unlock();

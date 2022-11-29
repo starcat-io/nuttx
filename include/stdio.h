@@ -96,6 +96,8 @@
 #  define fsetpos64 fsetpos
 #endif
 
+#define setlinebuf(stream)   setvbuf(stream, NULL, _IOLBF, 0)
+
 /****************************************************************************
  * Public Type Definitions
  ****************************************************************************/
@@ -103,6 +105,12 @@
 /* Streams */
 
 typedef struct file_struct FILE;
+
+struct va_format
+{
+  FAR const char *fmt;
+  FAR va_list *va;
+};
 
 /****************************************************************************
  * Public Data

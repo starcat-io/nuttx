@@ -60,9 +60,9 @@
        { \
          uint32_t start; \
          uint32_t elapsed; \
-         start = up_critmon_gettime(); \
+         start = up_perf_gettime(); \
          func(arg); \
-         elapsed = up_critmon_gettime() - start; \
+         elapsed = up_perf_gettime() - start; \
          if (elapsed > CONFIG_SCHED_CRITMONITOR_MAXTIME_WDOG) \
            { \
              serr("WDOG %p, %s IRQ, execute too long %"PRIu32"\n", \
@@ -98,40 +98,35 @@ static inline void wd_expiration(void)
   FAR struct wdog_s *wdog;
   wdentry_t func;
 
-  /* Check if the watchdog at the head of the list is ready to run */
+  /* Process the watchdog at the head of the list as well as any
+   * other watchdogs that became ready to run at this time
+   */
 
-  if (((FAR struct wdog_s *)g_wdactivelist.head)->lag <= 0)
+  while (g_wdactivelist.head &&
+        ((FAR struct wdog_s *)g_wdactivelist.head)->lag <= 0)
     {
-      /* Process the watchdog at the head of the list as well as any
-       * other watchdogs that became ready to run at this time
+      /* Remove the watchdog from the head of the list */
+
+      wdog = (FAR struct wdog_s *)sq_remfirst(&g_wdactivelist);
+
+      /* If there is another watchdog behind this one, update its
+       * its lag (this shouldn't be necessary).
        */
 
-      while (g_wdactivelist.head &&
-             ((FAR struct wdog_s *)g_wdactivelist.head)->lag <= 0)
+      if (g_wdactivelist.head)
         {
-          /* Remove the watchdog from the head of the list */
-
-          wdog = (FAR struct wdog_s *)sq_remfirst(&g_wdactivelist);
-
-          /* If there is another watchdog behind this one, update its
-           * its lag (this shouldn't be necessary).
-           */
-
-          if (g_wdactivelist.head)
-            {
-              ((FAR struct wdog_s *)g_wdactivelist.head)->lag += wdog->lag;
-            }
-
-          /* Indicate that the watchdog is no longer active. */
-
-          func = wdog->func;
-          wdog->func = NULL;
-
-          /* Execute the watchdog function */
-
-          up_setpicbase(wdog->picbase);
-          CALL_FUNC(func, wdog->arg);
+          ((FAR struct wdog_s *)g_wdactivelist.head)->lag += wdog->lag;
         }
+
+      /* Indicate that the watchdog is no longer active. */
+
+      func = wdog->func;
+      wdog->func = NULL;
+
+      /* Execute the watchdog function */
+
+      up_setpicbase(wdog->picbase);
+      CALL_FUNC(func, wdog->arg);
     }
 }
 
@@ -175,13 +170,13 @@ static inline void wd_expiration(void)
  *
  ****************************************************************************/
 
-int wd_start(FAR struct wdog_s *wdog, int32_t delay,
+int wd_start(FAR struct wdog_s *wdog, sclock_t delay,
              wdentry_t wdentry, wdparm_t arg)
 {
   FAR struct wdog_s *curr;
   FAR struct wdog_s *prev;
   FAR struct wdog_s *next;
-  int32_t now;
+  sclock_t now;
   irqstate_t flags;
 
   /* Verify the wdog and setup parameters */
@@ -209,7 +204,20 @@ int wd_start(FAR struct wdog_s *wdog, int32_t delay,
   up_getpicbase(&wdog->picbase);
   wdog->arg = arg;
 
-  /* Calculate delay+1, forcing the delay into a range that we can handle */
+  /* Calculate delay+1, forcing the delay into a range that we can handle.
+   *
+   * NOTE that one is added to the delay.  This is correct and must not be
+   * changed:  The contract for the use wdog_start is that the wdog will
+   * delay FOR AT LEAST as long as requested, but may delay longer due to
+   * variety of factors.  The wdog logic has no knowledge of the the phase
+   * of the system timer when it is started:  The next timer interrupt may
+   * occur immediately or may be delayed for almost a full cycle. In order
+   * to meet the contract requirement, the requested time is also always
+   * incremented by one so that the delay is always at least as long as
+   * requested.
+   *
+   * There is extensive documentation about this time issue elsewhere.
+   */
 
   if (delay <= 0)
     {
@@ -375,14 +383,6 @@ unsigned int wd_timer(int ticks, bool noswitches)
   wdog = (FAR struct wdog_s *)g_wdactivelist.head;
   while (wdog != NULL && ticks > 0)
     {
-#ifndef CONFIG_SCHED_TICKLESS_ALARM
-      /* There is logic to handle the case where ticks is greater than
-       * the watchdog lag, but if the scheduling is working properly
-       * that should never happen.
-       */
-
-      DEBUGASSERT(ticks <= wdog->lag);
-#endif
       /* Decrement the lag for this watchdog. */
 
       decr = MIN(wdog->lag, ticks);

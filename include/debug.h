@@ -78,11 +78,16 @@
  *    really intended only for crash error reporting.
  */
 
-#ifdef CONFIG_HAVE_FUNCTIONNAME
+#if !defined(EXTRA_FMT) && !defined(EXTRA_ARG) && defined(CONFIG_HAVE_FUNCTIONNAME)
 #  define EXTRA_FMT "%s: "
 #  define EXTRA_ARG ,__FUNCTION__
-#else
+#endif
+
+#ifndef EXTRA_FMT
 #  define EXTRA_FMT
+#endif
+
+#ifndef EXTRA_ARG
 #  define EXTRA_ARG
 #endif
 
@@ -243,6 +248,24 @@
 #  define pwrinfo      _info
 #else
 #  define pwrinfo      _none
+#endif
+
+#ifdef CONFIG_DEBUG_BATTERY_ERROR
+#  define baterr       _err
+#else
+#  define baterr       _none
+#endif
+
+#ifdef CONFIG_DEBUG_BATTERY_WARN
+#  define batwarn      _warn
+#else
+#  define batwarn      _none
+#endif
+
+#ifdef CONFIG_DEBUG_BATTERY_INFO
+#  define batinfo      _info
+#else
+#  define batinfo      _none
 #endif
 
 #ifdef CONFIG_DEBUG_WIRELESS_ERROR
@@ -749,6 +772,24 @@
 #  define mtrinfo     _none
 #endif
 
+#ifdef CONFIG_DEBUG_VIDEO_ERROR
+#  define verr        _err
+#else
+#  define verr        _none
+#endif
+
+#ifdef CONFIG_DEBUG_VIDEO_WARN
+#  define vwarn       _warn
+#else
+#  define vwarn       _none
+#endif
+
+#ifdef CONFIG_DEBUG_VIDEO_INFO
+#  define vinfo       _info
+#else
+#  define vinfo       _none
+#endif
+
 /* Buffer dumping macros do not depend on varargs */
 
 #ifdef CONFIG_DEBUG_ERROR
@@ -1051,19 +1092,19 @@ void lib_dumpvbuffer(FAR const char *msg, FAR const struct iovec *iov,
 
 #ifndef CONFIG_CPP_HAVE_VARARGS
 #ifdef CONFIG_DEBUG_ALERT
-void _alert(const char *format, ...);
+void _alert(const char *format, ...) sysloglike(1, 2);
 #endif
 
 #ifdef CONFIG_DEBUG_ERROR
-void _err(const char *format, ...);
+void _err(const char *format, ...) sysloglike(1, 2);
 #endif
 
 #ifdef CONFIG_DEBUG_WARN
-void _warn(const char *format, ...);
+void _warn(const char *format, ...) sysloglike(1, 2);
 #endif
 
 #ifdef CONFIG_DEBUG_INFO
-void _info(const char *format, ...);
+void _info(const char *format, ...) sysloglike(1, 2);
 #endif
 #endif /* CONFIG_CPP_HAVE_VARARGS */
 

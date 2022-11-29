@@ -60,9 +60,9 @@
  *
  ****************************************************************************/
 
-FAR void *up_textheap_memalign(size_t align, size_t size)
+void *up_textheap_memalign(size_t align, size_t size)
 {
-  FAR void *ret = NULL;
+  void *ret = NULL;
 
   /* Prioritise allocating from RTC. If that fails, allocate from the
    * main heap.
@@ -88,7 +88,7 @@ FAR void *up_textheap_memalign(size_t align, size_t size)
  *
  ****************************************************************************/
 
-void up_textheap_free(FAR void *p)
+void up_textheap_free(void *p)
 {
   if (p)
     {
@@ -103,4 +103,29 @@ void up_textheap_free(FAR void *p)
           esp32_iramheap_free(p);
         }
     }
+}
+
+/****************************************************************************
+ * Name: up_textheap_heapmember
+ *
+ * Description:
+ *   Test if memory is from text heap.
+ *
+ ****************************************************************************/
+
+bool up_textheap_heapmember(void *p)
+{
+  if (p == NULL)
+    {
+      return false;
+    }
+
+#ifdef CONFIG_ESP32_RTC_HEAP
+  if (esp32_ptr_rtcslow(p))
+    {
+      return esp32_rtcheap_heapmember(p);
+    }
+#endif
+
+  return esp32_iramheap_heapmember(p);
 }

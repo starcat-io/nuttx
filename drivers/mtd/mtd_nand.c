@@ -1,13 +1,6 @@
 /****************************************************************************
  * drivers/mtd/mtd_nand.c
  *
- *   Copyright (C) 2013 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
- *
- * This logic was based largely on Atmel sample code with modifications for
- * better integration with NuttX.  The Atmel sample code has a BSD
- * compatible license that requires this copyright notice:
- *
  *   Copyright (c) 2011, 2012, Atmel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
@@ -858,7 +851,7 @@ static int nand_ioctl(struct mtd_dev_s *dev, int cmd, unsigned long arg)
  *              driver instance.
  *
  * Returned Value:
- *   A non-NULL MTD driver intstance is returned on success.  NULL is
+ *   A non-NULL MTD driver instance is returned on success.  NULL is
  *   returned on any failaure.
  *
  ****************************************************************************/

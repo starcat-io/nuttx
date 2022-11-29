@@ -56,11 +56,7 @@
  ****************************************************************************/
 
 #ifdef CONFIG_ESP32_GPIO_IRQ
-#ifdef CONFIG_SMP
 static int g_gpio_cpuint[CONFIG_SMP_NCPUS];
-#else
-static int g_gpio_cpuint[1];
-#endif
 #endif
 
 static const uint8_t g_pin2func[40] =
@@ -135,7 +131,7 @@ static void gpio_dispatch(int irq, uint32_t status, uint32_t *regs)
  ****************************************************************************/
 
 #ifdef CONFIG_ESP32_GPIO_IRQ
-static int gpio_interrupt(int irq, FAR void *context, FAR void *arg)
+static int gpio_interrupt(int irq, void *context, void *arg)
 {
   uint32_t status;
 
@@ -416,7 +412,7 @@ bool esp32_gpioread(int pin)
 void esp32_gpioirqinitialize(int cpu)
 {
 #ifdef CONFIG_SMP
-  DEBUGASSERT(cpu >= 0 && cpu <= CONFIG_SMP_NCPUS);
+  DEBUGASSERT(cpu >= 0 && cpu < CONFIG_SMP_NCPUS);
 #else
   DEBUGASSERT(cpu == 0);
 #endif

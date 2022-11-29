@@ -41,6 +41,7 @@
 #include <nuttx/irq.h>
 #include <nuttx/clock.h>
 #include <nuttx/semaphore.h>
+#include <nuttx/spinlock.h>
 #include <nuttx/i2c/i2c_master.h>
 
 #include <arch/board/board.h>
@@ -77,6 +78,9 @@
 #ifdef CONFIG_I2C_POLLED
 #define TIMESPEC_TO_US(sec, nano)  ((sec * USEC_PER_SEC) + (nano / NSEC_PER_USEC))
 #endif
+
+#define ESP32_I2CTIMEOTICKS \
+    (SEC2TICK(CONFIG_ESP32_I2CTIMEOSEC) + MSEC2TICK(CONFIG_ESP32_I2CTIMEOMS))
 
 /* Default option */
 
@@ -219,6 +223,8 @@ struct esp32_i2c_priv_s
 
   uint32_t clk_freq;           /* Current I2C Clock frequency */
 
+  spinlock_t lock;             /* Device specific lock */
+
   /* I2C trace support */
 
 #ifdef CONFIG_I2C_TRACE
@@ -235,20 +241,20 @@ struct esp32_i2c_priv_s
  * Private Function Prototypes
  ****************************************************************************/
 
-static void esp32_i2c_init_clock(FAR struct esp32_i2c_priv_s *priv,
+static void esp32_i2c_init_clock(struct esp32_i2c_priv_s *priv,
                                  uint32_t clock);
-static void esp32_i2c_init(FAR struct esp32_i2c_priv_s *priv);
-static void esp32_i2c_deinit(FAR struct esp32_i2c_priv_s *priv);
-static int esp32_i2c_transfer(FAR struct i2c_master_s *dev,
-                              FAR struct i2c_msg_s *msgs,
+static void esp32_i2c_init(struct esp32_i2c_priv_s *priv);
+static void esp32_i2c_deinit(struct esp32_i2c_priv_s *priv);
+static int esp32_i2c_transfer(struct i2c_master_s *dev,
+                              struct i2c_msg_s *msgs,
                               int count);
 static inline void esp32_i2c_process(struct esp32_i2c_priv_s *priv,
                                      uint32_t status);
 #ifdef CONFIG_I2C_POLLED
-static int esp32_i2c_polling_waitdone(FAR struct esp32_i2c_priv_s *priv);
+static int esp32_i2c_polling_waitdone(struct esp32_i2c_priv_s *priv);
 #endif
 #ifdef CONFIG_I2C_RESET
-static int esp32_i2c_reset(FAR struct i2c_master_s *dev);
+static int esp32_i2c_reset(struct i2c_master_s *dev);
 #endif
 
 #ifdef CONFIG_I2C_TRACE
@@ -416,7 +422,7 @@ static inline void esp32_i2c_reset_reg_bits(struct esp32_i2c_priv_s *priv,
  *
  ****************************************************************************/
 
-static void esp32_i2c_reset_fifo(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_reset_fifo(struct esp32_i2c_priv_s *priv)
 {
   esp32_i2c_set_reg_bits(priv, I2C_FIFO_CONF_OFFSET, I2C_TX_FIFO_RST);
   esp32_i2c_reset_reg_bits(priv, I2C_FIFO_CONF_OFFSET, I2C_TX_FIFO_RST);
@@ -433,7 +439,7 @@ static void esp32_i2c_reset_fifo(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static void esp32_i2c_sendstart(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_sendstart(struct esp32_i2c_priv_s *priv)
 {
   struct i2c_msg_s *msg = &priv->msgv[priv->msgid];
 
@@ -471,7 +477,7 @@ static void esp32_i2c_sendstart(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static void esp32_i2c_senddata(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_senddata(struct esp32_i2c_priv_s *priv)
 {
   int i;
   struct i2c_msg_s *msg = &priv->msgv[priv->msgid];
@@ -488,7 +494,7 @@ static void esp32_i2c_senddata(FAR struct esp32_i2c_priv_s *priv)
 
   /* Transfer the data from the msg buffer to the TX FIFO */
 
-  for (i = 0; i < n; i ++)
+  for (i = 0; i < n; i++)
     {
       esp32_i2c_set_reg(priv, I2C_DATA_OFFSET,
                         msg->buffer[priv->bytes + i]);
@@ -600,7 +606,7 @@ static void esp32_i2c_sendstop(struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static void esp32_i2c_init_clock(FAR struct esp32_i2c_priv_s *priv,
+static void esp32_i2c_init_clock(struct esp32_i2c_priv_s *priv,
                                  uint32_t clk_freq)
 {
   uint32_t half_cycles = APB_CLK_FREQ / clk_freq / 2;
@@ -632,7 +638,7 @@ static void esp32_i2c_init_clock(FAR struct esp32_i2c_priv_s *priv,
  *
  ****************************************************************************/
 
-static void esp32_i2c_init(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_init(struct esp32_i2c_priv_s *priv)
 {
   const struct esp32_i2c_config_s *config = priv->config;
 
@@ -682,7 +688,7 @@ static void esp32_i2c_init(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static void esp32_i2c_deinit(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_deinit(struct esp32_i2c_priv_s *priv)
 {
   const struct esp32_i2c_config_s *config = priv->config;
 
@@ -700,7 +706,7 @@ static void esp32_i2c_deinit(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static void esp32_i2c_reset_fsmc(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_reset_fsmc(struct esp32_i2c_priv_s *priv)
 {
   esp32_i2c_deinit(priv);
   esp32_i2c_init(priv);
@@ -718,23 +724,11 @@ static void esp32_i2c_reset_fsmc(FAR struct esp32_i2c_priv_s *priv)
  *   priv          - Pointer to the internal driver state structure.
  ****************************************************************************/
 #ifndef CONFIG_I2C_POLLED
-static int esp32_i2c_sem_waitdone(FAR struct esp32_i2c_priv_s *priv)
+static int esp32_i2c_sem_waitdone(struct esp32_i2c_priv_s *priv)
 {
-  int ret;
-  struct timespec abstime;
-
-  /* Get the current absolute time and adds a offset as timeout */
-
-  clock_gettime(CLOCK_REALTIME, &abstime);
-
-  abstime.tv_sec += 10;
-  abstime.tv_nsec += 0;
-
   /* Wait on ISR semaphore */
 
-  ret = nxsem_timedwait_uninterruptible(&priv->sem_isr, &abstime);
-
-  return ret;
+  return nxsem_tickwait_uninterruptible(&priv->sem_isr, ESP32_I2CTIMEOTICKS);
 }
 #endif
 
@@ -756,13 +750,11 @@ static int esp32_i2c_sem_waitdone(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 #ifdef CONFIG_I2C_POLLED
-static int esp32_i2c_polling_waitdone(FAR struct esp32_i2c_priv_s *priv)
+static int esp32_i2c_polling_waitdone(struct esp32_i2c_priv_s *priv)
 {
   int ret;
-  struct timespec current_time;
-  struct timespec timeout;
-  uint64_t current_us;
-  uint64_t timeout_us;
+  clock_t current;
+  clock_t timeout;
   uint32_t status = 0;
 
   /* Get the current absolute time and add an offset as timeout.
@@ -771,23 +763,14 @@ static int esp32_i2c_polling_waitdone(FAR struct esp32_i2c_priv_s *priv)
    * forward and backwards.
    */
 
-  #ifdef CONFIG_CLOCK_MONOTONIC
-    clock_gettime(CLOCK_MONOTONIC, &current_time);
-  #else
-    clock_gettime(CLOCK_REALTIME, &current_time);
-  #endif
-
-  timeout.tv_sec  = current_time.tv_sec  + 10;
-  timeout.tv_nsec = current_time.tv_nsec +  0;
-
-  current_us = TIMESPEC_TO_US(current_time.tv_sec, current_time.tv_nsec);
-  timeout_us = TIMESPEC_TO_US(timeout.tv_sec, timeout.tv_nsec);
+  current = clock_systime_ticks();
+  timeout = current + SEC2TICK(10);
 
   /* Loop while a transfer is in progress
    * and an error didn't occur within the timeout
    */
 
-  while ((current_us < timeout_us) && (priv->error == 0))
+  while ((current < timeout) && (priv->error == 0))
     {
       /* Check if any interrupt triggered, clear them
        * process the operation.
@@ -816,12 +799,7 @@ static int esp32_i2c_polling_waitdone(FAR struct esp32_i2c_priv_s *priv)
 
       /* Update current time */
 
-      #ifdef CONFIG_CLOCK_MONOTONIC
-        clock_gettime(CLOCK_MONOTONIC, &current_time);
-      #else
-        clock_gettime(CLOCK_REALTIME, &current_time);
-      #endif
-      current_us = TIMESPEC_TO_US(current_time.tv_sec, current_time.tv_nsec);
+      current = clock_systime_ticks();
     }
 
   /* Return a negated value in case of timeout, and in the other scenarios
@@ -830,7 +808,7 @@ static int esp32_i2c_polling_waitdone(FAR struct esp32_i2c_priv_s *priv)
    * scenarios.
    */
 
-  if (current_us >= timeout_us)
+  if (current >= timeout)
     {
       ret = -ETIMEDOUT;
     }
@@ -859,7 +837,7 @@ static int esp32_i2c_polling_waitdone(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static int esp32_i2c_sem_wait(FAR struct esp32_i2c_priv_s *priv)
+static int esp32_i2c_sem_wait(struct esp32_i2c_priv_s *priv)
 {
   return nxsem_wait_uninterruptible(&priv->sem_excl);
 }
@@ -885,7 +863,7 @@ static void esp32_i2c_sem_post(struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static void esp32_i2c_sem_destroy(FAR struct esp32_i2c_priv_s *priv)
+static void esp32_i2c_sem_destroy(struct esp32_i2c_priv_s *priv)
 {
   nxsem_destroy(&priv->sem_excl);
 #ifndef CONFIG_I2C_POLLED
@@ -901,7 +879,7 @@ static void esp32_i2c_sem_destroy(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static inline void esp32_i2c_sem_init(FAR struct esp32_i2c_priv_s *priv)
+static inline void esp32_i2c_sem_init(struct esp32_i2c_priv_s *priv)
 {
   nxsem_init(&priv->sem_excl, 0, 1);
 
@@ -927,13 +905,13 @@ static inline void esp32_i2c_sem_init(FAR struct esp32_i2c_priv_s *priv)
  *
  ****************************************************************************/
 
-static int esp32_i2c_transfer(FAR struct i2c_master_s *dev,
-                              FAR struct i2c_msg_s *msgs,
+static int esp32_i2c_transfer(struct i2c_master_s *dev,
+                              struct i2c_msg_s *msgs,
                               int count)
 {
   int i;
   int ret = OK;
-  FAR struct esp32_i2c_priv_s *priv = (FAR struct esp32_i2c_priv_s *)dev;
+  struct esp32_i2c_priv_s *priv = (struct esp32_i2c_priv_s *)dev;
 
   DEBUGASSERT(count > 0);
 
@@ -1153,16 +1131,16 @@ out:
  ****************************************************************************/
 
 #ifdef CONFIG_I2C_RESET
-static int esp32_i2c_reset(FAR struct i2c_master_s *dev)
+static int esp32_i2c_reset(struct i2c_master_s *dev)
 {
   irqstate_t flags;
-  FAR struct esp32_i2c_priv_s *priv = (FAR struct esp32_i2c_priv_s *)dev;
+  struct esp32_i2c_priv_s *priv = (struct esp32_i2c_priv_s *)dev;
 
   DEBUGASSERT(dev);
 
   DEBUGASSERT(priv->refs > 0);
 
-  flags = enter_critical_section();
+  flags = spin_lock_irqsave(&priv->lock);
 
   esp32_i2c_deinit(priv);
 
@@ -1175,7 +1153,7 @@ static int esp32_i2c_reset(FAR struct i2c_master_s *dev)
   priv->bytes = 0;
   priv->ready_read = 0;
 
-  leave_critical_section(flags);
+  spin_unlock_irqrestore(&priv->lock, flags);
 
   return OK;
 }
@@ -1370,7 +1348,7 @@ static void esp32_i2c_tracedump(struct esp32_i2c_priv_s *priv)
  ****************************************************************************/
 
 #ifndef CONFIG_I2C_POLLED
-static int esp32_i2c_irq(int cpuint, void *context, FAR void *arg)
+static int esp32_i2c_irq(int cpuint, void *context, void *arg)
 {
   struct esp32_i2c_priv_s *priv = (struct esp32_i2c_priv_s *)arg;
 
@@ -1418,7 +1396,7 @@ static inline void esp32_i2c_process(struct esp32_i2c_priv_s *priv,
       esp32_i2c_traceevent(priv, I2CEVENT_ERROR, priv->error,
                            esp32_i2c_get_reg(priv, I2C_SR_OFFSET));
       esp32_i2c_set_reg(priv, I2C_INT_ENA_OFFSET, 0);
-#ifndef CONFIG_I2C_POLLED      
+#ifndef CONFIG_I2C_POLLED
       nxsem_post(&priv->sem_isr);
 #endif
     }
@@ -1518,7 +1496,7 @@ static inline void esp32_i2c_process(struct esp32_i2c_priv_s *priv,
  *
  ****************************************************************************/
 
-FAR struct i2c_master_s *esp32_i2cbus_initialize(int port)
+struct i2c_master_s *esp32_i2cbus_initialize(int port)
 {
   irqstate_t flags;
   struct esp32_i2c_priv_s *priv;
@@ -1543,11 +1521,11 @@ FAR struct i2c_master_s *esp32_i2cbus_initialize(int port)
       return NULL;
     }
 
-  flags = enter_critical_section();
+  flags = spin_lock_irqsave(&priv->lock);
 
   if ((volatile int)priv->refs++ != 0)
     {
-      leave_critical_section(flags);
+      spin_unlock_irqrestore(&priv->lock, flags);
 
       return (struct i2c_master_s *)priv;
     }
@@ -1564,7 +1542,7 @@ FAR struct i2c_master_s *esp32_i2cbus_initialize(int port)
     {
       /* Failed to allocate a CPU interrupt of this type */
 
-      leave_critical_section(flags);
+      spin_unlock_irqrestore(&priv->lock, flags);
 
       return NULL;
     }
@@ -1574,7 +1552,7 @@ FAR struct i2c_master_s *esp32_i2cbus_initialize(int port)
     {
       esp32_teardown_irq(priv->cpu, config->periph, priv->cpuint);
 
-      leave_critical_section(flags);
+      spin_unlock_irqrestore(&priv->lock, flags);
 
       return NULL;
     }
@@ -1586,9 +1564,9 @@ FAR struct i2c_master_s *esp32_i2cbus_initialize(int port)
 
   esp32_i2c_init(priv);
 
-  leave_critical_section(flags);
+  spin_unlock_irqrestore(&priv->lock, flags);
 
-  return (FAR struct i2c_master_s *)priv;
+  return (struct i2c_master_s *)priv;
 }
 
 /****************************************************************************
@@ -1599,10 +1577,10 @@ FAR struct i2c_master_s *esp32_i2cbus_initialize(int port)
  *
  ****************************************************************************/
 
-int esp32_i2cbus_uninitialize(FAR struct i2c_master_s *dev)
+int esp32_i2cbus_uninitialize(struct i2c_master_s *dev)
 {
   irqstate_t flags;
-  FAR struct esp32_i2c_priv_s *priv = (FAR struct esp32_i2c_priv_s *)dev;
+  struct esp32_i2c_priv_s *priv = (struct esp32_i2c_priv_s *)dev;
 
   DEBUGASSERT(dev);
 
@@ -1611,15 +1589,15 @@ int esp32_i2cbus_uninitialize(FAR struct i2c_master_s *dev)
       return ERROR;
     }
 
-  flags = enter_critical_section();
+  flags = spin_lock_irqsave(&priv->lock);
 
   if (--priv->refs)
     {
-      leave_critical_section(flags);
+      spin_unlock_irqrestore(&priv->lock, flags);
       return OK;
     }
 
-  leave_critical_section(flags);
+  spin_unlock_irqrestore(&priv->lock, flags);
 
 #ifndef CONFIG_I2C_POLLED
   up_disable_irq(priv->config->irq);
