@@ -52,6 +52,7 @@
 #include "hardware/sam_uart.h"
 #include "sam_config.h"
 #include "sam_dbgu.h"
+#include "sam_pmc.h"
 #include "sam_serial.h"
 
 /****************************************************************************

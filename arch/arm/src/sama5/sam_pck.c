@@ -36,6 +36,7 @@
 #include "arm_internal.h"
 #include "sam_pio.h"
 #include "sam_isi.h"
+#include "sam_pmc.h"
 
 #include "sam_pck.h"
 

@@ -35,6 +35,7 @@
 #include "arm_internal.h"
 #include "sam_pio.h"
 #include "sam_periphclks.h"
+#include "sam_pmc.h"
 #include "sam_config.h"
 #include "sam_dbgu.h"
 #include "sam_lowputc.h"
