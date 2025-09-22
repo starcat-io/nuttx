@@ -29,6 +29,15 @@
 
 #include <nuttx/config.h>
 
+#ifndef __ASSEMBLY__
+#  include <stdint.h>
+
+uint32_t sam_pllack_frequency(uint32_t mainclk);
+uint32_t sam_plladiv2_frequency(uint32_t mainclk);
+uint32_t sam_pck_frequency(uint32_t mainclk);
+uint32_t sam_mck_frequency(uint32_t mainclk);
+#endif
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
