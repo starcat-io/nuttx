@@ -35,6 +35,7 @@
 
 #include "arm_internal.h"
 #include "sam_periphclks.h"
+#include "sam_pmc.h"
 #include "hardware/sam_pit.h"
 
 /****************************************************************************
