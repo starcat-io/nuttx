@@ -103,6 +103,33 @@
 
 #endif
 
+#if defined(CONFIG_SAMA5_BOOT_SDRAM)
+#  ifdef BOARD_PLLA_FREQUENCY_SETTING
+#    undef BOARD_PLLA_FREQUENCY
+#    define BOARD_PLLA_FREQUENCY            BOARD_PLLA_FREQUENCY_SETTING
+#  endif
+#  ifdef BOARD_PCK_FREQUENCY_SETTING
+#    undef BOARD_PCK_FREQUENCY
+#    define BOARD_PCK_FREQUENCY             BOARD_PCK_FREQUENCY_SETTING
+#  endif
+#  ifdef BOARD_MCK_FREQUENCY_SETTING
+#    undef BOARD_MCK_FREQUENCY
+#    define BOARD_MCK_FREQUENCY             BOARD_MCK_FREQUENCY_SETTING
+#  endif
+#  ifdef BOARD_PIT_FREQUENCY_SETTING
+#    undef BOARD_PIT_FREQUENCY
+#    define BOARD_PIT_FREQUENCY             BOARD_PIT_FREQUENCY_SETTING
+#  endif
+#  ifdef BOARD_USART_FREQUENCY_SETTING
+#    undef BOARD_USART_FREQUENCY
+#    define BOARD_USART_FREQUENCY           BOARD_USART_FREQUENCY_SETTING
+#  endif
+#  ifdef BOARD_FLEXCOM_FREQUENCY_SETTING
+#    undef BOARD_FLEXCOM_FREQUENCY
+#    define BOARD_FLEXCOM_FREQUENCY         BOARD_FLEXCOM_FREQUENCY_SETTING
+#  endif
+#endif
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/

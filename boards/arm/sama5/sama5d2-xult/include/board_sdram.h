@@ -32,6 +32,27 @@
  ****************************************************************************/
 
 /* Clocking *****************************************************************/
+#if defined(CONFIG_SAMA5D2XULT_528MHZ)
+#  define BOARD_PLLA_FREQUENCY_SETTING    (528000000)
+#  define BOARD_PCK_FREQUENCY_SETTING     (528000000)
+#  define BOARD_MCK_FREQUENCY_SETTING     (132000000)
+#elif defined(CONFIG_SAMA5D2XULT_498MHZ)
+#  define BOARD_PLLA_FREQUENCY_SETTING    (996000000)
+#  define BOARD_PCK_FREQUENCY_SETTING     (498000000)
+#  define BOARD_MCK_FREQUENCY_SETTING     (166000000)
+#elif defined(CONFIG_SAMA5D2XULT_384MHZ)
+#  define BOARD_PLLA_FREQUENCY_SETTING    (768000000)
+#  define BOARD_PCK_FREQUENCY_SETTING     (384000000)
+#  define BOARD_MCK_FREQUENCY_SETTING     (128000000)
+#else /* CONFIG_SAMA5D2XULT_396MHZ default */
+#  define BOARD_PLLA_FREQUENCY_SETTING    (792000000)
+#  define BOARD_PCK_FREQUENCY_SETTING     (396000000)
+#  define BOARD_MCK_FREQUENCY_SETTING     (132000000)
+#endif
+
+#define BOARD_PIT_FREQUENCY_SETTING       (BOARD_MCK_FREQUENCY_SETTING >> 1)
+#define BOARD_USART_FREQUENCY_SETTING     (BOARD_MCK_FREQUENCY_SETTING >> 1)
+#define BOARD_FLEXCOM_FREQUENCY_SETTING   (BOARD_MCK_FREQUENCY_SETTING >> 1)
 
 /* After power-on reset, the SAMA5 device is running on a 12MHz internal RC.
  * When booting from SDRAM, NuttX is loaded in SDRAM by an intermediate

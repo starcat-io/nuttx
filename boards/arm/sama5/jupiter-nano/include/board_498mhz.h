@@ -102,11 +102,24 @@
 
 /* Resulting frequencies */
 
-#define BOARD_MAINCK_FREQUENCY     BOARD_MAINOSC_FREQUENCY
-#define BOARD_PLLA_FREQUENCY       (996000000) /* PLLACK:  83 * 12Mhz / 1 */
-#define BOARD_PCK_FREQUENCY        (498000000) /* CPU:     PLLACK / 2 / 1  */
-#define BOARD_MCK_FREQUENCY        (166000000) /* MCK:     PLLACK / 1 / 1 / 3 */
-#define BOARD_ADCCLK_FREQUENCY     (83000000)  /* ADCCLK:  MCK / ((7+1)*2) */
+#define BOARD_MAINCK_FREQUENCY          BOARD_MAINOSC_FREQUENCY
+#define BOARD_PLLA_FREQUENCY            (996000000) /* PLLACK:  83 * 12Mhz / 1 */
+#define BOARD_PCK_FREQUENCY             (498000000) /* CPU:     PLLACK / 2 / 1  */
+#define BOARD_MCK_FREQUENCY             (166000000) /* MCK:     PLLACK / 1 / 1 / 3 */
+#define BOARD_ADCCLK_FREQUENCY          (83000000)  /* ADCCLK:  MCK / ((7+1)*2) */
+
+/* Preserve the intended clock plan even when we inherit clocks from a
+ * preceding boot stage (for example, SDRAM boot where we do not
+ * reconfigure the PLL).  These *_SETTING values describe the frequencies
+ * we expect the hardware to be running at once initialization is complete.
+ */
+
+#define BOARD_PLLA_FREQUENCY_SETTING    BOARD_PLLA_FREQUENCY
+#define BOARD_PCK_FREQUENCY_SETTING     BOARD_PCK_FREQUENCY
+#define BOARD_MCK_FREQUENCY_SETTING     BOARD_MCK_FREQUENCY
+#define BOARD_PIT_FREQUENCY_SETTING     (BOARD_MCK_FREQUENCY_SETTING >> 1)
+#define BOARD_USART_FREQUENCY_SETTING   (BOARD_MCK_FREQUENCY_SETTING >> 1)
+#define BOARD_FLEXCOM_FREQUENCY_SETTING (BOARD_MCK_FREQUENCY_SETTING >> 1)
 
 /* Clocking to certain peripherals may be MCK/2.
  *

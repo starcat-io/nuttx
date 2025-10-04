@@ -127,6 +127,15 @@ uint32_t sam_pllack_frequency(uint32_t mainclk)
       return 0;
     }
 
+  if (pllack == 0)
+    {
+#ifdef BOARD_PLLA_FREQUENCY_SETTING
+      return BOARD_PLLA_FREQUENCY_SETTING;
+#else
+      return 0;
+#endif
+    }
+
   return pllack;
 }
 
@@ -151,14 +160,19 @@ uint32_t sam_plladiv2_frequency(uint32_t mainclk)
   /* Get the PLLA output clock */
 
   pllack = sam_pllack_frequency(mainclk);
+  regval = getreg32(SAM_PMC_MCKR);
+
   if (pllack == 0)
     {
+#ifdef BOARD_PLLA_FREQUENCY_SETTING
+      pllack = BOARD_PLLA_FREQUENCY_SETTING;
+#else
       return 0;
+#endif
     }
 
   /* Check if the PLLACK output is divided by 2 */
 
-  regval = getreg32(SAM_PMC_MCKR);
   if ((regval & PMC_MCKR_PLLADIV2) != 0)
     {
       pllack >>= 1;
@@ -205,7 +219,15 @@ uint32_t sam_pck_frequency(uint32_t mainclk)
       pck = sam_plladiv2_frequency(mainclk);
       if (pck == 0)
         {
+#ifdef BOARD_PLLA_FREQUENCY_SETTING
+          pck = BOARD_PLLA_FREQUENCY_SETTING;
+          if ((regval & PMC_MCKR_PLLADIV2) != 0)
+            {
+              pck >>= 1;
+            }
+#else
           return 0;
+#endif
         }
       break;
 
@@ -250,6 +272,12 @@ uint32_t sam_mck_frequency(uint32_t mainclk)
    */
 
   mck = sam_pck_frequency(mainclk);
+#ifdef BOARD_PCK_FREQUENCY_SETTING
+  if (mck == 0)
+    {
+      mck = BOARD_PCK_FREQUENCY_SETTING;
+    }
+#endif
   if (mck == 0)
     {
       return 0;
@@ -281,5 +309,14 @@ uint32_t sam_mck_frequency(uint32_t mainclk)
       return 0;
     }
 
-  return mck / mdiv;
+  mck /= mdiv;
+
+#ifdef BOARD_MCK_FREQUENCY_SETTING
+  if (mck == 0)
+    {
+      return BOARD_MCK_FREQUENCY_SETTING;
+    }
+#endif
+
+  return mck;
 }
