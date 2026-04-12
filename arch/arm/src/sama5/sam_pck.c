@@ -38,6 +38,7 @@
 #include "sam_isi.h"
 
 #include "sam_pck.h"
+#include "sam_pmc.h"
 
 /****************************************************************************
  * Pre-processor Definitions

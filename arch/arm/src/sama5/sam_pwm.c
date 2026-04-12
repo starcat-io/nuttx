@@ -43,6 +43,7 @@
 #include "sam_periphclks.h"
 #include "sam_pio.h"
 #include "sam_pwm.h"
+#include "sam_pmc.h"
 
 #ifdef CONFIG_SAMA5_PWM
 

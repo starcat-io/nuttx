@@ -57,6 +57,7 @@
 #include "sam_periphclks.h"
 #include "sam_pio.h"
 #include "sam_mcan.h"
+#include "sam_pmc.h"
 
 #if defined(CONFIG_CAN) && (defined(CONFIG_SAMA5_MCAN0) || \
             defined(CONFIG_SAMA5_MCAN1))

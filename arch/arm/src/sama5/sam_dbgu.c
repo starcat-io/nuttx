@@ -48,6 +48,7 @@
 #include "hardware/sam_pinmap.h"
 #include "sam_pio.h"
 #include "sam_dbgu.h"
+#include "sam_pmc.h"
 
 #ifdef CONFIG_SAMA5_DBGU
 

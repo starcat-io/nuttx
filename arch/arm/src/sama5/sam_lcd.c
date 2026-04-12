@@ -66,6 +66,7 @@
 #include "sam_periphclks.h"
 #include "sam_memories.h"
 #include "sam_lcd.h"
+#include "sam_pmc.h"
 
 /****************************************************************************
  * Pre-processor Definitions

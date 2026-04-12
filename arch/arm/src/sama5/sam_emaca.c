@@ -78,6 +78,7 @@
 #include "sam_periphclks.h"
 #include "sam_memories.h"
 #include "sam_ethernet.h"
+#include "sam_pmc.h"
 
 #include <arch/board/board.h>
 

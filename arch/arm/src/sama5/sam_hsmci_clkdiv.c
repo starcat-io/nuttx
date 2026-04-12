@@ -37,6 +37,7 @@
 #include "chip.h"
 #include "hardware/sam_hsmci.h"
 #include "sam_hsmci.h"
+#include "sam_pmc.h"
 
 #if defined(CONFIG_SAMA5_HSMCI0) || defined(CONFIG_SAMA5_HSMCI1) || \
     defined(CONFIG_SAMA5_HSMCI2)
