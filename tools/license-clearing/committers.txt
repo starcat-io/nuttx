@@ -1,0 +1,32 @@
+name	email	Apache ID	GitHub	Role
+Abdelatif Guettouche	abdelatif.guettouche@gmail.com 	aguettouche 	Ouss4 	PPMC, Committer 	
+Alan Carvalho de Assis 	acassis@gmail.com	acassis 	acassis 	PPMC, Committer 	
+Alin Jerpelea 	alin.jerpelea@sony.com	jerpelea 	jerpelea 	PPMC, Committer 	
+Anthony Merlino	anthony@vergeaero.com 	antmerlino 	antmerlino 	PPMC, Committer 	
+Brennan Ashton 	bashton@brennanashton.com   btashton 	btashton 	Committer 	
+David Sidrane 	david_s5@nscdg.com	davids5 	davids5 	PPMC, Committer 	
+David Sidrane 	david.sidrane@nscdg.com	davids5 	davids5 	PPMC, Committer 	
+David Sidrane	david_s5@usa.net	davids5 	davids5 	PPMC, Committer 	
+Flavio Paiva Junqueira	fpj@apache.org	fpj 	fpj 	Mentor, IPMC, PPMC, Committer 	
+Gregory Nutt	gnutt@nuttx.org	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	spudaneco@gmail.com 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@linux-qpx1.site 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@nuttx.org 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@linux-qpx1.site 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	gnutt@nuttx.org 	gnutt 	patacongo 	PPMC, Committer 	
+Gregory Nutt	patacongo@42af7a65-404d-4744-a932-0658087f49c3	gnutt 	patacongo 	PPMC, Committer 	
+Justin Mclean 	justin@classsoftware.com	jmclean 	justinmclean 	Mentor, IPMC, PPMC, Committer 	
+Junping Du	junping_du@apache.org	junping_du 	JunpingDu 	Champion, Mentor, IPMC, PPMC, Committer 	
+Masayuki Ishikawa	masayuki.ishikawa@gmail.com 	masayuki 	masayuki2009 	PPMC, Committer 	
+Masayuki Ishikawa	Masayuki.Ishikawa@jp.sony.com
+Mohammad Asif Siddiqui	asifdiatm@gmail.com asifdxtreme 	asifdxtreme 	Mentor, IPMC, PPMC, Committer 	
+Nathan Hartman	hartman.nathan@gmail.com	hartmannathan 	hartmannathan 	PPMC, Committer 	
+Xiang Xiao	xiaoxiang781216@gmail.com	xiaoxiang 	xiaoxiang781216 	PPMC, Committer
+Xiang Xiao	xiaoxiang@xiaomi.com	xiaoxiang 	xiaoxiang781216 	PPMC, Committer
+Xiang Xiao	xiaoxiang@pinecone.net	xiaoxiang 	xiaoxiang781216 	PPMC, Committer
+Xiang Xiao	xiaoxiang781216@gmail.com	xiaoxiang 	xiaoxiang781216 	PPMC, Committer
+Xiang Xiao	xiaoxiang@pinecone.net	xiaoxiang 	xiaoxiang781216 	PPMC, Committer
+Xiang Xiaoi	xiaoxiang@xiaomi.com	xiaoxiang 	xiaoxiang781216 	PPMC, Committer
+
+
+
